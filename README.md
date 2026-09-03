@@ -4,60 +4,59 @@ A premium, award-worthy photography portfolio website with WebGL effects, biling
 
 ## Technologies
 
-- HTML5 semantic markup
-- CSS3 with custom properties (design system)
-- JavaScript ES6+ (vanilla, no framework)
-- Three.js (WebGL displacement + gallery transitions)
+- **Vite 8** — build tool and dev server
+- **TypeScript** (strict) — all source in `src/`
+- **Bun** — package manager and runtime
+- **Three.js** (npm) — WebGL displacement + gallery transitions
+- HTML5 semantic markup + CSS3 custom properties (design system)
 - Google Fonts (Playfair Display + Space Grotesk + Inter)
-- IntersectionObserver
-- Responsive Design
-- Accessibility (ARIA, keyboard nav, reduced-motion)
+- IntersectionObserver, requestAnimationFrame
+- Responsive design, ARIA, keyboard nav, `prefers-reduced-motion`
 
 ## Structure
 
 ```
 /
-├── index.html              # Main page — all sections
-├── css/
-│   └── style.css           # Design system + all styles
-├── js/
-│   ├── main.js             # Data, init, navigation, cursor, i18n, loading
-│   ├── animations.js       # Scroll reveals, parallax, counters
-│   ├── gallery.js          # Lightbox, carousel, fullscreen gallery, project view
-│   └── three-scene.js      # WebGL hero displacement + gallery transitions
+├── index.html               # Main page — all sections
+├── vite.config.ts           # Vite config (Three.js chunk splitting, publicDir)
+├── tsconfig.json            # Strict TypeScript config
+├── package.json             # Scripts + deps
+├── src/
+│   ├── main.ts              # Entry point — wires all modules
+│   ├── data.ts              # Portfolio/carousel/gallery/projects data
+│   ├── types.ts             # All TypeScript interfaces
+│   ├── i18n.ts              # Bilingual (EN/PT) translations + applyLang
+│   ├── utils.ts             # DOM helpers + utilities
+│   ├── loader.ts            # Loading screen
+│   ├── nav.ts               # Navigation, mobile menu, smooth scroll
+│   ├── cursor.ts            # Custom cursor
+│   ├── animations.ts        # Scroll reveals, parallax, counters
+│   ├── gallery.ts           # Lightbox, carousel, gallery, project view
+│   ├── three-scene.ts       # WebGL hero displacement + gallery transitions
+│   └── styles/style.css     # Design system + all styles
 ├── assets/
-│   ├── images/             # Place for local full-size images
-│   ├── thumbnails/         # Place for lazy-loaded thumbnails
-│   └── textures/           # Place for displacement maps
+│   ├── images/              # Local full-size images
+│   ├── thumbnails/          # Lazy-loaded thumbnails
+│   └── textures/            # Displacement maps
 └── README.md
 ```
 
 ## How to Run
 
-### Option 1 — Direct file open
-
-Double-click `index.html`. All CDN resources (fonts, Three.js) load from the web.
-
-### Option 2 — Local server (recommended)
+Prerequisite: [Bun](https://bun.sh) installed.
 
 ```bash
-# Python
-python3 -m http.server 8000
-
-# Node.js
-npx serve .
-
-# PHP
-php -S localhost:8000
+bun install        # install dependencies
+bun run dev        # start dev server (http://localhost:3000)
+bun run build      # type-check + production build to dist/
+bun run preview    # preview the production build
 ```
-
-Then open `http://localhost:8000`.
 
 ## How to Replace Images
 
-All images are centralized in `js/main.js` inside the `DATA` object:
+All images are centralized in `src/data.ts` inside the `DATA` object:
 
-```javascript
+```ts
 const DATA = {
     portfolio: [
         {
@@ -94,6 +93,8 @@ const DATA = {
 - `portrait` — Centered, 3:4 ratio, max 60% width
 - `square` — Centered, 1:1 ratio, max 70% width
 
+The same data (used by both the lightbox and HTML markup) lives in `src/data.ts` and is strongly typed via `src/types.ts`.
+
 ## How to Customize the Photographer
 
 ### Name
@@ -108,40 +109,21 @@ In `index.html`, find and replace:
 
 ### Bio and Details
 
-Edit the `#about` section in `index.html`:
-
-- Portrait image
-- Name
-- Role description
-- Bio paragraphs
-- Stats (years, projects, publications)
+Edit the `#about` section in `index.html` (or its translations in `src/i18n.ts`).
 
 ### Contact Information
 
-Edit the `#contact` section in `index.html`:
-
-- Email: `hello@rafaphoto.com`
-- Instagram: `@rafaphoto`
-- Location: `São Paulo, Brazil`
+Edit the `#contact` section in `index.html`.
 
 ### SEO Meta Tags
 
-Edit `<head>` in `index.html`:
-
-```html
-<title>YOUR NAME — Photography Portfolio</title>
-<meta name="description" content="Your description here">
-```
-
-### Clients
-
-Edit the `#clients` section in `index.html`. Example clients are clearly marked as demo.
+Edit `<head>` in `index.html` (title, description, Open Graph, Twitter, JSON-LD).
 
 ## How to Add Projects
 
-1. Add project data to `DATA.projects` in `js/main.js`:
+1. Add project data to `DATA.projects` in `src/data.ts`:
 
-```javascript
+```ts
 {
     title: 'NEW PROJECT',
     description: 'Description text.',
@@ -179,7 +161,7 @@ Edit the `#clients` section in `index.html`. Example clients are clearly marked 
 
 ## How to Modify Colors
 
-Edit CSS custom properties in `css/style.css`:
+Edit CSS custom properties in `src/styles/style.css`:
 
 ```css
 :root {
@@ -195,27 +177,17 @@ Edit CSS custom properties in `css/style.css`:
 
 ### Disable hero displacement
 
-In `js/three-scene.js`, the hero automatically disables on mobile and when `prefers-reduced-motion` is active. To disable entirely:
-
-```javascript
-// In three-scene.js, comment out or remove the hero init:
-// HeroScene.init(heroCanvas, data.portfolio[0].src);
-```
+In `src/three-scene.ts`, the hero automatically disables on mobile and when `prefers-reduced-motion` is active. To disable entirely, remove the hero init call.
 
 ### Disable gallery transitions
 
-```javascript
-// In three-scene.js, comment out the gallery init:
-// GalleryScene.init(galleryCanvas);
-```
-
-The gallery falls back to a simple CSS opacity transition.
+Remove the gallery init call in `src/three-scene.ts`. The gallery falls back to a simple CSS opacity transition.
 
 ## How to Change Languages
 
-All bilingual content is in `js/main.js` inside the `I18N` object. Edit or add languages:
+All bilingual content is in `src/i18n.ts` inside the `I18N` object. Edit or add languages:
 
-```javascript
+```ts
 const I18N = {
     en: { 'nav.work': 'WORK', /* ... */ },
     pt: { 'nav.work': 'PORTFÓLIO', /* ... */ },
@@ -224,62 +196,17 @@ const I18N = {
 };
 ```
 
-To add a language toggle button, add a new button in the nav and call `applyLang('es')`.
-
 ## How to Deploy
 
-### Static hosting (recommended)
+Run `bun run build`, then deploy the `dist/` folder to any static host:
 
-Upload all files to:
-
-- **Netlify**: Drag and drop the folder
+- **Netlify**: Drag and drop `dist/` (or build command `bun run build`)
 - **Vercel**: Connect your Git repository
-- **GitHub Pages**: Push to a `gh-pages` branch
+- **GitHub Pages**: Push `dist/` to a `gh-pages` branch
 - **Cloudflare Pages**: Connect your repository
-
-### Important notes
-
-- Ensure all image paths are correct (relative or absolute)
-- Test on mobile devices
-- Verify Three.js loads (check console for errors)
-- Set proper meta tags for social sharing
-
-## Performance Checklist
-
-- [x] Lazy loading on all images below the fold
-- [x] Responsive images with appropriate sizing
-- [x] `loading="lazy"` attribute on images
-- [x] IntersectionObserver for scroll animations
-- [x] `requestAnimationFrame` for smooth animations
-- [x] WebGL disabled on mobile and low-power devices
-- [x] `prefers-reduced-motion` support
-- [x] Proper `will-change` hints
-- [x] No forced reflow in animation loops
-- [x] Three.js cleanup when not in use
-
-## Accessibility Checklist
-
-- [x] Semantic HTML5 elements
-- [x] ARIA labels on interactive elements
-- [x] Keyboard navigation support
-- [x] Focus visible indicators
-- [x] `prefers-reduced-motion` respected
-- [x] Alt text on all images
-- [x] Lightbox keyboard support (Escape, arrows)
-- [x] Mobile menu keyboard accessible
-- [x] Custom cursor disabled on touch devices
-
-## Browser Support
-
-- Chrome 80+
-- Firefox 78+
-- Safari 14+
-- Edge 80+
-- iOS Safari 14+
-- Chrome for Android 80+
 
 ## Credits
 
 - Fonts: Google Fonts (Playfair Display, Space Grotesk, Inter)
 - Images: Unsplash (placeholder — replace with your own)
-- WebGL: Three.js r128
+- WebGL: Three.js (npm)
