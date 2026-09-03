@@ -1,4 +1,4 @@
-import { $, lerp, isTouchDevice } from './utils';
+import { $, isTouchDevice } from './utils';
 
 export function initCursor(): void {
     if (isTouchDevice()) return;
@@ -8,26 +8,13 @@ export function initCursor(): void {
 
     if (!cursor) return;
 
-    let mouseX = 0;
-    let mouseY = 0;
-    let cursorX = 0;
-    let cursorY = 0;
-
-    document.addEventListener('mousemove', (e: MouseEvent) => {
-        mouseX = e.clientX;
-        mouseY = e.clientY;
-    });
-
-    const el = cursor;
-
-    function animate(): void {
-        cursorX = lerp(cursorX, mouseX, 0.15);
-        cursorY = lerp(cursorY, mouseY, 0.15);
-        el.style.transform = `translate(${cursorX}px, ${cursorY}px)`;
-        requestAnimationFrame(animate);
-    }
-
-    animate();
+    document.addEventListener(
+        'mousemove',
+        (e: MouseEvent) => {
+            cursor.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
+        },
+        { passive: true },
+    );
 
     document.addEventListener('mouseover', (e: MouseEvent) => {
         const target = (e.target as HTMLElement).closest('[data-cursor]');
