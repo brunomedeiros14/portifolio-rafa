@@ -1,601 +1,1017 @@
-<!DOCTYPE html>
-<html lang="en" data-lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!doctype html>
+<html lang="pt-BR" data-lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RAFA — Photography Portfolio</title>
-    <meta name="description" content="RAFA — Professional photography portfolio. Portraits, editorial, fashion, and documentary photography. Based in Brazil.">
-    <meta name="keywords" content="photography, portfolio, portrait, editorial, fashion, documentary, photographer, Brazil">
-    <meta name="author" content="RAFA">
+    <meta
+      name="description"
+      content="RAFA — Professional photography portfolio. Portraits, editorial, fashion, and documentary photography. Based in Brazil."
+    />
+    <meta
+      name="keywords"
+      content="photography, portfolio, portrait, editorial, fashion, documentary, photographer, Brazil"
+    />
+    <meta name="author" content="RAFA" />
 
-    <meta property="og:title" content="RAFA — Photography Portfolio">
-    <meta property="og:description" content="Professional photography portfolio. Portraits, editorial, fashion, and documentary photography.">
-    <meta property="og:type" content="website">
-    <meta property="og:image" content="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=1200">
-    <meta property="og:url" content="https://rafaphoto.com">
+    <meta property="og:title" content="RAFA — Photography Portfolio" />
+    <meta
+      property="og:description"
+      content="Professional photography portfolio. Portraits, editorial, fashion, and documentary photography."
+    />
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:image"
+      content="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=1200"
+    />
+    <meta property="og:url" content="https://rafaphoto.com" />
 
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="RAFA — Photography Portfolio">
-    <meta name="twitter:description" content="Professional photography portfolio. Portraits, editorial, fashion, and documentary photography.">
-    <meta name="twitter:image" content="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=1200">
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="RAFA — Photography Portfolio" />
+    <meta
+      name="twitter:description"
+      content="Professional photography portfolio. Portraits, editorial, fashion, and documentary photography."
+    />
+    <meta
+      name="twitter:image"
+      content="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=1200"
+    />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
 
-    <link rel="stylesheet" href="/src/styles/style.css">
+    <link rel="stylesheet" href="/src/styles/style.css" />
 
     <script type="application/ld+json">
-    {
+      {
         "@context": "https://schema.org",
         "@type": "ProfessionalService",
         "name": "RAFA Photography",
         "description": "Professional photography portfolio",
         "url": "https://rafaphoto.com",
         "address": {
-            "@type": "PostalAddress",
-            "addressLocality": "São Paulo",
-            "addressCountry": "BR"
+          "@type": "PostalAddress",
+          "addressLocality": "São Paulo",
+          "addressCountry": "BR"
         },
-        "knowsAbout": ["Photography", "Portraits", "Editorial", "Fashion", "Documentary"]
-    }
+        "knowsAbout": [
+          "Photography",
+          "Portraits",
+          "Editorial",
+          "Fashion",
+          "Documentary"
+        ]
+      }
     </script>
-</head>
-<body>
-
+  </head>
+  <body>
     <!-- LOADING SCREEN -->
     <div id="loader" class="loader" aria-hidden="true">
-        <div class="loader__inner">
-            <div class="loader__counter">
-                <span id="loader-counter">0</span>
-            </div>
-            <div class="loader__label" data-i18n="loader.label">LOADING VISUAL ARCHIVE</div>
-            <div class="loader__bar">
-                <div class="loader__bar-fill" id="loader-bar"></div>
-            </div>
+      <div class="loader__inner">
+        <div class="loader__counter">
+          <span id="loader-counter">0</span>
         </div>
+        <div class="loader__label" data-i18n="loader.label">
+          CARREGANDO ARQUIVO VISUAL
+        </div>
+        <div class="loader__bar">
+          <div class="loader__bar-fill" id="loader-bar"></div>
+        </div>
+      </div>
     </div>
 
     <!-- CUSTOM CURSOR -->
     <div id="cursor" class="cursor" aria-hidden="true">
-        <div class="cursor__dot"></div>
-        <div class="cursor__circle"></div>
-        <div class="cursor__label" id="cursor-label"></div>
+      <div class="cursor__dot"></div>
+      <div class="cursor__circle"></div>
+      <div class="cursor__label" id="cursor-label"></div>
     </div>
 
     <!-- NAVIGATION -->
     <nav id="nav" class="nav" role="navigation" aria-label="Main navigation">
-        <div class="nav__inner">
-            <a href="#hero" class="nav__logo" aria-label="Back to top">
-                <span class="nav__logo-text">RAFA</span>
-            </a>
+      <div class="nav__inner">
+        <a href="#hero" class="nav__logo" aria-label="Back to top">
+          <span class="nav__logo-text">RAFA</span>
+        </a>
 
-            <div class="nav__links">
-                <a href="#work" class="nav__link" data-i18n="nav.work">WORK</a>
-                <a href="#projects" class="nav__link" data-i18n="nav.projects">PROJECTS</a>
-                <a href="#about" class="nav__link" data-i18n="nav.about">ABOUT</a>
-                <a href="#contact" class="nav__link" data-i18n="nav.contact">CONTACT</a>
-            </div>
-
-            <div class="nav__actions">
-                <button class="nav__lang" id="lang-toggle" aria-label="Toggle language" data-cursor="pointer">
-                    <span class="nav__lang-en active">EN</span>
-                    <span class="nav__lang-pt">PT</span>
-                </button>
-                <button class="nav__menu-btn" id="menu-toggle" aria-label="Toggle menu" aria-expanded="false" data-cursor="pointer">
-                    <span class="nav__menu-line"></span>
-                    <span class="nav__menu-line"></span>
-                </button>
-            </div>
+        <div class="nav__links">
+          <a href="#work" class="nav__link" data-i18n="nav.work">PORTFÓLIO</a>
+          <a href="#projects" class="nav__link" data-i18n="nav.projects"
+            >PROJETOS</a
+          >
+          <a href="#about" class="nav__link" data-i18n="nav.about">SOBRE</a>
+          <a href="#contact" class="nav__link" data-i18n="nav.contact"
+            >CONTATO</a
+          >
         </div>
+
+        <div class="nav__actions">
+          <button
+            class="nav__lang"
+            id="lang-toggle"
+            aria-label="Toggle language"
+            data-cursor="pointer"
+          >
+            <span class="nav__lang-pt active">PT</span>
+            <span class="nav__lang-en">EN</span>
+          </button>
+          <button
+            class="nav__menu-btn"
+            id="menu-toggle"
+            aria-label="Toggle menu"
+            aria-expanded="false"
+            data-cursor="pointer"
+          >
+            <span class="nav__menu-line"></span>
+            <span class="nav__menu-line"></span>
+          </button>
+        </div>
+      </div>
     </nav>
 
     <!-- MOBILE MENU -->
     <div id="mobile-menu" class="mobile-menu" aria-hidden="true">
-        <div class="mobile-menu__inner">
-            <a href="#work" class="mobile-menu__link" data-i18n="nav.work">WORK</a>
-            <a href="#projects" class="mobile-menu__link" data-i18n="nav.projects">PROJECTS</a>
-            <a href="#about" class="mobile-menu__link" data-i18n="nav.about">ABOUT</a>
-            <a href="#contact" class="mobile-menu__link" data-i18n="nav.contact">CONTACT</a>
-            <div class="mobile-menu__footer">
-                <button class="nav__lang mobile-menu__lang" id="lang-toggle-mobile" aria-label="Toggle language">
-                    <span class="nav__lang-en active">EN</span>
-                    <span class="nav__lang-pt">PT</span>
-                </button>
-            </div>
+      <div class="mobile-menu__inner">
+        <a href="#work" class="mobile-menu__link" data-i18n="nav.work"
+          >PORTFÓLIO</a
+        >
+        <a href="#projects" class="mobile-menu__link" data-i18n="nav.projects"
+          >PROJETOS</a
+        >
+        <a href="#about" class="mobile-menu__link" data-i18n="nav.about"
+          >SOBRE</a
+        >
+        <a href="#contact" class="mobile-menu__link" data-i18n="nav.contact"
+          >CONTATO</a
+        >
+        <div class="mobile-menu__footer">
+          <button
+            class="nav__lang mobile-menu__lang"
+            id="lang-toggle-mobile"
+            aria-label="Toggle language"
+          >
+            <span class="nav__lang-en">EN</span>
+            <span class="nav__lang-pt active">PT</span>
+          </button>
         </div>
+      </div>
     </div>
 
     <!-- SCROLL PROGRESS -->
     <div class="scroll-progress" id="scroll-progress" aria-hidden="true">
-        <div class="scroll-progress__bar"></div>
+      <div class="scroll-progress__bar"></div>
     </div>
 
     <main>
-
-        <!-- HERO -->
-        <section id="hero" class="hero" aria-label="Hero">
-            <canvas id="hero-canvas" class="hero__canvas"></canvas>
-            <div class="hero__overlay"></div>
-            <div class="hero__content">
-                <div class="hero__top">
-                    <span class="hero__label" data-i18n="hero.label">PHOTOGRAPHER</span>
-                </div>
-                <div class="hero__center">
-                    <h1 class="hero__title">
-                        <span class="hero__title-line" data-reveal>RAFA</span>
-                    </h1>
-                </div>
-                <div class="hero__bottom">
-                    <div class="hero__specialties" data-i18n="hero.specialties">
-                        STORIES / PEOPLE / LIGHT / MOMENTS
-                    </div>
-                    <div class="hero__location" data-i18n="hero.location">
-                        BASED IN SÃO PAULO, BRAZIL
-                    </div>
-                </div>
+      <!-- HERO -->
+      <section id="hero" class="hero" aria-label="Hero">
+        <canvas id="hero-canvas" class="hero__canvas"></canvas>
+        <div class="hero__overlay"></div>
+        <div class="hero__content">
+          <div class="hero__top">
+            <span class="hero__label" data-i18n="hero.label">FOTÓGRAFO</span>
+          </div>
+          <div class="hero__center">
+            <h1 class="hero__title">
+              <span class="hero__title-line" data-reveal>RAFA</span>
+            </h1>
+          </div>
+          <div class="hero__bottom">
+            <div class="hero__specialties" data-i18n="hero.specialties">
+              HISTÓRIAS / PESSOAS / LUZ / MOMENTOS
             </div>
-            <div class="hero__scroll-indicator" aria-hidden="true">
-                <span class="hero__scroll-text" data-i18n="hero.scroll">SCROLL</span>
-                <div class="hero__scroll-line"></div>
+            <div class="hero__location" data-i18n="hero.location">
+              BASED EM SÃO PAULO, BRASIL
             </div>
-        </section>
+          </div>
+        </div>
+        <div class="hero__scroll-indicator" aria-hidden="true">
+          <span class="hero__scroll-text" data-i18n="hero.scroll">ROLAR</span>
+          <div class="hero__scroll-line"></div>
+        </div>
+      </section>
 
-        <!-- MANIFESTO -->
-        <section id="manifesto" class="manifesto" aria-label="Manifesto">
-            <div class="manifesto__inner">
-                <p class="manifesto__text" data-reveal data-reveal="words">
-                    <span class="manifesto__word">I</span>
-                    <span class="manifesto__word">photograph</span>
-                    <span class="manifesto__word">what</span>
-                    <span class="manifesto__word">happens</span>
-                    <span class="manifesto__word">between</span>
-                    <span class="manifesto__word">moments.</span>
+      <!-- MANIFESTO -->
+      <section id="manifesto" class="manifesto" aria-label="Manifesto">
+        <div class="manifesto__inner">
+          <p class="manifesto__text" data-reveal data-reveal="words">
+            <span class="manifesto__word">I</span>
+            <span class="manifesto__word">photograph</span>
+            <span class="manifesto__word">what</span>
+            <span class="manifesto__word">happens</span>
+            <span class="manifesto__word">between</span>
+            <span class="manifesto__word">moments.</span>
+          </p>
+          <div class="manifesto__sub" data-reveal>
+            <span data-i18n="manifesto.sub"
+              >O silêncio antes do sorriso. A luz antes da sombra.</span
+            >
+          </div>
+        </div>
+      </section>
+
+      <!-- SELECTED WORK -->
+      <section id="work" class="work" aria-label="Selected Work">
+        <div class="section-header" data-reveal>
+          <span class="section-header__number">01</span>
+          <h2 class="section-header__title" data-i18n="work.title">
+            PORTFÓLIO SELECIONADO
+          </h2>
+          <span class="section-header__line"></span>
+        </div>
+
+        <div class="work__grid">
+          <article
+            class="work__item work__item--wide"
+            data-reveal
+            data-cursor="VIEW"
+            data-index="0"
+          >
+            <div class="work__item-img">
+              <img
+                src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=1200&q=80"
+                alt="Portrait study in natural light"
+                loading="lazy"
+                width="1200"
+                height="800"
+              />
+            </div>
+            <div class="work__item-info">
+              <span class="work__item-cat">Portrait</span>
+              <span class="work__item-title">Silent Morning</span>
+            </div>
+          </article>
+
+          <article
+            class="work__item work__item--narrow"
+            data-reveal
+            data-cursor="VIEW"
+            data-index="1"
+          >
+            <div class="work__item-img">
+              <img
+                src="https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&q=80"
+                alt="Modern architectural lines and shadows"
+                loading="lazy"
+                width="800"
+                height="1200"
+              />
+            </div>
+            <div class="work__item-info">
+              <span class="work__item-cat">Architecture</span>
+              <span class="work__item-title">Urban Geometry</span>
+            </div>
+          </article>
+
+          <article
+            class="work__item work__item--medium"
+            data-reveal
+            data-cursor="VIEW"
+            data-index="2"
+          >
+            <div class="work__item-img">
+              <img
+                src="https://images.unsplash.com/photo-1509631179647-0177331693ae?w=1000&q=80"
+                alt="Fashion editorial in studio"
+                loading="lazy"
+                width="1000"
+                height="750"
+              />
+            </div>
+            <div class="work__item-info">
+              <span class="work__item-cat">Fashion</span>
+              <span class="work__item-title">Metamorphosis</span>
+            </div>
+          </article>
+
+          <article
+            class="work__item work__item--medium"
+            data-reveal
+            data-cursor="VIEW"
+            data-index="3"
+          >
+            <div class="work__item-img">
+              <img
+                src="https://images.unsplash.com/photo-1519741497674-611481863552?w=1000&q=80"
+                alt="Intimate wedding moment"
+                loading="lazy"
+                width="1000"
+                height="750"
+              />
+            </div>
+            <div class="work__item-info">
+              <span class="work__item-cat">Wedding</span>
+              <span class="work__item-title">Eternal Vow</span>
+            </div>
+          </article>
+
+          <article
+            class="work__item work__item--wide"
+            data-reveal
+            data-cursor="VIEW"
+            data-index="4"
+          >
+            <div class="work__item-img">
+              <img
+                src="https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1200&q=80"
+                alt="City streets at golden hour"
+                loading="lazy"
+                width="1200"
+                height="800"
+              />
+            </div>
+            <div class="work__item-info">
+              <span class="work__item-cat">Street</span>
+              <span class="work__item-title">Urban Stories</span>
+            </div>
+          </article>
+
+          <article
+            class="work__item work__item--narrow"
+            data-reveal
+            data-cursor="VIEW"
+            data-index="5"
+          >
+            <div class="work__item-img">
+              <img
+                src="https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=800&q=80"
+                alt="Editorial photography composition"
+                loading="lazy"
+                width="800"
+                height="1200"
+              />
+            </div>
+            <div class="work__item-info">
+              <span class="work__item-cat">Editorial</span>
+              <span class="work__item-title">Paper Dreams</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- HORIZONTAL CAROUSEL -->
+      <section class="carousel-section" aria-label="Featured images carousel">
+        <div class="section-header" data-reveal>
+          <span class="section-header__number">02</span>
+          <h2 class="section-header__title" data-i18n="carousel.title">
+            DESTAQUES
+          </h2>
+          <span class="section-header__line"></span>
+        </div>
+        <div
+          class="carousel"
+          id="carousel"
+          role="region"
+          aria-label="Image carousel"
+        >
+          <div class="carousel__track" id="carousel-track">
+            <div class="carousel__slide" data-cursor="DRAG">
+              <img
+                src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=900&q=80"
+                alt="Portrait in warm light"
+                loading="lazy"
+                width="900"
+                height="600"
+              />
+              <div class="carousel__slide-info">
+                <span class="carousel__slide-num">01</span>
+                <span class="carousel__slide-title">Warmth</span>
+              </div>
+            </div>
+            <div class="carousel__slide" data-cursor="DRAG">
+              <img
+                src="https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?w=900&q=80"
+                alt="Architectural detail"
+                loading="lazy"
+                width="900"
+                height="600"
+              />
+              <div class="carousel__slide-info">
+                <span class="carousel__slide-num">02</span>
+                <span class="carousel__slide-title">Structure</span>
+              </div>
+            </div>
+            <div class="carousel__slide" data-cursor="DRAG">
+              <img
+                src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=900&q=80"
+                alt="Fashion editorial shot"
+                loading="lazy"
+                width="900"
+                height="600"
+              />
+              <div class="carousel__slide-info">
+                <span class="carousel__slide-num">03</span>
+                <span class="carousel__slide-title">Elegance</span>
+              </div>
+            </div>
+            <div class="carousel__slide" data-cursor="DRAG">
+              <img
+                src="https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=900&q=80"
+                alt="Natural portrait"
+                loading="lazy"
+                width="900"
+                height="600"
+              />
+              <div class="carousel__slide-info">
+                <span class="carousel__slide-num">04</span>
+                <span class="carousel__slide-title">Serenity</span>
+              </div>
+            </div>
+            <div class="carousel__slide" data-cursor="DRAG">
+              <img
+                src="https://images.unsplash.com/photo-1504198453319-5ce911bafcde?w=900&q=80"
+                alt="Landscape at dusk"
+                loading="lazy"
+                width="900"
+                height="600"
+              />
+              <div class="carousel__slide-info">
+                <span class="carousel__slide-num">05</span>
+                <span class="carousel__slide-title">Horizon</span>
+              </div>
+            </div>
+            <div class="carousel__slide" data-cursor="DRAG">
+              <img
+                src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=900&q=80"
+                alt="Fashion model in motion"
+                loading="lazy"
+                width="900"
+                height="600"
+              />
+              <div class="carousel__slide-info">
+                <span class="carousel__slide-num">06</span>
+                <span class="carousel__slide-title">Motion</span>
+              </div>
+            </div>
+          </div>
+          <div class="carousel__controls">
+            <button
+              class="carousel__btn carousel__btn--prev"
+              id="carousel-prev"
+              aria-label="Previous slide"
+              data-cursor="pointer"
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <span class="carousel__counter" id="carousel-counter">01 / 06</span>
+            <button
+              class="carousel__btn carousel__btn--next"
+              id="carousel-next"
+              aria-label="Next slide"
+              data-cursor="pointer"
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- PROJECTS -->
+      <section id="projects" class="projects" aria-label="Projects">
+        <div class="section-header" data-reveal>
+          <span class="section-header__number">03</span>
+          <h2 class="section-header__title" data-i18n="projects.title">
+            PROJETOS
+          </h2>
+          <span class="section-header__line"></span>
+        </div>
+
+        <div class="projects__list">
+          <!-- Project 01 -->
+          <article class="project" data-project="0" data-reveal>
+            <div class="project__header">
+              <span class="project__number">01</span>
+              <div class="project__meta">
+                <h3 class="project__title">THE HUMAN CONDITION</h3>
+                <p class="project__desc" data-i18n="projects.p1.desc">
+                  Retratos explorando identidade, silêncio e gestos cotidianos.
                 </p>
-                <div class="manifesto__sub" data-reveal>
-                    <span data-i18n="manifesto.sub">The silence before the smile. The light before the shadow.</span>
+                <div class="project__details">
+                  <span>2026</span>
+                  <span>São Paulo, Brazil</span>
                 </div>
+              </div>
+              <a
+                href="#"
+                class="project__link"
+                data-cursor="OPEN"
+                data-i18n="projects.view"
+                >VER PROJETO →</a
+              >
             </div>
-        </section>
-
-        <!-- SELECTED WORK -->
-        <section id="work" class="work" aria-label="Selected Work">
-            <div class="section-header" data-reveal>
-                <span class="section-header__number">01</span>
-                <h2 class="section-header__title" data-i18n="work.title">SELECTED WORK</h2>
-                <span class="section-header__line"></span>
+            <div class="project__cover">
+              <img
+                src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=1400&q=80"
+                alt="The Human Condition — project cover"
+                loading="lazy"
+                width="1400"
+                height="700"
+              />
             </div>
+          </article>
 
-            <div class="work__grid">
-                <article class="work__item work__item--wide" data-reveal data-cursor="VIEW" data-index="0">
-                    <div class="work__item-img">
-                        <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=1200&q=80"
-                             alt="Portrait study in natural light"
-                             loading="lazy" width="1200" height="800">
-                    </div>
-                    <div class="work__item-info">
-                        <span class="work__item-cat">Portrait</span>
-                        <span class="work__item-title">Silent Morning</span>
-                    </div>
-                </article>
-
-                <article class="work__item work__item--narrow" data-reveal data-cursor="VIEW" data-index="1">
-                    <div class="work__item-img">
-                        <img src="https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&q=80"
-                             alt="Modern architectural lines and shadows"
-                             loading="lazy" width="800" height="1200">
-                    </div>
-                    <div class="work__item-info">
-                        <span class="work__item-cat">Architecture</span>
-                        <span class="work__item-title">Urban Geometry</span>
-                    </div>
-                </article>
-
-                <article class="work__item work__item--medium" data-reveal data-cursor="VIEW" data-index="2">
-                    <div class="work__item-img">
-                        <img src="https://images.unsplash.com/photo-1509631179647-0177331693ae?w=1000&q=80"
-                             alt="Fashion editorial in studio"
-                             loading="lazy" width="1000" height="750">
-                    </div>
-                    <div class="work__item-info">
-                        <span class="work__item-cat">Fashion</span>
-                        <span class="work__item-title">Metamorphosis</span>
-                    </div>
-                </article>
-
-                <article class="work__item work__item--medium" data-reveal data-cursor="VIEW" data-index="3">
-                    <div class="work__item-img">
-                        <img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=1000&q=80"
-                             alt="Intimate wedding moment"
-                             loading="lazy" width="1000" height="750">
-                    </div>
-                    <div class="work__item-info">
-                        <span class="work__item-cat">Wedding</span>
-                        <span class="work__item-title">Eternal Vow</span>
-                    </div>
-                </article>
-
-                <article class="work__item work__item--wide" data-reveal data-cursor="VIEW" data-index="4">
-                    <div class="work__item-img">
-                        <img src="https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1200&q=80"
-                             alt="City streets at golden hour"
-                             loading="lazy" width="1200" height="800">
-                    </div>
-                    <div class="work__item-info">
-                        <span class="work__item-cat">Street</span>
-                        <span class="work__item-title">Urban Stories</span>
-                    </div>
-                </article>
-
-                <article class="work__item work__item--narrow" data-reveal data-cursor="VIEW" data-index="5">
-                    <div class="work__item-img">
-                        <img src="https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=800&q=80"
-                             alt="Editorial photography composition"
-                             loading="lazy" width="800" height="1200">
-                    </div>
-                    <div class="work__item-info">
-                        <span class="work__item-cat">Editorial</span>
-                        <span class="work__item-title">Paper Dreams</span>
-                    </div>
-                </article>
-            </div>
-        </section>
-
-        <!-- HORIZONTAL CAROUSEL -->
-        <section class="carousel-section" aria-label="Featured images carousel">
-            <div class="section-header" data-reveal>
-                <span class="section-header__number">02</span>
-                <h2 class="section-header__title" data-i18n="carousel.title">FEATURED</h2>
-                <span class="section-header__line"></span>
-            </div>
-            <div class="carousel" id="carousel" role="region" aria-label="Image carousel">
-                <div class="carousel__track" id="carousel-track">
-                    <div class="carousel__slide" data-cursor="DRAG">
-                        <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=900&q=80"
-                             alt="Portrait in warm light" loading="lazy" width="900" height="600">
-                        <div class="carousel__slide-info">
-                            <span class="carousel__slide-num">01</span>
-                            <span class="carousel__slide-title">Warmth</span>
-                        </div>
-                    </div>
-                    <div class="carousel__slide" data-cursor="DRAG">
-                        <img src="https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?w=900&q=80"
-                             alt="Architectural detail" loading="lazy" width="900" height="600">
-                        <div class="carousel__slide-info">
-                            <span class="carousel__slide-num">02</span>
-                            <span class="carousel__slide-title">Structure</span>
-                        </div>
-                    </div>
-                    <div class="carousel__slide" data-cursor="DRAG">
-                        <img src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=900&q=80"
-                             alt="Fashion editorial shot" loading="lazy" width="900" height="600">
-                        <div class="carousel__slide-info">
-                            <span class="carousel__slide-num">03</span>
-                            <span class="carousel__slide-title">Elegance</span>
-                        </div>
-                    </div>
-                    <div class="carousel__slide" data-cursor="DRAG">
-                        <img src="https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=900&q=80"
-                             alt="Natural portrait" loading="lazy" width="900" height="600">
-                        <div class="carousel__slide-info">
-                            <span class="carousel__slide-num">04</span>
-                            <span class="carousel__slide-title">Serenity</span>
-                        </div>
-                    </div>
-                    <div class="carousel__slide" data-cursor="DRAG">
-                        <img src="https://images.unsplash.com/photo-1504198453319-5ce911bafcde?w=900&q=80"
-                             alt="Landscape at dusk" loading="lazy" width="900" height="600">
-                        <div class="carousel__slide-info">
-                            <span class="carousel__slide-num">05</span>
-                            <span class="carousel__slide-title">Horizon</span>
-                        </div>
-                    </div>
-                    <div class="carousel__slide" data-cursor="DRAG">
-                        <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=900&q=80"
-                             alt="Fashion model in motion" loading="lazy" width="900" height="600">
-                        <div class="carousel__slide-info">
-                            <span class="carousel__slide-num">06</span>
-                            <span class="carousel__slide-title">Motion</span>
-                        </div>
-                    </div>
+          <!-- Project 02 -->
+          <article class="project" data-project="1" data-reveal>
+            <div class="project__header">
+              <span class="project__number">02</span>
+              <div class="project__meta">
+                <h3 class="project__title">URBAN GEOMETRY</h3>
+                <p class="project__desc" data-i18n="projects.p2.desc">
+                  Arquitetura e o ritmo dos espaços construídos.
+                </p>
+                <div class="project__details">
+                  <span>2025</span>
+                  <span>Multiple Cities</span>
                 </div>
-                <div class="carousel__controls">
-                    <button class="carousel__btn carousel__btn--prev" id="carousel-prev" aria-label="Previous slide" data-cursor="pointer">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M19 12H5M12 19l-7-7 7-7"/>
-                        </svg>
-                    </button>
-                    <span class="carousel__counter" id="carousel-counter">01 / 06</span>
-                    <button class="carousel__btn carousel__btn--next" id="carousel-next" aria-label="Next slide" data-cursor="pointer">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M5 12h14M12 5l7 7-7 7"/>
-                        </svg>
-                    </button>
+              </div>
+              <a
+                href="#"
+                class="project__link"
+                data-cursor="OPEN"
+                data-i18n="projects.view"
+                >VER PROJETO →</a
+              >
+            </div>
+            <div class="project__cover">
+              <img
+                src="https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1400&q=80"
+                alt="Urban Geometry — project cover"
+                loading="lazy"
+                width="1400"
+                height="700"
+              />
+            </div>
+          </article>
+
+          <!-- Project 03 -->
+          <article class="project" data-project="2" data-reveal>
+            <div class="project__header">
+              <span class="project__number">03</span>
+              <div class="project__meta">
+                <h3 class="project__title">ETERNAL VOW</h3>
+                <p class="project__desc" data-i18n="projects.p3.desc">
+                  Histórias de casamento contadas através da luz e intimidade.
+                </p>
+                <div class="project__details">
+                  <span>2026</span>
+                  <span>São Paulo, Brazil</span>
                 </div>
+              </div>
+              <a
+                href="#"
+                class="project__link"
+                data-cursor="OPEN"
+                data-i18n="projects.view"
+                >VER PROJETO →</a
+              >
             </div>
-        </section>
-
-        <!-- PROJECTS -->
-        <section id="projects" class="projects" aria-label="Projects">
-            <div class="section-header" data-reveal>
-                <span class="section-header__number">03</span>
-                <h2 class="section-header__title" data-i18n="projects.title">PROJECTS</h2>
-                <span class="section-header__line"></span>
+            <div class="project__cover">
+              <img
+                src="https://images.unsplash.com/photo-1519741497674-611481863552?w=1400&q=80"
+                alt="Eternal Vow — project cover"
+                loading="lazy"
+                width="1400"
+                height="700"
+              />
             </div>
+          </article>
+        </div>
+      </section>
 
-            <div class="projects__list">
-                <!-- Project 01 -->
-                <article class="project" data-project="0" data-reveal>
-                    <div class="project__header">
-                        <span class="project__number">01</span>
-                        <div class="project__meta">
-                            <h3 class="project__title">THE HUMAN CONDITION</h3>
-                            <p class="project__desc" data-i18n="projects.p1.desc">Portraits exploring identity, silence and everyday gestures.</p>
-                            <div class="project__details">
-                                <span>2026</span>
-                                <span>São Paulo, Brazil</span>
-                            </div>
-                        </div>
-                        <a href="#" class="project__link" data-cursor="OPEN" data-i18n="projects.view">VIEW PROJECT →</a>
-                    </div>
-                    <div class="project__cover">
-                        <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=1400&q=80"
-                             alt="The Human Condition — project cover" loading="lazy" width="1400" height="700">
-                    </div>
-                </article>
+      <!-- FULLSCREEN GALLERY -->
+      <section
+        id="gallery"
+        class="fullscreen-gallery"
+        aria-label="Fullscreen gallery"
+      >
+        <div class="section-header" data-reveal>
+          <span class="section-header__number">04</span>
+          <h2 class="section-header__title" data-i18n="gallery.title">
+            GALERIA
+          </h2>
+          <span class="section-header__line"></span>
+        </div>
 
-                <!-- Project 02 -->
-                <article class="project" data-project="1" data-reveal>
-                    <div class="project__header">
-                        <span class="project__number">02</span>
-                        <div class="project__meta">
-                            <h3 class="project__title">URBAN GEOMETRY</h3>
-                            <p class="project__desc" data-i18n="projects.p2.desc">Architecture and the rhythm of built spaces.</p>
-                            <div class="project__details">
-                                <span>2025</span>
-                                <span>Multiple Cities</span>
-                            </div>
-                        </div>
-                        <a href="#" class="project__link" data-cursor="OPEN" data-i18n="projects.view">VIEW PROJECT →</a>
-                    </div>
-                    <div class="project__cover">
-                        <img src="https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1400&q=80"
-                             alt="Urban Geometry — project cover" loading="lazy" width="1400" height="700">
-                    </div>
-                </article>
+        <div
+          class="gallery"
+          id="fullscreen-gallery"
+          role="region"
+          aria-label="Fullscreen image gallery"
+        >
+          <div class="gallery__canvas-wrap">
+            <canvas id="gallery-canvas" class="gallery__canvas"></canvas>
+          </div>
+          <div class="gallery__current">
+            <img
+              id="gallery-current-img"
+              class="gallery__current-img"
+              src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=1600&q=80"
+              alt="Gallery image 1"
+              width="1600"
+              height="900"
+            />
+          </div>
+          <div class="gallery__info">
+            <span class="gallery__info-title" id="gallery-title"
+              >Silent Morning</span
+            >
+            <span class="gallery__info-cat" id="gallery-cat">Portrait</span>
+          </div>
+          <div class="gallery__nav">
+            <button
+              class="gallery__nav-btn gallery__nav-btn--prev"
+              id="gallery-prev"
+              aria-label="Previous image"
+              data-cursor="pointer"
+            >
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1"
+              >
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <span class="gallery__counter" id="gallery-counter">01 / 08</span>
+            <button
+              class="gallery__nav-btn gallery__nav-btn--next"
+              id="gallery-next"
+              aria-label="Next image"
+              data-cursor="pointer"
+            >
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+          <button
+            class="gallery__expand"
+            id="gallery-expand"
+            aria-label="Toggle fullscreen"
+            data-cursor="pointer"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
+              <path
+                d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"
+              />
+            </svg>
+          </button>
+        </div>
+      </section>
 
-                <!-- Project 03 -->
-                <article class="project" data-project="2" data-reveal>
-                    <div class="project__header">
-                        <span class="project__number">03</span>
-                        <div class="project__meta">
-                            <h3 class="project__title">ETERNAL VOW</h3>
-                            <p class="project__desc" data-i18n="projects.p3.desc">Wedding stories told through light and intimacy.</p>
-                            <div class="project__details">
-                                <span>2026</span>
-                                <span>São Paulo, Brazil</span>
-                            </div>
-                        </div>
-                        <a href="#" class="project__link" data-cursor="OPEN" data-i18n="projects.view">VIEW PROJECT →</a>
-                    </div>
-                    <div class="project__cover">
-                        <img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=1400&q=80"
-                             alt="Eternal Vow — project cover" loading="lazy" width="1400" height="700">
-                    </div>
-                </article>
+      <!-- SCROLL IMAGE TRANSITION -->
+      <section class="transition-section" aria-hidden="true">
+        <div class="transition-image" data-transition-image>
+          <img
+            src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=1600&q=80"
+            alt=""
+            loading="lazy"
+            width="1600"
+            height="900"
+          />
+        </div>
+      </section>
+
+      <!-- ABOUT -->
+      <section id="about" class="about" aria-label="About">
+        <div class="section-header" data-reveal>
+          <span class="section-header__number">05</span>
+          <h2 class="section-header__title" data-i18n="about.title">SOBRE</h2>
+          <span class="section-header__line"></span>
+        </div>
+
+        <div class="about__grid">
+          <div class="about__portrait" data-reveal>
+            <img
+              src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=600&q=80"
+              alt="RAFA — Photographer portrait"
+              loading="lazy"
+              width="600"
+              height="800"
+            />
+          </div>
+          <div class="about__content">
+            <h3 class="about__name" data-reveal>RAFA</h3>
+            <p class="about__role" data-reveal data-i18n="about.role">
+              Fotógrafo baseado em São Paulo, Brasil.
+            </p>
+            <div class="about__bio" data-reveal>
+              <p data-i18n="about.bio1">
+                Com mais de uma década de experiência atrás da lente, sou
+                especializado em capturar a essência autêntica dos meus temas —
+                seja através de retratos, editorial ou trabalho documental.
+              </p>
+              <p data-i18n="about.bio2">
+                Minha abordagem é enraizada na observação. Acredito que as
+                fotografias mais poderosas nascem não da encenação, mas da
+                paciência — esperando a luz certa, o gesto certo, o silêncio
+                certo.
+              </p>
+              <p data-i18n="about.bio3">
+                Cada projeto é uma colaboração. Cada imagem, uma conversa entre
+                luz e emoção.
+              </p>
             </div>
-        </section>
-
-        <!-- FULLSCREEN GALLERY -->
-        <section id="gallery" class="fullscreen-gallery" aria-label="Fullscreen gallery">
-            <div class="section-header" data-reveal>
-                <span class="section-header__number">04</span>
-                <h2 class="section-header__title" data-i18n="gallery.title">GALLERY</h2>
-                <span class="section-header__line"></span>
+            <div class="about__stats" data-reveal>
+              <div class="about__stat">
+                <span class="about__stat-num">10+</span>
+                <span class="about__stat-label" data-i18n="about.years"
+                  >ANOS DE EXPERIÊNCIA</span
+                >
+              </div>
+              <div class="about__stat">
+                <span class="about__stat-num">200+</span>
+                <span class="about__stat-label" data-i18n="about.projects_stat"
+                  >PROJETOS</span
+                >
+              </div>
+              <div class="about__stat">
+                <span class="about__stat-num">15+</span>
+                <span class="about__stat-label" data-i18n="about.publications"
+                  >PUBLICAÇÕES</span
+                >
+              </div>
             </div>
+          </div>
+        </div>
+      </section>
 
-            <div class="gallery" id="fullscreen-gallery" role="region" aria-label="Fullscreen image gallery">
-                <div class="gallery__canvas-wrap">
-                    <canvas id="gallery-canvas" class="gallery__canvas"></canvas>
-                </div>
-                <div class="gallery__current">
-                    <img id="gallery-current-img" class="gallery__current-img"
-                         src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=1600&q=80"
-                         alt="Gallery image 1" width="1600" height="900">
-                </div>
-                <div class="gallery__info">
-                    <span class="gallery__info-title" id="gallery-title">Silent Morning</span>
-                    <span class="gallery__info-cat" id="gallery-cat">Portrait</span>
-                </div>
-                <div class="gallery__nav">
-                    <button class="gallery__nav-btn gallery__nav-btn--prev" id="gallery-prev" aria-label="Previous image" data-cursor="pointer">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-                            <path d="M19 12H5M12 19l-7-7 7-7"/>
-                        </svg>
-                    </button>
-                    <span class="gallery__counter" id="gallery-counter">01 / 08</span>
-                    <button class="gallery__nav-btn gallery__nav-btn--next" id="gallery-next" aria-label="Next image" data-cursor="pointer">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-                            <path d="M5 12h14M12 5l7 7-7 7"/>
-                        </svg>
-                    </button>
-                </div>
-                <button class="gallery__expand" id="gallery-expand" aria-label="Toggle fullscreen" data-cursor="pointer">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/>
-                    </svg>
-                </button>
-            </div>
-        </section>
+      <!-- CLIENTS -->
+      <section
+        id="clients"
+        class="clients"
+        aria-label="Clients and publications"
+      >
+        <div class="section-header" data-reveal>
+          <span class="section-header__number">06</span>
+          <h2 class="section-header__title" data-i18n="clients.title">
+            CLIENTES SELECIONADOS
+          </h2>
+          <span class="section-header__line"></span>
+        </div>
+        <div class="clients__grid" data-reveal>
+          <div class="clients__item" data-cursor="pointer">NIKE</div>
+          <div class="clients__item" data-cursor="pointer">ADIDAS</div>
+          <div class="clients__item" data-cursor="pointer">VOGUE</div>
+          <div class="clients__item" data-cursor="pointer">ELLE</div>
+          <div class="clients__item" data-cursor="pointer">GQ</div>
+          <div class="clients__item" data-cursor="pointer">HARPER'S BAZAAR</div>
+          <div class="clients__item" data-cursor="pointer">CASA VOUGUE</div>
+          <div class="clients__item" data-cursor="pointer">WALLPAPER*</div>
+        </div>
+        <p class="clients__note" data-reveal data-i18n="clients.note">
+          * Clientes de exemplo para fins de demonstração
+        </p>
+      </section>
 
-        <!-- SCROLL IMAGE TRANSITION -->
-        <section class="transition-section" aria-hidden="true">
-            <div class="transition-image" data-transition-image>
-                <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=1600&q=80"
-                     alt="" loading="lazy" width="1600" height="900">
+      <!-- CONTACT -->
+      <section id="contact" class="contact" aria-label="Contact">
+        <div class="contact__inner">
+          <div class="contact__headline" data-reveal>
+            <h2 class="contact__title">
+              <span data-i18n="contact.line1">VAMOS CRIAR</span>
+              <span data-i18n="contact.line2">ALGO</span>
+              <span data-i18n="contact.line3">MEMORÁVEL.</span>
+            </h2>
+          </div>
+          <div class="contact__details" data-reveal>
+            <a
+              href="mailto:hello@rafaphoto.com"
+              class="contact__link"
+              data-cursor="pointer"
+              data-i18n="contact.email"
+              >ENTRE EM CONTATO →</a
+            >
+            <div class="contact__info">
+              <div class="contact__info-item">
+                <span
+                  class="contact__info-label"
+                  data-i18n="contact.email_label"
+                  >E-MAIL</span
+                >
+                <a href="mailto:hello@rafaphoto.com">hello@rafaphoto.com</a>
+              </div>
+              <div class="contact__info-item">
+                <span
+                  class="contact__info-label"
+                  data-i18n="contact.instagram_label"
+                  >INSTAGRAM</span
+                >
+                <a
+                  href="https://instagram.com/rafaphoto"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >@rafaphoto</a
+                >
+              </div>
+              <div class="contact__info-item">
+                <span
+                  class="contact__info-label"
+                  data-i18n="contact.location_label"
+                  >LOCALIZAÇÃO</span
+                >
+                <span>São Paulo, Brazil</span>
+              </div>
             </div>
-        </section>
-
-        <!-- ABOUT -->
-        <section id="about" class="about" aria-label="About">
-            <div class="section-header" data-reveal>
-                <span class="section-header__number">05</span>
-                <h2 class="section-header__title" data-i18n="about.title">ABOUT</h2>
-                <span class="section-header__line"></span>
-            </div>
-
-            <div class="about__grid">
-                <div class="about__portrait" data-reveal>
-                    <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=600&q=80"
-                         alt="RAFA — Photographer portrait" loading="lazy" width="600" height="800">
-                </div>
-                <div class="about__content">
-                    <h3 class="about__name" data-reveal>RAFA</h3>
-                    <p class="about__role" data-reveal data-i18n="about.role">Photographer based in São Paulo, Brazil.</p>
-                    <div class="about__bio" data-reveal>
-                        <p data-i18n="about.bio1">With over a decade of experience behind the lens, I specialize in capturing the authentic essence of my subjects — whether through portraiture, editorial, or documentary work.</p>
-                        <p data-i18n="about.bio2">My approach is rooted in observation. I believe the most powerful photographs are born not from staging, but from patience — waiting for the right light, the right gesture, the right silence.</p>
-                        <p data-i18n="about.bio3">Every project is a collaboration. Every image, a conversation between light and emotion.</p>
-                    </div>
-                    <div class="about__stats" data-reveal>
-                        <div class="about__stat">
-                            <span class="about__stat-num">10+</span>
-                            <span class="about__stat-label" data-i18n="about.years">YEARS EXPERIENCE</span>
-                        </div>
-                        <div class="about__stat">
-                            <span class="about__stat-num">200+</span>
-                            <span class="about__stat-label" data-i18n="about.projects_stat">PROJECTS</span>
-                        </div>
-                        <div class="about__stat">
-                            <span class="about__stat-num">15+</span>
-                            <span class="about__stat-label" data-i18n="about.publications">PUBLICATIONS</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- CLIENTS -->
-        <section id="clients" class="clients" aria-label="Clients and publications">
-            <div class="section-header" data-reveal>
-                <span class="section-header__number">06</span>
-                <h2 class="section-header__title" data-i18n="clients.title">SELECTED CLIENTS</h2>
-                <span class="section-header__line"></span>
-            </div>
-            <div class="clients__grid" data-reveal>
-                <div class="clients__item" data-cursor="pointer">NIKE</div>
-                <div class="clients__item" data-cursor="pointer">ADIDAS</div>
-                <div class="clients__item" data-cursor="pointer">VOGUE</div>
-                <div class="clients__item" data-cursor="pointer">ELLE</div>
-                <div class="clients__item" data-cursor="pointer">GQ</div>
-                <div class="clients__item" data-cursor="pointer">HARPER'S BAZAAR</div>
-                <div class="clients__item" data-cursor="pointer">CASA VOUGUE</div>
-                <div class="clients__item" data-cursor="pointer">WALLPAPER*</div>
-            </div>
-            <p class="clients__note" data-reveal data-i18n="clients.note">* Example clients for demonstration purposes</p>
-        </section>
-
-        <!-- CONTACT -->
-        <section id="contact" class="contact" aria-label="Contact">
-            <div class="contact__inner">
-                <div class="contact__headline" data-reveal>
-                    <h2 class="contact__title">
-                        <span data-i18n="contact.line1">LET'S CREATE</span>
-                        <span data-i18n="contact.line2">SOMETHING</span>
-                        <span data-i18n="contact.line3">MEMORABLE.</span>
-                    </h2>
-                </div>
-                <div class="contact__details" data-reveal>
-                    <a href="mailto:hello@rafaphoto.com" class="contact__link" data-cursor="pointer" data-i18n="contact.email">GET IN TOUCH →</a>
-                    <div class="contact__info">
-                        <div class="contact__info-item">
-                            <span class="contact__info-label" data-i18n="contact.email_label">EMAIL</span>
-                            <a href="mailto:hello@rafaphoto.com">hello@rafaphoto.com</a>
-                        </div>
-                        <div class="contact__info-item">
-                            <span class="contact__info-label" data-i18n="contact.instagram_label">INSTAGRAM</span>
-                            <a href="https://instagram.com/rafaphoto" target="_blank" rel="noopener noreferrer">@rafaphoto</a>
-                        </div>
-                        <div class="contact__info-item">
-                            <span class="contact__info-label" data-i18n="contact.location_label">LOCATION</span>
-                            <span>São Paulo, Brazil</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
+          </div>
+        </div>
+      </section>
     </main>
 
     <!-- FOOTER -->
     <footer class="footer" role="contentinfo">
-        <div class="footer__inner">
-            <div class="footer__left">
-                <span class="footer__name">RAFA</span>
-                <span class="footer__copy">&copy; 2026</span>
-            </div>
-            <div class="footer__center">
-                <a href="https://instagram.com/rafaphoto" target="_blank" rel="noopener noreferrer" class="footer__link" data-cursor="pointer">Instagram</a>
-                <a href="mailto:hello@rafaphoto.com" class="footer__link" data-cursor="pointer">Email</a>
-                <a href="#" class="footer__link" data-cursor="pointer">Behance</a>
-            </div>
-            <div class="footer__right">
-                <button class="footer__back-top" id="back-to-top" aria-label="Back to top" data-cursor="pointer">
-                    <span data-i18n="footer.top">BACK TO TOP ↑</span>
-                </button>
-            </div>
+      <div class="footer__inner">
+        <div class="footer__left">
+          <span class="footer__name">RAFA</span>
+          <span class="footer__copy">&copy; 2026</span>
         </div>
+        <div class="footer__center">
+          <a
+            href="https://instagram.com/rafaphoto"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="footer__link"
+            data-cursor="pointer"
+            >Instagram</a
+          >
+          <a
+            href="mailto:hello@rafaphoto.com"
+            class="footer__link"
+            data-cursor="pointer"
+            >Email</a
+          >
+          <a href="#" class="footer__link" data-cursor="pointer">Behance</a>
+        </div>
+        <div class="footer__right">
+          <button
+            class="footer__back-top"
+            id="back-to-top"
+            aria-label="Back to top"
+            data-cursor="pointer"
+          >
+            <span data-i18n="footer.top">VOLTAR AO TOPO ↑</span>
+          </button>
+        </div>
+      </div>
     </footer>
 
     <!-- LIGHTBOX -->
-    <div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Image lightbox" aria-hidden="true">
-        <div class="lightbox__backdrop"></div>
-        <div class="lightbox__content">
-            <button class="lightbox__close" id="lightbox-close" aria-label="Close lightbox" data-cursor="pointer">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M18 6L6 18M6 6l12 12"/>
-                </svg>
-            </button>
-            <div class="lightbox__image-wrap">
-                <img id="lightbox-img" class="lightbox__img" src="" alt="" width="1600" height="900">
-            </div>
-            <div class="lightbox__info">
-                <span class="lightbox__title" id="lightbox-title"></span>
-                <span class="lightbox__category" id="lightbox-category"></span>
-            </div>
-            <div class="lightbox__nav">
-                <button class="lightbox__nav-btn lightbox__nav-btn--prev" id="lightbox-prev" aria-label="Previous image" data-cursor="pointer">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-                        <path d="M19 12H5M12 19l-7-7 7-7"/>
-                    </svg>
-                </button>
-                <span class="lightbox__counter" id="lightbox-counter">01 / 01</span>
-                <button class="lightbox__nav-btn lightbox__nav-btn--next" id="lightbox-next" aria-label="Next image" data-cursor="pointer">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-                        <path d="M5 12h14M12 5l7 7-7 7"/>
-                    </svg>
-                </button>
-            </div>
+    <div
+      id="lightbox"
+      class="lightbox"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Image lightbox"
+      aria-hidden="true"
+    >
+      <div class="lightbox__backdrop"></div>
+      <div class="lightbox__content">
+        <button
+          class="lightbox__close"
+          id="lightbox-close"
+          aria-label="Close lightbox"
+          data-cursor="pointer"
+        >
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+        <div class="lightbox__image-wrap">
+          <img
+            id="lightbox-img"
+            class="lightbox__img"
+            src=""
+            alt=""
+            width="1600"
+            height="900"
+          />
         </div>
+        <div class="lightbox__info">
+          <span class="lightbox__title" id="lightbox-title"></span>
+          <span class="lightbox__category" id="lightbox-category"></span>
+        </div>
+        <div class="lightbox__nav">
+          <button
+            class="lightbox__nav-btn lightbox__nav-btn--prev"
+            id="lightbox-prev"
+            aria-label="Previous image"
+            data-cursor="pointer"
+          >
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1"
+            >
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <span class="lightbox__counter" id="lightbox-counter">01 / 01</span>
+          <button
+            class="lightbox__nav-btn lightbox__nav-btn--next"
+            id="lightbox-next"
+            aria-label="Next image"
+            data-cursor="pointer"
+          >
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1"
+            >
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- PROJECT VIEW -->
-    <div id="project-view" class="project-view" role="dialog" aria-modal="true" aria-label="Project view" aria-hidden="true">
-        <div class="project-view__backdrop"></div>
-        <div class="project-view__content">
-            <button class="project-view__close" id="project-close" aria-label="Close project" data-cursor="pointer">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M18 6L6 18M6 6l12 12"/>
-                </svg>
-            </button>
-            <div class="project-view__header">
-                <span class="project-view__number" id="project-view-number"></span>
-                <h2 class="project-view__title" id="project-view-title"></h2>
-            </div>
-            <div class="project-view__gallery" id="project-view-gallery"></div>
+    <div
+      id="project-view"
+      class="project-view"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Project view"
+      aria-hidden="true"
+    >
+      <div class="project-view__backdrop"></div>
+      <div class="project-view__content">
+        <button
+          class="project-view__close"
+          id="project-close"
+          aria-label="Close project"
+          data-cursor="pointer"
+        >
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+        <div class="project-view__header">
+          <span class="project-view__number" id="project-view-number"></span>
+          <h2 class="project-view__title" id="project-view-title"></h2>
         </div>
+        <div class="project-view__gallery" id="project-view-gallery"></div>
+      </div>
     </div>
 
     <script type="module" src="/src/main.ts"></script>
-</body>
+  </body>
 </html>
