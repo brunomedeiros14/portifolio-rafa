@@ -86,8 +86,20 @@
 
     <!-- CUSTOM CURSOR -->
     <div id="cursor" class="cursor" aria-hidden="true">
-      <svg class="cursor__pointer" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M5 3l7 18 2-8 8-2L5 3z" fill="currentColor" stroke="currentColor" stroke-width="1"/>
+      <svg
+        class="cursor__pointer"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path
+          d="M5 3l7 18 2-8 8-2L5 3z"
+          fill="currentColor"
+          stroke="currentColor"
+          stroke-width="1"
+        />
       </svg>
       <div class="cursor__label" id="cursor-label"></div>
     </div>
@@ -170,20 +182,38 @@
     <main>
       <!-- HERO -->
       <section id="hero" class="hero" aria-label="Hero">
-        <canvas id="hero-canvas" class="hero__canvas"></canvas>
+        <div class="hero__bg">
+          <img
+            class="hero__bg-img"
+            src="https://images.unsplash.com/photo-1542992933-ce75d0187ec1?w=2000&q=85"
+            alt="Casamento ao ar livre ao entardecer"
+            fetchpriority="high"
+            width="2000"
+            height="1250"
+          />
+        </div>
         <div class="hero__overlay"></div>
         <div class="hero__content">
           <div class="hero__top">
-            <span class="hero__label" data-i18n="hero.label">FOTÓGRAFO</span>
+            <span class="hero__label" data-i18n="hero.label"
+              >FOTÓGRAFO DE CASAMENTOS</span
+            >
           </div>
           <div class="hero__center">
             <h1 class="hero__title">
-              <span class="hero__title-line" data-reveal>RAFA</span>
+              <span class="hero__title-line" data-reveal>RAFAEL</span>
+              <span class="hero__title-line hero__title-line--last" data-reveal
+                >DIAS</span
+              >
             </h1>
+            <p class="hero__tagline" data-i18n="hero.tagline">
+              Especializado em registrar histórias de amor em casamentos e
+              pré-wedding.
+            </p>
           </div>
           <div class="hero__bottom">
             <div class="hero__specialties" data-i18n="hero.specialties">
-              HISTÓRIAS / PESSOAS / LUZ / MOMENTOS
+              CASAMENTOS / PRÉ-WEDDING / ENSAIOS
             </div>
             <div class="hero__location" data-i18n="hero.location">
               BASED EM SÃO PAULO, BRASIL

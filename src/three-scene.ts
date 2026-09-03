@@ -11,46 +11,6 @@ const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/
    SHADERS
    ============================================= */
 
-const heroVertexShader = `
-    varying vec2 vUv;
-    uniform float uTime;
-    uniform vec2 uMouse;
-    uniform float uIntensity;
-
-    void main() {
-        vUv = uv;
-        vec3 pos = position;
-
-        float dist = distance(uv, uMouse);
-        float wave = sin(dist * 8.0 - uTime * 1.5) * uIntensity;
-        float falloff = smoothstep(0.5, 0.0, dist);
-        pos.z += wave * falloff;
-
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-    }
-`;
-
-const heroFragmentShader = `
-    varying vec2 vUv;
-    uniform sampler2D uTexture;
-    uniform float uTime;
-    uniform vec2 uMouse;
-    uniform float uIntensity;
-
-    void main() {
-        vec2 uv = vUv;
-
-        float dist = distance(uv, uMouse);
-        float wave = sin(dist * 10.0 - uTime * 2.0) * uIntensity * 0.01;
-        float falloff = smoothstep(0.4, 0.0, dist);
-        uv.x += wave * falloff;
-        uv.y += wave * falloff * 0.5;
-
-        vec4 color = texture2D(uTexture, uv);
-        gl_FragColor = color;
-    }
-`;
-
 const galleryVertexShader = `
     varying vec2 vUv;
     void main() {
@@ -82,158 +42,6 @@ const galleryFragmentShader = `
         gl_FragColor = mix(colorA, colorB, alpha);
     }
 `;
-
-/* =============================================
-   HERO SCENE
-   ============================================= */
-
-const HeroScene = {
-    scene: null as THREE.Scene | null,
-    camera: null as THREE.OrthographicCamera | null,
-    renderer: null as THREE.WebGLRenderer | null,
-    material: null as THREE.ShaderMaterial | null,
-    mesh: null as THREE.Mesh | null,
-    mouse: { x: 0.5, y: 0.5 },
-    targetMouse: { x: 0.5, y: 0.5 },
-    time: 0,
-    isActive: false,
-    animFrameId: 0,
-    texture: null as THREE.Texture | null,
-
-    init(canvas: HTMLCanvasElement, imageUrl: string): void {
-        if (reducedMotion || isMobile) return;
-
-        try {
-            this.scene = new THREE.Scene();
-            this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-            this.renderer = new THREE.WebGLRenderer({
-                canvas,
-                alpha: true,
-                antialias: false,
-                powerPreference: 'low-power',
-            });
-
-            const rect = canvas.parentElement!.getBoundingClientRect();
-            this.renderer.setSize(rect.width, rect.height);
-            this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-            const loader = new THREE.TextureLoader();
-            (loader as any).crossOrigin = 'anonymous';
-            this.texture = loader.load(imageUrl, (texture) => {
-                texture.minFilter = THREE.LinearFilter;
-                texture.magFilter = THREE.LinearFilter;
-                this.updatePlaneSize(canvas);
-            });
-
-            this.material = new THREE.ShaderMaterial({
-                vertexShader: heroVertexShader,
-                fragmentShader: heroFragmentShader,
-                uniforms: {
-                    uTexture: { value: this.texture },
-                    uTime: { value: 0 },
-                    uMouse: { value: new THREE.Vector2(0.5, 0.5) },
-                    uIntensity: { value: 0.0 },
-                },
-                transparent: true,
-            });
-
-            const geometry = new THREE.PlaneGeometry(2, 2, 64, 64);
-            this.mesh = new THREE.Mesh(geometry, this.material);
-            this.scene.add(this.mesh);
-
-            this.bindEvents(canvas);
-            this.isActive = true;
-            this.animate();
-        } catch (e) {
-            console.warn('WebGL hero initialization failed:', e);
-            this.isActive = false;
-        }
-    },
-
-    updatePlaneSize(canvas: HTMLCanvasElement): void {
-        if (!canvas.parentElement) return;
-        const rect = canvas.parentElement.getBoundingClientRect();
-        const imageAspect = this.texture?.image
-            ? (this.texture.image as HTMLImageElement).width / (this.texture.image as HTMLImageElement).height
-            : rect.width / rect.height;
-        const containerAspect = rect.width / rect.height;
-
-        let scaleX = 2;
-        let scaleY = 2;
-
-        if (containerAspect > imageAspect) {
-            scaleY = 2 * (containerAspect / imageAspect);
-        } else {
-            scaleX = 2 * (imageAspect / containerAspect);
-        }
-
-        this.mesh?.scale.set(scaleX, scaleY, 1);
-    },
-
-    bindEvents(canvas: HTMLCanvasElement): void {
-        const hero = canvas.closest<HTMLElement>('.hero');
-        if (!hero) return;
-
-        hero.addEventListener('mousemove', (e: MouseEvent) => {
-            const rect = hero.getBoundingClientRect();
-            this.targetMouse.x = (e.clientX - rect.left) / rect.width;
-            this.targetMouse.y = 1.0 - (e.clientY - rect.top) / rect.height;
-        });
-
-        window.addEventListener('resize', () => {
-            if (!this.isActive || !this.renderer || !canvas.parentElement) return;
-            const rect = canvas.parentElement.getBoundingClientRect();
-            this.renderer.setSize(rect.width, rect.height);
-            this.updatePlaneSize(canvas);
-        });
-    },
-
-    animate(): void {
-        if (!this.isActive) return;
-
-        this.animFrameId = requestAnimationFrame(() => this.animate());
-
-        this.time += 0.016;
-        this.mouse.x += (this.targetMouse.x - this.mouse.x) * 0.05;
-        this.mouse.y += (this.targetMouse.y - this.mouse.y) * 0.05;
-
-        if (this.material) {
-            this.material.uniforms.uTime.value = this.time;
-            this.material.uniforms.uMouse.value.set(this.mouse.x, this.mouse.y);
-
-            const hero = document.querySelector('.hero');
-            if (hero) {
-                const rect = hero.getBoundingClientRect();
-                const visible = rect.bottom > 0 && rect.top < window.innerHeight;
-                this.material.uniforms.uIntensity.value = visible
-                    ? THREE.MathUtils.lerp(this.material.uniforms.uIntensity.value, 1.0, 0.02)
-                    : THREE.MathUtils.lerp(this.material.uniforms.uIntensity.value, 0.0, 0.05);
-            }
-        }
-
-        this.renderer?.render(this.scene!, this.camera!);
-    },
-
-    destroy(): void {
-        this.isActive = false;
-        if (this.animFrameId) {
-            cancelAnimationFrame(this.animFrameId);
-            this.animFrameId = 0;
-        }
-        this.texture?.dispose();
-        this.texture = null;
-        this.material?.dispose();
-        this.material = null;
-        if (this.mesh) {
-            (this.mesh.geometry as THREE.BufferGeometry).dispose();
-            this.mesh = null;
-        }
-        this.renderer?.dispose();
-        this.renderer = null;
-        this.scene = null;
-        this.camera = null;
-    },
-};
 
 /* =============================================
    GALLERY TRANSITION SCENE
@@ -372,11 +180,6 @@ const GalleryScene = {
    ============================================= */
 
 export function initThreeScene(data: PortfolioData): void {
-    const heroCanvas = document.getElementById('hero-canvas') as HTMLCanvasElement | null;
-    if (heroCanvas && data.portfolio[0]) {
-        HeroScene.init(heroCanvas, data.portfolio[0].src);
-    }
-
     const galleryCanvas = document.getElementById('gallery-canvas') as HTMLCanvasElement | null;
     if (galleryCanvas) {
         const initialized = GalleryScene.init(galleryCanvas);
@@ -391,7 +194,6 @@ export function initThreeScene(data: PortfolioData): void {
 }
 
 export function destroyThreeScene(): void {
-    HeroScene.destroy();
     if (GalleryScene.renderer) {
         GalleryScene.renderer.dispose();
         GalleryScene.renderer = null;

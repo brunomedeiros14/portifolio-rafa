@@ -152,6 +152,10 @@ class Carousel {
         let startX = 0;
         let startScrollLeft = 0;
 
+        this.track.addEventListener('dragstart', (e: DragEvent) => {
+            e.preventDefault();
+        });
+
         this.track.addEventListener('mousedown', (e: MouseEvent) => {
             this.isDragging = true;
             this.track?.classList.add('is-dragging');

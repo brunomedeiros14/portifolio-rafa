@@ -7,8 +7,10 @@ export const I18N: I18NData = {
     "nav.projects": "PROJETOS",
     "nav.about": "SOBRE",
     "nav.contact": "CONTATO",
-    "hero.label": "FOTÓGRAFO",
-    "hero.specialties": "HISTÓRIAS / PESSOAS / LUZ / MOMENTOS",
+    "hero.label": "FOTÓGRAFO DE CASAMENTOS",
+    "hero.tagline":
+      "Especializado em registrar histórias de amor em casamentos e pré-wedding.",
+    "hero.specialties": "CASAMENTOS / PRÉ-WEDDING / ENSAIOS",
     "hero.location": "BASED EM SÃO PAULO, BRASIL",
     "hero.scroll": "ROLAR",
     "manifesto.sub": "O silêncio antes do sorriso. A luz antes da sombra.",
@@ -50,8 +52,10 @@ export const I18N: I18NData = {
     "nav.projects": "PROJECTS",
     "nav.about": "ABOUT",
     "nav.contact": "CONTACT",
-    "hero.label": "PHOTOGRAPHER",
-    "hero.specialties": "STORIES / PEOPLE / LIGHT / MOMENTS",
+    "hero.label": "WEDDING PHOTOGRAPHER",
+    "hero.tagline":
+      "Specialized in telling love stories through weddings and pre-wedding sessions.",
+    "hero.specialties": "WEDDINGS / PRE-WEDDING / SESSIONS",
     "hero.location": "BASED IN SÃO PAULO, BRAZIL",
     "hero.scroll": "SCROLL",
     "manifesto.sub":

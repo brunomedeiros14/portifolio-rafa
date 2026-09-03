@@ -71,13 +71,26 @@ function initParallax(): void {
     const parallaxElements = document.querySelectorAll<HTMLElement>(
         '.work__item-img img, .project__cover img',
     );
-    if (!parallaxElements.length) return;
+
+    const heroImg = document.querySelector<HTMLElement>('.hero__bg-img');
+    const heroEl = document.querySelector<HTMLElement>('.hero');
+
+    if (!parallaxElements.length && !heroImg) return;
 
     let ticking = false;
 
     function onScroll(): void {
         if (!ticking) {
             requestAnimationFrame(() => {
+                if (heroImg && heroEl) {
+                    const rect = heroEl.getBoundingClientRect();
+                    if (rect.bottom > 0 && rect.top < window.innerHeight) {
+                        const progress = Math.min(Math.max(rect.top / window.innerHeight, 0), 1);
+                        const translateY = progress * 8;
+                        heroImg.style.transform = `translateY(${translateY}px) scale(1.05)`;
+                    }
+                }
+
                 parallaxElements.forEach((img) => {
                     const rect = img.getBoundingClientRect();
                     const windowHeight = window.innerHeight;
