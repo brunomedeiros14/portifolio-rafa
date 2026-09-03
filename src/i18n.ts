@@ -11,10 +11,9 @@ export const I18N: I18NData = {
     "hero.tagline":
       "Especializado em registrar histórias de amor em casamentos e pré-wedding.",
     "hero.specialties": "CASAMENTOS / PRÉ-WEDDING / ENSAIOS",
-    "hero.location": "BASED EM SÃO PAULO, BRASIL",
+    "hero.location": "BASED EM MINAS GERAIS, BRASIL",
     "hero.scroll": "ROLAR",
-    "manifesto.text":
-      "Fotografo o que acontece entre momentos.",
+    "manifesto.text": "Fotografo o que acontece entre momentos.",
     "manifesto.sub": "O silêncio antes do sorriso. A luz antes da sombra.",
     "work.title": "PORTFÓLIO SELECIONADO",
     "carousel.title": "DESTAQUES",
@@ -27,7 +26,7 @@ export const I18N: I18NData = {
     "projects.view": "VER PROJETO →",
     "gallery.title": "GALERIA",
     "about.title": "SOBRE",
-    "about.role": "Fotógrafo baseado em São Paulo, Brasil.",
+    "about.role": "Fotógrafo baseado em Minas Gerais, Brasil.",
     "about.bio1":
       "Com mais de uma década de experiência atrás da lente, sou especializado em capturar a essência autêntica dos meus temas — seja através de retratos, editorial ou trabalho documental.",
     "about.bio2":
@@ -46,6 +45,11 @@ export const I18N: I18NData = {
     "contact.email_label": "E-MAIL",
     "contact.instagram_label": "INSTAGRAM",
     "contact.location_label": "LOCALIZAÇÃO",
+    "footer.tagline": "Fotografia de casamentos e pré-wedding.",
+    "footer.work": "PORTFÓLIO",
+    "footer.projects": "PROJETOS",
+    "footer.about": "SOBRE",
+    "footer.contact": "CONTATO",
     "footer.top": "VOLTAR AO TOPO ↑",
   },
   en: {
@@ -58,10 +62,9 @@ export const I18N: I18NData = {
     "hero.tagline":
       "Specialized in telling love stories through weddings and pre-wedding sessions.",
     "hero.specialties": "WEDDINGS / PRE-WEDDING / SESSIONS",
-    "hero.location": "BASED IN SÃO PAULO, BRAZIL",
+    "hero.location": "BASED IN MINAS GERAIS, BRAZIL",
     "hero.scroll": "SCROLL",
-    "manifesto.text":
-      "I photograph what happens between moments.",
+    "manifesto.text": "I photograph what happens between moments.",
     "manifesto.sub":
       "The silence before the smile. The light before the shadow.",
     "work.title": "SELECTED WORK",
@@ -74,7 +77,7 @@ export const I18N: I18NData = {
     "projects.view": "VIEW PROJECT →",
     "gallery.title": "GALLERY",
     "about.title": "ABOUT",
-    "about.role": "Photographer based in São Paulo, Brazil.",
+    "about.role": "Photographer based in Minas Gerais, Brazil.",
     "about.bio1":
       "With over a decade of experience behind the lens, I specialize in capturing the authentic essence of my subjects — whether through portraiture, editorial, or documentary work.",
     "about.bio2":
@@ -93,6 +96,11 @@ export const I18N: I18NData = {
     "contact.email_label": "EMAIL",
     "contact.instagram_label": "INSTAGRAM",
     "contact.location_label": "LOCATION",
+    "footer.tagline": "Wedding and pre-wedding photography.",
+    "footer.work": "WORK",
+    "footer.projects": "PROJECTS",
+    "footer.about": "ABOUT",
+    "footer.contact": "CONTACT",
     "footer.top": "BACK TO TOP ↑",
   },
 };
@@ -126,9 +134,11 @@ function applyManifesto(translations: Translations): void {
   const manifestoText = document.querySelector<HTMLElement>(".manifesto__text");
   if (!text || !manifestoText) return;
 
-  manifestoText.querySelectorAll<HTMLElement>(".manifesto__word").forEach((w) => {
-    w.classList.remove("is-visible");
-  });
+  manifestoText
+    .querySelectorAll<HTMLElement>(".manifesto__word")
+    .forEach((w) => {
+      w.classList.remove("is-visible");
+    });
 
   const words = text.split(" ");
   manifestoText.innerHTML = words
@@ -136,12 +146,15 @@ function applyManifesto(translations: Translations): void {
     .join(" ");
 
   if (manifestoAlreadyRevealed()) {
-    manifestoText.querySelectorAll(".manifesto__word").forEach((w) => w.classList.add("is-visible"));
+    manifestoText
+      .querySelectorAll(".manifesto__word")
+      .forEach((w) => w.classList.add("is-visible"));
   }
 }
 
 function manifestoAlreadyRevealed(): boolean {
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return true;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+    return true;
   const manifesto = document.getElementById("manifesto");
   if (manifesto) {
     const rect = manifesto.getBoundingClientRect();
