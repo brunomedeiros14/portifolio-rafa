@@ -45,6 +45,7 @@ function initWordReveal(): void {
         (entries) => {
             entries.forEach((entry) => {
                 if (entry.isIntersecting) {
+                    (window as any).__manifestoRevealed = true;
                     const words = manifestoText.querySelectorAll('.manifesto__word');
                     words.forEach((word, i) => {
                         setTimeout(() => word.classList.add('is-visible'), i * 120);

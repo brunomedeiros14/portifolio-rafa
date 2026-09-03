@@ -13,6 +13,8 @@ export const I18N: I18NData = {
     "hero.specialties": "CASAMENTOS / PRÉ-WEDDING / ENSAIOS",
     "hero.location": "BASED EM SÃO PAULO, BRASIL",
     "hero.scroll": "ROLAR",
+    "manifesto.text":
+      "Fotografo o que acontece entre momentos.",
     "manifesto.sub": "O silêncio antes do sorriso. A luz antes da sombra.",
     "work.title": "PORTFÓLIO SELECIONADO",
     "carousel.title": "DESTAQUES",
@@ -58,6 +60,8 @@ export const I18N: I18NData = {
     "hero.specialties": "WEDDINGS / PRE-WEDDING / SESSIONS",
     "hero.location": "BASED IN SÃO PAULO, BRAZIL",
     "hero.scroll": "SCROLL",
+    "manifesto.text":
+      "I photograph what happens between moments.",
     "manifesto.sub":
       "The silence before the smile. The light before the shadow.",
     "work.title": "SELECTED WORK",
@@ -100,6 +104,8 @@ export function applyLang(lang: Language): void {
   const translations: Translations = I18N[lang];
   if (!translations) return;
 
+  applyManifesto(translations);
+
   document.querySelectorAll<HTMLElement>("[data-i18n]").forEach((el) => {
     const key = el.getAttribute("data-i18n");
     if (key && translations[key]) {
@@ -113,6 +119,35 @@ export function applyLang(lang: Language): void {
   document.querySelectorAll(".nav__lang-pt").forEach((el) => {
     el.classList.toggle("active", lang === "pt");
   });
+}
+
+function applyManifesto(translations: Translations): void {
+  const text = translations["manifesto.text"];
+  const manifestoText = document.querySelector<HTMLElement>(".manifesto__text");
+  if (!text || !manifestoText) return;
+
+  manifestoText.querySelectorAll<HTMLElement>(".manifesto__word").forEach((w) => {
+    w.classList.remove("is-visible");
+  });
+
+  const words = text.split(" ");
+  manifestoText.innerHTML = words
+    .map((word) => `<span class="manifesto__word">${word}</span>`)
+    .join(" ");
+
+  if (manifestoAlreadyRevealed()) {
+    manifestoText.querySelectorAll(".manifesto__word").forEach((w) => w.classList.add("is-visible"));
+  }
+}
+
+function manifestoAlreadyRevealed(): boolean {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return true;
+  const manifesto = document.getElementById("manifesto");
+  if (manifesto) {
+    const rect = manifesto.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) return true;
+  }
+  return (window as any).__manifestoRevealed === true;
 }
 
 export function initI18n(): void {
