@@ -35,9 +35,19 @@ function doPost(e) {
   try {
     req = JSON.parse(e.postData.contents);
   } catch (err) {
-    return Publish.json_({ error: 'invalid_json' });
+    return Publish.json_({ error: 'invalid_json', detail: String((err && err.message) || err) });
   }
-  return Publish.publicationEndpoint_(req);
+  try {
+    return Publish.publicationEndpoint_(req);
+  } catch (err) {
+    // Nunca deixar uma exceção escapar: o GAS responde 302/corpo vazio e o workflow
+    // baixa um arquivo vazio sem explicação. Erro sempre vira JSON no corpo.
+    return Publish.json_({
+      error: 'internal',
+      detail: String((err && err.message) || err),
+      stack: String((err && err.stack) || ''),
+    });
+  }
 }
 
 /** Versão exibida no rodapé da UI para depuração de deploy. */

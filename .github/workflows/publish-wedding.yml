@@ -37,28 +37,38 @@ jobs:
         id: publication
         env:
           PUBLICATION_ID: ${{ github.event.client_payload.publication_id }}
-          CMS_URL: ${{ secrets.CMS_URL }}
+          URL_ID: ${{ github.event.client_payload.url_id }}
           CMS_API_TOKEN: ${{ secrets.CMS_API_TOKEN }}
         run: |
-          HTTP_CODE=$(curl \
-            --silent \
-            --location \
-            --output publication.json \
-            --write-out "%{http_code}" \
-            -H "Content-Type: application/json" \
-            -d "{
-              \"action\": \"publication\",
-              \"token\": \"${CMS_API_TOKEN}\",
-              \"publicationId\": \"${PUBLICATION_ID}\"
-            }" \
-            "${CMS_URL}")
-          SIZE=$(wc -c < publication.json)
-          echo "HTTP ${HTTP_CODE} | ${SIZE} bytes"
-          head -c 400 publication.json; echo
-          if [ "$HTTP_CODE" != "200" ]; then
-            echo "::error::GAS respondeu HTTP ${HTTP_CODE}. Confira secrets.CMS_URL (URL /exec do deployment Web App)."
-            exit 1
-          fi
+          node --input-type=module -e '
+            import fs from "node:fs";
+            const urlId = process.env.URL_ID;
+            if (!urlId || urlId.includes("undefined") || urlId.includes("(")) {
+              console.error("Faltou github.event.client_payload.url_id (id da URL /macros/s/<id>/exec).");
+              process.exit(1);
+            }
+            const cmsUrl = `https://script.google.com/macros/s/${urlId}/exec`;
+            const res = await fetch(cmsUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              redirect: "follow",
+              body: JSON.stringify({
+                action: "publication",
+                token: process.env.CMS_API_TOKEN,
+                publicationId: process.env.PUBLICATION_ID,
+              }),
+            });
+            const body = await res.text();
+            fs.writeFileSync("publication.json", body);
+            console.log(`HTTP ${res.status} | ${body.length} bytes`);
+            console.log(body.slice(0, 400));
+            if (res.status !== 200 || !body.trim()) {
+              console.error(`GAS respondeu HTTP ${res.status}. Confirme que a URL ${cmsUrl} é o deployment Web App.`);
+              process.exit(1);
+            }
+            try { JSON.parse(body); }
+            catch { console.error("Resposta não é JSON válido."); process.exit(1); }
+          '
 
       - name: Generate content
         run: |

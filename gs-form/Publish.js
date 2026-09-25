@@ -79,6 +79,16 @@ const Publish = {
       throw new Error('Configure GITHUB_OWNER, GITHUB_REPO e GITHUB_TOKEN nas propriedades do script.');
     }
 
+    // ID da URL do deployment Web App atual (https://script.google.com/macros/s/<id>/exec).
+    // Viaja no client_payload para o workflow montar o endpoint sem depender de secret.
+    let url_id = '';
+    try {
+      const m = String(ScriptApp.getService().getUrl() || '').match(/macros\/s\/([^/]+)\/exec/);
+      if (m) url_id = m[1];
+    } catch (e) {
+      // sem deployment (ex.: execução local) — o workflow falha com mensagem clara.
+    }
+
     const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/dispatches`;
     const response = UrlFetchApp.fetch(url, {
       method: 'post',
@@ -90,7 +100,7 @@ const Publish = {
       },
       payload: JSON.stringify({
         event_type: 'publish-wedding',
-        client_payload: { publication_id: slug },
+        client_payload: { publication_id: slug, url_id },
       }),
       muteHttpExceptions: true,
     });

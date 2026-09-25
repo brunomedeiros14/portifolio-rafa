@@ -46,13 +46,15 @@ const Drive = {
   },
 
   /**
-   * Salva um upload (Blob vindo do formulário da UI) dentro da pasta do evento.
+   * Salva um upload recebido em base64 (payload { data, name, type }) dentro da pasta do evento.
    * Antes de salvar, remove um arquivo anterior com o mesmo nome pra impedir duplicidades.
    * Retorna { name, id }.
    */
-  saveBlob(slug, kind, blob, suggestedName) {
+  savePayload(slug, kind, payload) {
     const folder = Drive.kindFolder(slug, kind);
-    const name = Drive.safeName_(blob, suggestedName);
+    const name = Drive.sanitizeName_(payload.name || '', payload.type || '');
+    const bytes = Utilities.base64Decode(String(payload.data || ''));
+    const blob = Utilities.newBlob(bytes, payload.type || 'image/jpeg', name);
 
     const existing = folder.getFilesByName(name);
     while (existing.hasNext()) existing.next().setTrashed(true);
@@ -71,8 +73,8 @@ const Drive = {
   },
 
   /** Garante um nome final de arquivo com extensão correta. */
-  safeName_(blob, suggestedName) {
-    let name = suggestedName && String(suggestedName).trim() ? String(suggestedName).trim() : blob.getName();
+  sanitizeName_(rawName, mime) {
+    let name = rawName && String(rawName).trim() ? String(rawName).trim() : 'imagem';
     const extByName = /(\.[^.]+)$/.test(name) ? name.match(/(\.[^.]+)$/)[1] : '';
     const extByMime = {
       'image/jpeg': '.jpg',
@@ -81,7 +83,7 @@ const Drive = {
       'image/avif': '.avif',
       'image/heic': '.heic',
       'image/heif': '.heif',
-    }[blob.getContentType() || ''];
+    }[mime || ''];
     if (!extByName && extByMime) name = `${name}${extByMime}`;
     return name.replace(/[/\\]/g, '-').replace(/\.{2,}/g, '.').trim();
   },

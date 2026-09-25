@@ -14,7 +14,7 @@ POST api.github.com/repos/{owner}/{repo}/dispatches   (event_type: publish-weddi
       │
       ▼
 workflow .github/workflows/publish-wedding.yml
-      │ POST {CMS_URL}  {action:"publication", token, publicationId}
+      │ POST https://script.google.com/macros/s/<url_id>/exec  {action:"publication", token, publicationId}
       ▼
 doPost → {"slug","title","couple","date",..., "cover":{...}, "gallery":[...], "story":{html,images}}
       │
@@ -62,7 +62,8 @@ commit + push → build/deploy → nova URL /casamentos/<slug>
 3. **Deploy como Web App**
    - Apps Script → _Implantar → Nova implantação → Aplicativo da web_
    - Executar como: **Eu**. Quem tem acesso: **Qualquer pessoa**
-   - Guarde a URL `/exec` (é o `CMS_URL`).
+   - Guarde a URL `/exec`; o ID dela (`/macros/s/<id>/exec`) é enviado
+     automaticamente no `client_payload` do dispatch — não é secret.
 
 4. **Configure as propriedades do script**
    Apps Script → _Configurações do projeto → Propriedades do script_:
@@ -81,8 +82,9 @@ commit + push → build/deploy → nova URL /casamentos/<slug>
 5. **Configure os secrets do workflow no GitHub**
    _Settings → Secrets and variables → Actions_:
 
-   - `CMS_URL`: a URL `/exec` do Web App deployado.
    - `CMS_API_TOKEN`: o mesmo valor da propriedade de mesmo nome.
+     (O ID da URL `/exec` viaja em `github.event.client_payload.url_id`, enviado
+     pelo `Publish.dispatch` via `ScriptApp.getService().getUrl()`.)
 
 ## Uso
 
@@ -97,7 +99,7 @@ commit + push → build/deploy → nova URL /casamentos/<slug>
 
 ## Endpoint programático
 
-O workflow chama `POST {CMS_URL}/exec` com:
+O workflow chama `POST https://script.google.com/macros/s/<url_id>/exec` com:
 
 ```json
 { "action": "publication", "token": "<CMS_API_TOKEN>", "publicationId": "<slug>" }

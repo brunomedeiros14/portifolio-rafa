@@ -53,6 +53,7 @@
     .toolbar { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; border: 1px solid var(--line); border-bottom: 0; border-radius: var(--radius) var(--radius) 0 0; background: #f4eee5; }
     .toolbar button { padding: 5px 9px; font-size: 13px; border-radius: 6px; }
     .toolbar button.b { font-weight: 700; } .toolbar button.i { font-style: italic; } .toolbar button.u { text-decoration: underline; }
+    .toolbar button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
     [contenteditable].editor {
       border: 1px solid var(--line); border-radius: 0 0 var(--radius) var(--radius);
       background: var(--surface); min-height: 220px; padding: 14px 16px;
@@ -62,7 +63,8 @@
     [contenteditable].editor p { margin: 0 0 12px; }
     [contenteditable].editor figure { margin: 14px 0; }
     [contenteditable].editor figure img { max-width: 100%; border-radius: 8px; }
-    [contenteditable].editor figure figcaption { font-size: 13px; color: var(--muted); margin-top: 6px; }
+    [contenteditable].editor figure figcaption { font-size: 13px; color: var(--muted); margin-top: 6px; min-height: 1.1em; }
+    [contenteditable].editor figure figcaption:empty::before { content: attr(data-ph); font-style: italic; opacity: .75; }
     [contenteditable].editor blockquote { margin: 12px 0; padding-left: 14px; border-left: 3px solid var(--accent); color: var(--muted); font-style: italic; }
     .card {
       background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
@@ -110,6 +112,67 @@
     .slug-box input { flex: 1; background: #f4eee5; color: var(--muted); cursor: not-allowed; }
     .empty { text-align: center; color: var(--muted); padding: 40px 0; }
     .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .dropzone {
+      border: 2px dashed var(--line); border-radius: var(--radius);
+      padding: 30px 16px; text-align: center; color: var(--muted);
+      background: var(--surface); cursor: pointer;
+      transition: border-color .12s ease, background .12s ease;
+    }
+    .dropzone:hover, .dropzone.drag { border-color: var(--accent); background: #f4eee5; }
+    .dropzone:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .dropzone .dz-main { font-size: 15px; color: var(--text); }
+    .dropzone small { display: block; margin-top: 4px; color: var(--muted); }
+    .thumbs { display: flex; flex-wrap: wrap; gap: 10px; }
+    .photo-tile {
+      position: relative; width: 100px; height: 100px; border-radius: 8px;
+      border: 2px solid var(--line); overflow: hidden; background: #f4eee5; flex-shrink: 0;
+    }
+    .photo-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .photo-tile.is-cover { border-color: var(--accent); }
+    .photo-tile .tile-x {
+      position: absolute; top: 2px; right: 2px; width: 20px; height: 20px;
+      border-radius: 50%; border: 0; padding: 0; line-height: 1;
+      background: rgba(22, 18, 14, .62); color: #fff; font-size: 13px; cursor: pointer; z-index: 2;
+    }
+    .photo-tile .tile-x:hover { background: var(--danger); }
+    .photo-tile .tile-mark {
+      position: absolute; bottom: 3px; font-size: 10px; font-weight: 700; line-height: 1;
+      padding: 4px 7px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .65);
+      background: rgba(22, 18, 14, .6); color: #fff; cursor: pointer; z-index: 2;
+    }
+    .photo-tile .tile-mark.mark-cover { left: 3px; }
+    .photo-tile .tile-mark.mark-story { right: 3px; }
+    .photo-tile .tile-mark.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .badge-chip {
+      position: absolute; top: 2px; left: 2px; z-index: 2; font-size: 9px; font-weight: 700;
+      background: rgba(22, 18, 14, .7); color: #fff; padding: 3px 6px; border-radius: 999px;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .photo-tile .tile-insert {
+      position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); z-index: 2;
+      font-size: 10px; font-weight: 700; line-height: 1; padding: 4px 8px; border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, .65); background: rgba(22, 18, 14, .6); color: #fff; cursor: pointer;
+    }
+    .photo-tile .tile-insert:hover { background: var(--accent); border-color: var(--accent); }
+    #loader {
+      position: fixed; inset: 0; z-index: 70;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(250, 247, 242, .55);
+      opacity: 0; pointer-events: none; transition: opacity .15s ease;
+    }
+    #loader.show { opacity: 1; pointer-events: auto; }
+    #loader .loader-box {
+      background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+      box-shadow: var(--shadow); padding: 18px 24px;
+      display: flex; align-items: center; gap: 12px;
+      font-size: 14px; color: var(--text);
+    }
+    #loader .spinner {
+      width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+      border: 3px solid var(--line); border-top-color: var(--accent);
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -123,10 +186,16 @@
 
   <main id="view"></main>
   <div id="toast"></div>
+  <div id="loader" aria-hidden="true">
+    <div class="loader-box" role="status">
+      <div class="spinner"></div>
+      <span id="loader-msg">Carregando…</span>
+    </div>
+  </div>
 
   <script>
     'use strict';
-    var state = { slug: null, event: null, files: null, config: null };
+    var state = { slug: null, event: null, files: null, config: null, pending: [] };
 
     function $(sel, root) { return (root || document).querySelector(sel); }
     function $$(sel, root) { return Array.from((root || document).querySelectorAll(sel)); }
@@ -146,15 +215,11 @@
     function run(fn) {
       var args = Array.prototype.slice.call(arguments, 1);
       return new Promise(function (resolve, reject) {
-        var r = google.script.run.withSuccessHandler(resolve).withFailureHandler(reject);
+        busy();
+        var r = google.script.run
+          .withSuccessHandler(function (v) { idle(); resolve(v); })
+          .withFailureHandler(function (e) { idle(); reject(e); });
         r[fn].apply(r, args);
-      });
-    }
-    function runForm(fn, form) {
-      var args = Array.prototype.slice.call(arguments, 2);
-      return new Promise(function (resolve, reject) {
-        var r = google.script.run.withSuccessHandler(resolve).withFailureHandler(reject);
-        r.withUploadContainer(form)[fn].apply(r, args);
       });
     }
 
@@ -165,6 +230,29 @@
       t.className = isErr ? 'show err' : 'show';
       clearTimeout(toastTimer);
       toastTimer = setTimeout(function () { t.className = ''; }, 3600);
+    }
+
+    var _busy = 0;
+    var _loaderTimer = null;
+    function busy(msg) {
+      _busy++;
+      if (msg) byId('loader-msg').textContent = msg;
+      if (_busy === 1) {
+        clearTimeout(_loaderTimer);
+        _loaderTimer = setTimeout(function () {
+          byId('loader').classList.add('show');
+          byId('loader').setAttribute('aria-hidden', 'false');
+        }, 120);
+      }
+    }
+    function idle() {
+      _busy--;
+      if (_busy <= 0) {
+        _busy = 0;
+        clearTimeout(_loaderTimer);
+        byId('loader').classList.remove('show');
+        byId('loader').setAttribute('aria-hidden', 'true');
+      }
     }
 
     function ensureConfig() {
@@ -187,10 +275,55 @@
       var form = ev.target;
       if (form.id === 'f-create') { ev.preventDefault(); onCreate(form); return; }
       if (form.id === 'f-edit') { ev.preventDefault(); onSave(); return; }
-      if (form.id === 'f-cover') { ev.preventDefault(); onUpload('cover'); return; }
-      if (form.id === 'f-gallery') { ev.preventDefault(); onUpload('gallery'); return; }
-      if (form.id === 'f-story') { ev.preventDefault(); onUpload('story'); return; }
     });
+
+    document.addEventListener('selectionchange', function () {
+      updateToolbarStates();
+      captureStoryRange();
+    });
+
+    var savedStoryRange = null;
+    function captureStoryRange() {
+      var ed = byId('story-ed');
+      if (!ed) { savedStoryRange = null; return; }
+      var sel = document.getSelection();
+      if (!sel || !sel.rangeCount) return;
+      var r = sel.getRangeAt(0);
+      if (r && ed.contains(r.startContainer)) savedStoryRange = r;
+    }
+
+    function placeCaretForInsert(ed) {
+      var sel = document.getSelection();
+      if (!sel) return;
+      var inEditor = savedStoryRange && ed.contains(savedStoryRange.startContainer);
+      var r = inEditor ? savedStoryRange : document.createRange();
+      if (!inEditor) { r.selectNodeContents(ed); r.collapse(false); }
+      sel.removeAllRanges();
+      sel.addRange(r);
+    }
+
+    function blockState() {
+      var v = '';
+      try { v = String(document.queryCommandValue('formatBlock') || '').toLowerCase(); } catch (e) { v = ''; }
+      v = v.replace(/[<>]/g, '');
+      if (!v || v === 'div') return 'p';
+      return v;
+    }
+
+    function updateToolbarStates() {
+      var block = blockState();
+      var ul = false, ol = false;
+      try { ul = document.queryCommandState('insertUnorderedList'); } catch (e) {}
+      try { ol = document.queryCommandState('insertOrderedList'); } catch (e) {}
+      $$('.toolbar [data-cmd]').forEach(function (b) {
+        var on = false;
+        var cmd = b.getAttribute('data-cmd');
+        if (cmd === 'formatBlock') on = block === (b.getAttribute('data-val') || '').toLowerCase();
+        else if (cmd === 'insertUnorderedList') on = ul;
+        else if (cmd === 'insertOrderedList') on = ol;
+        b.classList.toggle('on', on);
+      });
+    }
 
     /* ------------------------------------------------------------------ */
     /* Lista                                                               */
@@ -261,10 +394,15 @@
         location: (fd.get('location') || '').trim(),
         venue: (fd.get('venue') || '').trim(),
       };
+      var submit = form.querySelector('[type=submit]');
+      submit.disabled = true; submit.textContent = 'Criando…';
       run('apiCreate', payload).then(function (e) {
         toast('Evento "' + e.couple + '" criado com slug "' + e.slug + '"');
         renderEdit(e.slug);
-      }, function (err) { toast(err.message, true); });
+      }, function (err) {
+        toast(err.message, true);
+        submit.disabled = false; submit.textContent = 'Criar evento';
+      });
     }
 
     /* ------------------------------------------------------------------ */
@@ -315,6 +453,7 @@
         '<button type="button" class="b" data-cmd="bold">B</button>' +
         '<button type="button" class="i" data-cmd="italic">I</button>' +
         '<button type="button" class="u" data-cmd="underline">U</button>' +
+        '<button type="button" data-cmd="formatBlock" data-val="p">P</button>' +
         '<button type="button" data-cmd="formatBlock" data-val="h2">H2</button>' +
         '<button type="button" data-cmd="formatBlock" data-val="h3">H3</button>' +
         '<button type="button" data-cmd="formatBlock" data-val="blockquote">Citação</button>' +
@@ -324,7 +463,7 @@
         '<button type="button" class="primary" id="btn-insert-story">Inserir foto do story</button>' +
         '</div>' +
         '<div contenteditable="true" class="editor" id="story-ed"></div>' +
-        '<div class="hint" style="margin-top:6px">Fotos aparecem como blocos de imagem aqui e viram imagens no markdown do site.</div>' +
+        '<div class="hint" style="margin-top:6px">Fotos aparecem como blocos de imagem aqui e viram imagens no markdown do site. Clique na legenda abaixo de cada foto para escrever o texto dela.</div>' +
         '</div>' +
 
         '<div class="card"><h2>Fornecedores</h2>' +
@@ -333,19 +472,19 @@
         '</div>' +
 
         '<div class="card"><h2>Fotos</h2>' +
-        '<p class="muted">As fotos ficam no Google Drive e são baixadas pela automação na publicação.</p>' +
-        '<h3>Capa</h3>' +
-        '<form id="f-cover"><div class="row" style="gap:8px"><input type="file" name="cover" accept="image/*" style="flex:1">' +
-        '<button class="primary small" type="submit">Enviar capa</button></div></form>' +
+        '<p class="muted">Jogue todas as fotos na área abaixo. Marque a <strong>Capa</strong> e as usadas no <strong>Story</strong>; o restante entra na galeria.</p>' +
+        '<div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Enviar fotos">' +
+        '<span class="dz-main">Arraste as fotos para cá</span>' +
+        '<small>ou clique para selecionar — envie tudo de uma vez</small>' +
+        '<input type="file" id="photo-file" multiple accept="image/*" hidden>' +
+        '</div>' +
+        '<div id="pending-thumbs" class="thumbs" style="margin-top:12px"></div>' +
+        '<div class="row" style="margin-top:12px">' +
+        '<button type="button" class="primary" id="btn-upload-photos" disabled>Enviar fotos</button>' +
+        '<span class="hint" id="upload-summary"></span></div>' +
+        '<h3 style="margin-top:20px">Já enviadas</h3>' +
         '<div id="files-cover"></div>' +
-        '<h3 style="margin-top:18px">Galeria — fotos extras (mín. ' + (state.config ? state.config.minGallery : 8) + ')</h3>' +
-        '<form id="f-gallery"><div class="row" style="gap:8px"><input type="file" name="files" multiple accept="image/*" style="flex:1">' +
-        '<button class="primary small" type="submit">Enviar fotos</button></div></form>' +
-        '<div class="hint">A ordem exibida segue a ordem alfabética dos nomes dos arquivos.</div>' +
         '<div id="files-gallery"></div>' +
-        '<h3 style="margin-top:18px">Story — fotos para inserir no texto</h3>' +
-        '<form id="f-story"><div class="row" style="gap:8px"><input type="file" name="files" multiple accept="image/*" style="flex:1">' +
-        '<button class="primary small" type="submit">Enviar fotos</button></div></form>' +
         '<div id="files-story"></div>' +
         '</div>' +
 
@@ -366,6 +505,7 @@
         '</form>';
 
       byId('story-ed').innerHTML = e.historia_html || '';
+      fixupStoryEditor();
       bindEditListeners();
       refreshFilesPane();
       refreshPublishPane();
@@ -387,7 +527,14 @@
       $$('.toolbar [data-cmd]').forEach(function (btn) {
         btn.addEventListener('click', function () {
           ed.focus();
-          document.execCommand(btn.getAttribute('data-cmd'), false, btn.getAttribute('data-val') || null);
+          var cmd = btn.getAttribute('data-cmd');
+          var val = btn.getAttribute('data-val') || null;
+          if (cmd === 'formatBlock') {
+            document.execCommand('formatBlock', false, blockState() === (val || '').toLowerCase() ? 'p' : val);
+          } else {
+            document.execCommand(cmd, false, val);
+          }
+          updateToolbarStates();
         });
       });
 
@@ -416,32 +563,165 @@
 
       byId('btn-publish').addEventListener('click', onPublish);
       byId('btn-preview').addEventListener('click', onPreview);
+
+      var dz = byId('dropzone');
+      dz.addEventListener('click', function () { byId('photo-file').click(); });
+      dz.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); byId('photo-file').click(); }
+      });
+      ['dragenter', 'dragover'].forEach(function (type) {
+        dz.addEventListener(type, function (ev) { ev.preventDefault(); dz.classList.add('drag'); });
+      });
+      ['dragleave', 'drop'].forEach(function (type) {
+        dz.addEventListener(type, function (ev) { ev.preventDefault(); dz.classList.remove('drag'); });
+      });
+      dz.addEventListener('drop', function (ev) {
+        var files = ev.dataTransfer && ev.dataTransfer.files;
+        if (files && files.length) addPendingFiles(files);
+      });
+      byId('photo-file').addEventListener('change', function () {
+        addPendingFiles(byId('photo-file').files);
+        byId('photo-file').value = '';
+      });
+      byId('pending-thumbs').addEventListener('click', onPendingClick);
+      byId('btn-upload-photos').addEventListener('click', onUploadPhotos);
     }
 
     /* ------------------------------------------------------------------ */
-    /* Upload de fotos                                                     */
+    /* Upload de fotos (dropzone + marcação capa/story/galeria)            */
     /* ------------------------------------------------------------------ */
-    function onUpload(kind) {
-      var formMap = { cover: 'f-cover', gallery: 'f-gallery', story: 'f-story' };
-      var form = byId(formMap[kind]);
-      var submit = form.querySelector('button[type=submit]');
-      var original = submit.textContent;
-      submit.disabled = true; submit.textContent = 'Enviando…';
+    function addPendingFiles(fileList) {
+      if (!fileList || !fileList.length) { toast('Selecione uma imagem primeiro.', true); return; }
+      var files = Array.prototype.filter.call(fileList, function (f) { return !f.type || f.type.indexOf('image/') === 0; });
+      if (files.length < fileList.length) toast('Arquivos não-imagem ignorados.', true);
+      if (!files.length) return;
+      state.pending = state.pending.concat(files.map(function (f) {
+        return {
+          id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+          file: f,
+          name: f.name,
+          objectUrl: URL.createObjectURL(f),
+          cover: false,
+          story: false,
+        };
+      }));
+      renderPending();
+    }
 
-      var p;
-      if (kind === 'cover') p = runForm('apiUploadCover', form, state.slug);
-      else p = runForm('apiUploadFiles', form, state.slug, kind);
+    function renderPending() {
+      var box = byId('pending-thumbs');
+      box.innerHTML = state.pending.map(function (p) {
+        return '<div class="photo-tile' + (p.cover ? ' is-cover' : '') + '" data-pid="' + esc(p.id) + '" title="' + esc(p.name) + '">' +
+          '<img src="' + p.objectUrl + '" alt="">' +
+          '<button type="button" class="tile-x" data-remove-pending title="Remover">\u00d7</button>' +
+          '<button type="button" class="tile-mark mark-cover' + (p.cover ? ' on' : '') + '" data-mark-pending="cover" title="Usar como capa">Capa</button>' +
+          '<button type="button" class="tile-mark mark-story' + (p.story ? ' on' : '') + '" data-mark-pending="story" title="Usar no story">Story</button>' +
+          '</div>';
+      }).join('');
+      updateUploadSummary();
+    }
 
-      p.then(function (files) {
-        state.files = files;
+    function onPendingClick(ev) {
+      var tile = ev.target.closest('.photo-tile');
+      if (!tile) return;
+      var pid = tile.getAttribute('data-pid');
+      var p = state.pending.filter(function (x) { return x.id === pid; })[0];
+      if (!p) return;
+      if (ev.target.closest('[data-remove-pending]')) {
+        try { URL.revokeObjectURL(p.objectUrl); } catch (e) {}
+        state.pending = state.pending.filter(function (x) { return x.id !== pid; });
+        renderPending();
+        return;
+      }
+      if (ev.target.closest('[data-mark-pending="cover"]')) {
+        state.pending.forEach(function (x) { x.cover = x.id === pid; });
+        renderPending();
+        return;
+      }
+      if (ev.target.closest('[data-mark-pending="story"]')) {
+        p.story = !p.story;
+        renderPending();
+        return;
+      }
+    }
+
+    function updateUploadSummary() {
+      var btn = byId('btn-upload-photos');
+      var sum = byId('upload-summary');
+      if (!btn || !sum) return;
+      var n = state.pending.length;
+      if (n === 0) { btn.disabled = true; btn.textContent = 'Enviar fotos'; sum.textContent = ''; return; }
+      var cover = state.pending.filter(function (p) { return p.cover; }).length;
+      var story = state.pending.filter(function (p) { return p.story; }).length;
+      btn.disabled = false;
+      btn.textContent = 'Enviar fotos (' + n + ')';
+      var parts = ['galeria: ' + (n - cover - story)];
+      if (cover) parts.push('capa: 1');
+      if (story) parts.push('story: ' + story);
+      sum.textContent = parts.join(' \u00b7 ');
+    }
+
+    function readPayload(file) {
+      return new Promise(function (resolve, reject) {
+        var r = new FileReader();
+        r.onload = function () {
+          resolve({ data: String(r.result).split(',')[1], name: file.name, type: file.type || 'image/jpeg' });
+        };
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+    }
+
+    function toPayloads(list) {
+      return list.reduce(function (chain, p) {
+        return chain.then(function (acc) {
+          return readPayload(p.file).then(function (pl) { acc.push(pl); return acc; });
+        });
+      }, Promise.resolve([]));
+    }
+
+    function onUploadPhotos() {
+      if (!state.pending.length) return;
+      var cover = state.pending.filter(function (p) { return p.cover; });
+      var story = state.pending.filter(function (p) { return p.story; });
+      var gallery = state.pending.filter(function (p) { return !p.cover && !p.story; });
+      busy('Enviando fotos para o Drive\u2026');
+
+      var chain = Promise.resolve();
+      if (cover.length) {
+        chain = chain.then(function () {
+          return toPayloads(cover).then(function (pl) {
+            return run('apiUploadCover', state.slug, pl[0]).then(function (files) { state.files = files; });
+          });
+        });
+      }
+      if (story.length) {
+        chain = chain.then(function () {
+          return toPayloads(story).then(function (pl) {
+            return run('apiUploadFiles', state.slug, 'story', pl).then(function (files) { state.files = files; });
+          });
+        });
+      }
+      if (gallery.length) {
+        chain = chain.then(function () {
+          return toPayloads(gallery).then(function (pl) {
+            return run('apiUploadFiles', state.slug, 'gallery', pl).then(function (files) { state.files = files; });
+          });
+        });
+      }
+
+      chain.then(function () {
+        state.pending.forEach(function (p) { try { URL.revokeObjectURL(p.objectUrl); } catch (e) {} });
+        state.pending = [];
         toast('Fotos enviadas para o Google Drive.');
-        form.reset();
+        renderPending();
         refreshFilesPane();
         refreshPublishPane();
       }, function (err) {
         toast('Falha no envio: ' + err.message, true);
       }).then(function () {
-        submit.disabled = false; submit.textContent = original;
+        idle();
+        updateUploadSummary();
       });
     }
 
@@ -457,30 +737,43 @@
       var f = state.files || { cover: null, gallery: [], story: [] };
 
       byId('files-cover').innerHTML = f.cover
-        ? fileRow(f.cover.name, 'cover', f.cover.name, true)
+        ? '<div class="thumbs">' + fileTile(f.cover.name, 'cover', f.cover.id, 'Capa') + '</div>'
         : '<p class="hint upload-note">Nenhuma capa enviada.</p>';
 
       byId('files-gallery').innerHTML = (f.gallery.length
-        ? f.gallery.map(function (x) { return fileRow(x.name, 'gallery', x.name, false); }).join('')
+        ? '<div class="thumbs">' + f.gallery.map(function (x) { return fileTile(x.name, 'gallery', x.id, ''); }).join('') + '</div>'
         : '<p class="hint upload-note">Nenhuma foto na galeria.</p>');
 
       byId('files-story').innerHTML = (f.story.length
-        ? f.story.map(function (x) { return fileRow(x.name, 'story', x.name, false); }).join('')
+        ? '<div class="thumbs">' + f.story.map(function (x) { return fileTile(x.name, 'story', x.id, 'Story'); }).join('') + '</div>'
         : '<p class="hint upload-note">Nenhuma foto no story.</p>');
+
+      updateUploadSummary();
     }
 
-    function fileRow(name, kind, dataName, isCover) {
-      var extra = kind === 'story'
-        ? '<button class="small primary" data-action="insertstory" data-name="' + esc(dataName) + '">Inserir no texto</button>'
+    function fileTile(name, kind, id, badge) {
+      var insert = kind === 'story'
+        ? '<button type="button" class="tile-insert" data-action="insertstory" data-name="' + esc(name) + '" title="Inserir no texto">+ Inserir</button>'
         : '';
-      return '<div class="file-row"><span class="name">' + esc(name) + (isCover ? ' <span class="badge ready" style="margin-left:4px">capa</span>' : '') +
-        '</span>' + extra +
-        '<button class="small danger" data-action="removefile" data-kind="' + esc(kind) + '" data-name="' + esc(dataName) + '">Remover</button></div>';
+      return '<div class="photo-tile" title="' + esc(name) + '">' +
+        '<img src="https://drive.google.com/thumbnail?id=' + encodeURIComponent(id) + '&sz=w200" alt="">' +
+        (badge ? '<span class="badge-chip">' + esc(badge) + '</span>' : '') +
+        insert +
+        '<button type="button" class="tile-x" data-action="removefile" data-kind="' + esc(kind) + '" data-name="' + esc(name) + '" title="Remover">\u00d7</button>' +
+        '</div>';
     }
 
     /* ------------------------------------------------------------------ */
     /* Inserir foto do story no editor                                     */
     /* ------------------------------------------------------------------ */
+    function storyImageUrl(id) {
+      return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(id) + '&sz=w800';
+    }
+
+    function storyFile(name) {
+      return (state.files && state.files.story || []).filter(function (x) { return x.name === name; })[0];
+    }
+
     function openStoryPicker() {
       var f = state.files || { story: [] };
       if (!f.story.length) { toast('Envie fotos na aba Story primeiro.', true); return; }
@@ -490,15 +783,13 @@
       var overlay = document.createElement('div');
       overlay.style.cssText = 'position:fixed;inset:0;background:rgba(22,18,14,.5);display:flex;align-items:center;justify-content:center;z-index:60';
       overlay.innerHTML = '<div class="card" style="width:min(90vw,480px)"><h2>Inserir foto no texto</h2>' +
-        '<p class="muted">Escolha uma foto do story. Depois digite a legenda (alt).</p>' +
+        '<p class="muted">Escolha uma foto do story. A legenda é editada clicando nela, abaixo da foto, dentro do editor.</p>' +
         '<div class="row" style="flex-direction:column;align-items:stretch;gap:6px;margin-bottom:12px">' + list + '</div>' +
         '<button class="ghost" id="close-picker">Cancelar</button></div>';
       overlay.addEventListener('click', function (ev) {
         var btn = ev.target.closest('[data-story-name]');
         if (btn) {
-          var name = btn.getAttribute('data-story-name');
-          var alt = prompt('Legenda para a imagem (opcional):', '');
-          insertStoryImage(name, alt == null ? '' : alt);
+          insertStoryImage(btn.getAttribute('data-story-name'));
           overlay.remove();
         } else if (ev.target.id === 'close-picker' || ev.target === overlay) {
           overlay.remove();
@@ -507,12 +798,46 @@
       document.body.appendChild(overlay);
     }
 
-    function insertStoryImage(name, alt) {
+    function insertStoryImage(name) {
       var ed = byId('story-ed');
+      var file = storyFile(name);
+      var img = '<img data-story="' + esc(name) + '" src="' + (file ? storyImageUrl(file.id) : '') + '" alt="">';
+      var fig = '<figure class="story-img">' + img +
+        '<figcaption data-ph="Clique para adicionar legenda"></figcaption></figure>';
+      placeCaretForInsert(ed);
       ed.focus();
-      var figure = '<figure class="story-img"><img data-story="' + esc(name) + '" alt="' + esc(alt || '') + '">' +
-        '<figcaption>' + esc(alt || '') + '</figcaption></figure>';
-      document.execCommand('insertHTML', false, '<p>' + figure + '</p>');
+      document.execCommand('insertHTML', false, '<p>' + fig + '</p>');
+      updateToolbarStates();
+    }
+
+    function fixupStoryEditor() {
+      var ed = byId('story-ed');
+      if (!ed) return;
+      $$('figure.story-img img[data-story]', ed).forEach(function (im) {
+        var file = storyFile(im.getAttribute('data-story'));
+        if (file) im.setAttribute('src', storyImageUrl(file.id));
+        var fig = im.closest('figure');
+        if (fig) {
+          var cap = fig.querySelector('figcaption');
+          if (cap) {
+            var t = cap.textContent.replace(/\s+/g, ' ').trim();
+            var ph = cap.getAttribute('data-ph') || '';
+            im.setAttribute('alt', t === ph ? '' : t);
+          }
+        }
+      });
+    }
+
+    function storyHtml() {
+      var ed = byId('story-ed');
+      $$('figure.story-img img[data-story]', ed).forEach(function (im) {
+        var fig = im.closest('figure');
+        var cap = fig ? fig.querySelector('figcaption') : null;
+        var t = cap ? cap.textContent.replace(/\s+/g, ' ').trim() : '';
+        var ph = cap ? (cap.getAttribute('data-ph') || '') : '';
+        im.setAttribute('alt', t === ph ? '' : t);
+      });
+      return ed.innerHTML;
     }
 
     /* ------------------------------------------------------------------ */
@@ -542,17 +867,23 @@
         vendors: vendors,
         seoTitle: byId('f-seoTitle').value.trim(),
         seoDescription: byId('f-seoDescription').value.trim(),
-        historia_html: byId('story-ed').innerHTML,
+        historia_html: storyHtml(),
       };
     }
 
     function onSave() {
       var payload = collectEdit();
+      var btn = byId('f-edit').querySelector('[type=submit]');
+      btn.disabled = true; btn.textContent = 'Salvando…';
       run('apiSave', state.slug, payload).then(function (e) {
         state.event = e;
         toast('Alterações salvas.');
         refreshPublishPane();
-      }, function (err) { toast(err.message, true); });
+      }, function (err) {
+        toast(err.message, true);
+      }).then(function () {
+        btn.disabled = false; btn.textContent = 'Salvar alterações';
+      });
     }
 
     /* ------------------------------------------------------------------ */
@@ -603,11 +934,18 @@
     function onPublish() {
       var btn = byId('btn-publish');
       btn.disabled = true;
+      btn.textContent = 'Disparando…';
+      busy('Disparando a automação no GitHub…');
       run('apiPublish', state.slug).then(function (r) {
         toast('Automação disparada. O workflow vai gerar /casamentos/' + r.slug + ' e fazer commit.');
-        btn.disabled = false;
         renderList();
-      }, function (err) { toast('Não foi possível publicar: ' + err.message, true); btn.disabled = false; });
+      }, function (err) {
+        toast('Não foi possível publicar: ' + err.message, true);
+        btn.disabled = false;
+        btn.textContent = 'Executar automação';
+      }).then(function () {
+        idle();
+      });
     }
 
     function onPreview() {

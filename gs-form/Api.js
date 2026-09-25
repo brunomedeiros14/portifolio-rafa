@@ -41,25 +41,28 @@ function apiDelete(slug) {
   return { ok: true };
 }
 
-/** Faz upload da capa (único arquivo, input name="cover"). */
-function apiUploadCover(slug, cover) {
-  if (!cover || !cover.getName) throw new Error('Selecione uma imagem de capa.');
-  const saved = Drive.saveBlob(slug, 'cover', cover, cover.getName());
-  Events.setCover(slug, saved);
-  return Events.listFiles(slug);
+/** Upload da capa — o payload chega em base64 (google.script.run não serializa File/Blob). */
+function apiUploadCover(slug, payload) {
+  const s = String(slug || '').trim();
+  if (!s) throw new Error('Evento não identificado.');
+  if (!payload || !payload.data || !payload.name) throw new Error('Selecione uma imagem de capa.');
+  const saved = Drive.savePayload(s, 'cover', payload);
+  Events.setCover(s, saved);
+  return Events.listFiles(s);
 }
 
-/** Upload em lote de galeria ou story (input name="files"). */
-function apiUploadFiles(slug, kind, files) {
-  if (!['gallery', 'story'].includes(kind)) throw new Error(`Tipo inválido: ${kind}`);
-  const blobList = (Array.isArray(files) ? files : [files]).filter((f) => f && f.getName);
-  if (blobList.length === 0) throw new Error('Selecione ao menos uma imagem.');
+/** Upload em lote de galeria ou story (payloads base64). */
+function apiUploadFiles(slug, kind, payloads) {
+  const s = String(slug || '').trim();
+  const k = String(kind || '').trim();
+  if (!s) throw new Error('Evento não identificado.');
+  if (!['gallery', 'story'].includes(k)) throw new Error(`Tipo inválido: ${k}`);
+  const list = (Array.isArray(payloads) ? payloads : [payloads]).filter((p) => p && p.data && p.name);
+  if (list.length === 0) throw new Error('Selecione ao menos uma imagem.');
   const saved = [];
-  for (const blob of blobList) {
-    saved.push(Drive.saveBlob(slug, kind, blob, blob.getName()));
-  }
-  Events.appendFiles(slug, kind, saved);
-  return Events.listFiles(slug);
+  for (const payload of list) saved.push(Drive.savePayload(s, k, payload));
+  Events.appendFiles(s, k, saved);
+  return Events.listFiles(s);
 }
 
 /** Remove um arquivo (Drive + referência na planilha). */

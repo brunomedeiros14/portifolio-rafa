@@ -229,6 +229,21 @@ const Events = {
     return value === null || value === undefined || String(value).trim() === '';
   },
 
+  /**
+   * Normaliza a data para "YYYY-MM-DD" (formato do <input type=date> e do frontmatter).
+   * O Sheets converte células reconhecidas como data para Date; sem isso o valor
+   * voltaria como "Sat May 30 2026 ...", quebrado no editor e no MDX gerado.
+   */
+  normalizeDate_(value) {
+    if (value instanceof Date && !isNaN(value.getTime())) {
+      return Utilities.formatDate(value, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+    }
+    const s = String(value || '');
+    const m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (m) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+    return s;
+  },
+
   setRow_(slug, patch) {
     const sheet = Events.sheet_();
     const values = sheet.getDataRange().getValues();
@@ -249,13 +264,13 @@ const Events = {
       slug: String(at('slug') || ''),
       title: String(at('title') || ''),
       couple: String(at('couple') || ''),
-      date: String(at('date') || ''),
       location: String(at('location') || ''),
       city: String(at('city') || ''),
       state: String(at('state') || ''),
       venue: String(at('venue') || ''),
       description: String(at('description') || ''),
       excerpt: String(at('excerpt') || ''),
+      date: Events.normalizeDate_(at('date')),
       featured: Events.truthy_(at('featured')),
       tags: Events.parseJSON_(at('tags'), []),
       vendors: Events.parseJSON_(at('vendors'), []),
