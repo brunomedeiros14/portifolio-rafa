@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --bg: #faf7f2;
+      --surface: #ffffff;
+      --text: #16120e;
+      --muted: #6b5f53;
+      --line: #e5ddcf;
+      --accent: #9c6f4d;
+      --accent-dark: #7c5737;
+      --ok: #2f7d4f;
+      --warn: #b4682d;
+      --danger: #b23b3b;
+      --radius: 10px;
+      --shadow: 0 1px 2px rgba(22, 18, 14, .06), 0 8px 24px rgba(22, 18, 14, .06);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    header.top {
+      position: sticky; top: 0; z-index: 5;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; padding: 14px 20px;
+      background: var(--surface); border-bottom: 1px solid var(--line);
+    }
+    header.top .brand { font-family: Georgia, serif; font-style: italic; font-size: 20px; }
+    header.top .brand small { display: block; font-family: system-ui; font-style: normal; font-size: 11px; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; }
+    main { max-width: 920px; margin: 0 auto; padding: 24px 20px 80px; }
+    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .grow { flex: 1; }
+    button, .btn {
+      font: inherit; cursor: pointer; border-radius: 8px;
+      padding: 8px 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text);
+      transition: background .12s ease, border-color .12s ease, opacity .12s ease;
+    }
+    button:hover { background: #f4eee5; }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    button.primary:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+    button.ghost { background: transparent; border-color: transparent; color: var(--muted); }
+    button.danger { color: var(--danger); border-color: var(--line); }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    button.small { padding: 4px 9px; font-size: 13px; border-radius: 6px; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; border: 1px solid var(--line); border-bottom: 0; border-radius: var(--radius) var(--radius) 0 0; background: #f4eee5; }
+    .toolbar button { padding: 5px 9px; font-size: 13px; border-radius: 6px; }
+    .toolbar button.b { font-weight: 700; } .toolbar button.i { font-style: italic; } .toolbar button.u { text-decoration: underline; }
+    [contenteditable].editor {
+      border: 1px solid var(--line); border-radius: 0 0 var(--radius) var(--radius);
+      background: var(--surface); min-height: 220px; padding: 14px 16px;
+      outline: none;
+    }
+    [contenteditable].editor:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(156,111,77,.15); }
+    [contenteditable].editor p { margin: 0 0 12px; }
+    [contenteditable].editor figure { margin: 14px 0; }
+    [contenteditable].editor figure img { max-width: 100%; border-radius: 8px; }
+    [contenteditable].editor figure figcaption { font-size: 13px; color: var(--muted); margin-top: 6px; }
+    [contenteditable].editor blockquote { margin: 12px 0; padding-left: 14px; border-left: 3px solid var(--accent); color: var(--muted); font-style: italic; }
+    .card {
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+      padding: 18px 20px; box-shadow: var(--shadow); margin-bottom: 18px;
+    }
+    .card h2 { margin: 0 0 14px; font-size: 18px; }
+    .card h3 { margin: 20px 0 8px; font-size: 15px; color: var(--accent-dark); text-transform: uppercase; letter-spacing: .08em; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+    label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+    input[type=text], input[type=date], input[type=url], textarea, select {
+      width: 100%; font: inherit; color: var(--text);
+      padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface);
+    }
+    input:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(156,111,77,.15); }
+    textarea { resize: vertical; }
+    .field { margin-bottom: 12px; }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .check { display: flex; align-items: center; gap: 8px; margin: 10px 0; }
+    table.list { width: 100%; border-collapse: collapse; }
+    table.list th, table.list td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+    table.list th { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+    .badge { display: inline-block; font-size: 12px; padding: 3px 9px; border-radius: 999px; font-weight: 600; }
+    .badge.ready { background: #e5f2e9; color: var(--ok); }
+    .badge.pending { background: #fbeedd; color: var(--warn); }
+    .badge.published { background: #e7edf5; color: #35507a; }
+    .chip { display: inline-flex; gap: 6px; align-items: center; background: #f4eee5; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; margin: 4px; font-size: 13px; }
+    .muted { color: var(--muted); }
+    .ok { color: var(--ok); } .warn { color: var(--warn); }
+    .list-files { display: flex; flex-direction: column; gap: 8px; }
+    .file-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+    .file-row .name { flex: 1; word-break: break-all; font-size: 13px; }
+    .upload-note { font-size: 12px; color: var(--muted); margin: 6px 0 10px; }
+    #toast {
+      position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px);
+      background: var(--text); color: #fff; padding: 10px 18px; border-radius: 999px;
+      opacity: 0; pointer-events: none; transition: opacity .18s ease, transform .18s ease;
+      max-width: 90vw; font-size: 14px; z-index: 50;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.err { background: var(--danger); }
+    pre.json { background: #16120e; color: #e8dcc9; padding: 12px 14px; border-radius: 8px; overflow: auto; font-size: 12px; max-height: 320px; }
+    .checklist { list-style: none; margin: 0; padding: 0; }
+    .checklist li { padding: 4px 0; display: flex; gap: 8px; align-items: center; font-size: 14px; }
+    .slug-box { display: flex; align-items: center; gap: 8px; }
+    .slug-box input { flex: 1; background: #f4eee5; color: var(--muted); cursor: not-allowed; }
+    .empty { text-align: center; color: var(--muted); padding: 40px 0; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="brand">Casamentos<small>Controle de publicação</small></div>
+    <div class="row">
+      <button class="ghost" data-action="home" id="btn-home">Lista</button>
+      <button class="primary" data-action="create">+ Novo evento</button>
+    </div>
+  </header>
+
+  <main id="view"></main>
+  <div id="toast"></div>
+
+  <script>
+    'use strict';
+    var state = { slug: null, event: null, files: null, config: null };
+
+    function $(sel, root) { return (root || document).querySelector(sel); }
+    function $$(sel, root) { return Array.from((root || document).querySelectorAll(sel)); }
+    function byId(id) { return document.getElementById(id); }
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+    function fmtDate(d) {
+      if (!d) return '—';
+      var m = String(d).match(/^(\d{4})-(\d{2})-(\d{2})/);
+      return m ? m[3] + '/' + m[2] + '/' + m[1] : String(d);
+    }
+
+    function run(fn) {
+      var args = Array.prototype.slice.call(arguments, 1);
+      return new Promise(function (resolve, reject) {
+        var r = google.script.run.withSuccessHandler(resolve).withFailureHandler(reject);
+        r[fn].apply(r, args);
+      });
+    }
+    function runForm(fn, form) {
+      var args = Array.prototype.slice.call(arguments, 2);
+      return new Promise(function (resolve, reject) {
+        var r = google.script.run.withSuccessHandler(resolve).withFailureHandler(reject);
+        r.withUploadContainer(form)[fn].apply(r, args);
+      });
+    }
+
+    var toastTimer = null;
+    function toast(msg, isErr) {
+      var t = byId('toast');
+      t.textContent = msg;
+      t.className = isErr ? 'show err' : 'show';
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { t.className = ''; }, 3600);
+    }
+
+    function ensureConfig() {
+      if (state.config) return Promise.resolve(state.config);
+      return run('apiConfig').then(function (cfg) { state.config = cfg; return cfg; });
+    }
+
+    document.addEventListener('click', function (ev) {
+      var el = ev.target.closest('[data-action]');
+      if (!el) return;
+      var action = el.getAttribute('data-action');
+      if (action === 'home') { renderList(); return; }
+      if (action === 'create') { renderCreate(); return; }
+      if (action === 'edit') { renderEdit(el.getAttribute('data-slug')); return; }
+      if (action === 'removefile') { onRemoveFile(el.getAttribute('data-kind'), el.getAttribute('data-name')); return; }
+      if (action === 'insertstory') { insertStoryImage(el.getAttribute('data-name')); return; }
+    });
+
+    document.addEventListener('submit', function (ev) {
+      var form = ev.target;
+      if (form.id === 'f-create') { ev.preventDefault(); onCreate(form); return; }
+      if (form.id === 'f-edit') { ev.preventDefault(); onSave(); return; }
+      if (form.id === 'f-cover') { ev.preventDefault(); onUpload('cover'); return; }
+      if (form.id === 'f-gallery') { ev.preventDefault(); onUpload('gallery'); return; }
+      if (form.id === 'f-story') { ev.preventDefault(); onUpload('story'); return; }
+    });
+
+    /* ------------------------------------------------------------------ */
+    /* Lista                                                               */
+    /* ------------------------------------------------------------------ */
+    async function renderList() {
+      var cfg = await ensureConfig();
+      var events = await run('apiList');
+      var rows = events.map(function (e) {
+        var ready = e.ready === 'ready';
+        var badge = e.status === 'published'
+          ? '<span class="badge published">publicado</span>'
+          : (ready ? '<span class="badge ready">pronto</span>' : '<span class="badge pending">incompleto</span>');
+        var missed = e.missed && e.missed.length
+          ? '<div class="hint warn">Falta: ' + esc(e.missed.join(', ')) + '</div>' : '';
+        return '<tr>' +
+          '<td><strong>' + esc(e.couple) + '</strong>' + (e.featured ? ' ★' : '') +
+          '<div class="hint">' + esc(e.slug) + '</div>' + missed + '</td>' +
+          '<td>' + esc(e.city) + (e.state ? '/' + esc(e.state) : '') + '</td>' +
+          '<td>' + fmtDate(e.date) + '</td>' +
+          '<td>' + badge + '</td>' +
+          '<td class="row" style="justify-content:flex-end">' +
+          '<button class="small" data-action="edit" data-slug="' + esc(e.slug) + '">Editar</button>' +
+          '<button class="small primary" data-action="edit" data-slug="' + esc(e.slug) + '" data-go="publish">Publicar</button>' +
+          '</td></tr>';
+      }).join('');
+
+      byId('view').innerHTML =
+        '<div class="card"><h2>Eventos <span class="muted">(' + events.length + ')</span></h2>' +
+        '<p class="muted">Crie um evento, preencha os dados, envie as fotos e execute a automação para publicar no site.</p></div>' +
+        (events.length
+          ? '<div class="card" style="overflow-x:auto"><table class="list"><thead><tr>' +
+            '<th>Casamento</th><th>Cidade</th><th>Data</th><th>Status</th><th></th>' +
+            '</tr></thead><tbody>' + rows + '</tbody></table></div>'
+          : '<div class="card empty">Nenhum evento ainda. Clique em "+ Novo evento".</div>');
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Criar                                                               */
+    /* ------------------------------------------------------------------ */
+    function renderCreate() {
+      byId('view').innerHTML =
+        '<form id="f-create">' +
+        '<div class="card">' +
+        '<h2>Novo evento</h2>' +
+        '<p class="muted">Comece pelo essencial. O slug é gerado automaticamente e o restante é preenchido na edição.</p>' +
+        '<div class="grid">' +
+        '<div class="field"><label>Nome do casal *</label><input type="text" name="couple" required autofocus placeholder="Marina e Pedro"></div>' +
+        '<div class="field"><label>Título</label><input type="text" name="title" placeholder="Marina + Pedro"></div>' +
+        '<div class="field"><label>Data</label><input type="date" name="date"></div>' +
+        '<div class="field"><label>Cidade</label><input type="text" name="city" placeholder="Ouro Preto"></div>' +
+        '<div class="field"><label>Estado</label><input type="text" name="state" placeholder="MG"></div>' +
+        '<div class="field"><label>Local</label><input type="text" name="location" placeholder="Museu da Inconfidência"></div>' +
+        '<div class="field"><label>Espaço / Venue</label><input type="text" name="venue"></div>' +
+        '</div>' +
+        '<div class="actions"><button class="primary" type="submit">Criar evento</button>' +
+        '<button type="button" class="ghost" data-action="home">Cancelar</button></div>' +
+        '</div></form>';
+    }
+
+    function onCreate(form) {
+      var fd = new FormData(form);
+      var payload = {
+        couple: fd.get('couple').trim(),
+        title: (fd.get('title') || '').trim(),
+        date: (fd.get('date') || '').trim(),
+        city: (fd.get('city') || '').trim(),
+        state: (fd.get('state') || '').trim(),
+        location: (fd.get('location') || '').trim(),
+        venue: (fd.get('venue') || '').trim(),
+      };
+      run('apiCreate', payload).then(function (e) {
+        toast('Evento "' + e.couple + '" criado com slug "' + e.slug + '"');
+        renderEdit(e.slug);
+      }, function (err) { toast(err.message, true); });
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Edição                                                              */
+    /* ------------------------------------------------------------------ */
+    async function renderEdit(slug) {
+      state.slug = slug;
+      try {
+        state.event = await run('apiGet', slug);
+      } catch (err) { toast(err.message, true); renderList(); return; }
+      state.files = await run('apiListFiles', slug);
+
+      var e = state.event;
+      var vendors = (e.vendors || []).map(function (v, i) { return vendorRow(i, v); }).join('');
+
+      byId('view').innerHTML =
+        '<div class="row" style="margin-bottom:14px">' +
+        '<a class="ghost btn" data-action="home">← Lista</a>' +
+        '<div class="grow"></div>' +
+        '<button class="small danger" id="btn-delete">Apagar evento</button>' +
+        '</div>' +
+
+        '<form id="f-edit">' +
+        '<div class="card"><h2>Dados do casamento</h2>' +
+        '<div class="slug-box field"><label style="margin-bottom:4px">Slug (URL pública)</label>' +
+        '<input type="text" id="slug-field" value="' + esc(e.slug) + '" readonly>' +
+        '<button type="button" class="small" id="btn-regenerate-slug">Gerar novo</button></div>' +
+        '<div class="grid">' +
+        '<div class="field"><label>Título</label><input type="text" id="f-title" value="' + esc(e.title) + '"></div>' +
+        '<div class="field"><label>Nome do casal</label><input type="text" id="f-couple" value="' + esc(e.couple) + '"></div>' +
+        '<div class="field"><label>Data</label><input type="date" id="f-date" value="' + esc(e.date) + '"></div>' +
+        '<div class="field"><label>Local</label><input type="text" id="f-location" value="' + esc(e.location) + '"></div>' +
+        '<div class="field"><label>Cidade</label><input type="text" id="f-city" value="' + esc(e.city) + '"></div>' +
+        '<div class="field"><label>Estado</label><input type="text" id="f-state" value="' + esc(e.state) + '"></div>' +
+        '<div class="field"><label>Espaço / Venue</label><input type="text" id="f-venue" value="' + esc(e.venue) + '"></div>' +
+        '</div>' +
+        '<div class="field"><label>Description — teaser da página</label><textarea id="f-description" rows="3">' + esc(e.description) + '</textarea></div>' +
+        '<div class="field"><label>Excerpt — legenda curta (máx. 220)</label><textarea id="f-excerpt" rows="2" maxlength="220">' + esc(e.excerpt) + '</textarea></div>' +
+        '<label class="check"><input type="checkbox" id="f-featured"' + (e.featured ? ' checked' : '') + '> Destacar na home</label>' +
+        '<div class="field"><label>Tags (separadas por vírgula)</label><input type="text" id="f-tags" value="' + esc((e.tags || []).join(', ')) + '" placeholder="casamento, ouro-preto, casal"></div>' +
+        '<div class="field"><label>SEO title</label><input type="text" id="f-seoTitle" value="' + esc(e.seoTitle || '') + '"></div>' +
+        '<div class="field"><label>SEO description (máx. 160)</label><textarea id="f-seoDescription" rows="2" maxlength="160">' + esc(e.seoDescription || '') + '</textarea></div>' +
+        '</div>' +
+
+        '<div class="card"><h2>A história</h2>' +
+        '<p class="muted">Texto principal da página. Use o editor, intercale as fotos do story com "Inserir foto".</p>' +
+        '<div class="toolbar">' +
+        '<button type="button" class="b" data-cmd="bold">B</button>' +
+        '<button type="button" class="i" data-cmd="italic">I</button>' +
+        '<button type="button" class="u" data-cmd="underline">U</button>' +
+        '<button type="button" data-cmd="formatBlock" data-val="h2">H2</button>' +
+        '<button type="button" data-cmd="formatBlock" data-val="h3">H3</button>' +
+        '<button type="button" data-cmd="formatBlock" data-val="blockquote">Citação</button>' +
+        '<button type="button" data-cmd="insertUnorderedList">• Lista</button>' +
+        '<button type="button" data-cmd="insertOrderedList">1. Lista</button>' +
+        '<span class="grow"></span>' +
+        '<button type="button" class="primary" id="btn-insert-story">Inserir foto do story</button>' +
+        '</div>' +
+        '<div contenteditable="true" class="editor" id="story-ed"></div>' +
+        '<div class="hint" style="margin-top:6px">Fotos aparecem como blocos de imagem aqui e viram imagens no markdown do site.</div>' +
+        '</div>' +
+
+        '<div class="card"><h2>Fornecedores</h2>' +
+        '<div id="vendors">' + (vendors || '<p class="muted">Nenhum fornecedor ainda.</p>') + '</div>' +
+        '<button type="button" class="small" id="btn-add-vendor">+ Adicionar fornecedor</button>' +
+        '</div>' +
+
+        '<div class="card"><h2>Fotos</h2>' +
+        '<p class="muted">As fotos ficam no Google Drive e são baixadas pela automação na publicação.</p>' +
+        '<h3>Capa</h3>' +
+        '<form id="f-cover"><div class="row" style="gap:8px"><input type="file" name="cover" accept="image/*" style="flex:1">' +
+        '<button class="primary small" type="submit">Enviar capa</button></div></form>' +
+        '<div id="files-cover"></div>' +
+        '<h3 style="margin-top:18px">Galeria — fotos extras (mín. ' + (state.config ? state.config.minGallery : 8) + ')</h3>' +
+        '<form id="f-gallery"><div class="row" style="gap:8px"><input type="file" name="files" multiple accept="image/*" style="flex:1">' +
+        '<button class="primary small" type="submit">Enviar fotos</button></div></form>' +
+        '<div class="hint">A ordem exibida segue a ordem alfabética dos nomes dos arquivos.</div>' +
+        '<div id="files-gallery"></div>' +
+        '<h3 style="margin-top:18px">Story — fotos para inserir no texto</h3>' +
+        '<form id="f-story"><div class="row" style="gap:8px"><input type="file" name="files" multiple accept="image/*" style="flex:1">' +
+        '<button class="primary small" type="submit">Enviar fotos</button></div></form>' +
+        '<div id="files-story"></div>' +
+        '</div>' +
+
+        '<div class="card"><h2>Automação / publicação</h2>' +
+        '<ul class="checklist" id="checklist"></ul>' +
+        '<div class="actions" style="margin-top:14px">' +
+        '<button type="button" class="primary" id="btn-publish">Executar automação</button>' +
+        '<button type="button" id="btn-preview">Ver JSON da publicação</button>' +
+        '</div>' +
+        '<pre class="json" id="json-preview" hidden></pre>' +
+        '<div class="hint" style="margin-top:10px">A automação dispara o workflow "publish-wedding" no GitHub, que baixa estes dados, baixa as fotos do Drive, gera a pasta do evento e faz commit.</div>' +
+        '</div>' +
+
+        '<div class="row" style="justify-content:space-between; margin-top:6px">' +
+        '<button type="submit" class="primary">Salvar alterações</button>' +
+        '<button type="button" class="ghost" data-action="home">Voltar para a lista</button>' +
+        '</div>' +
+        '</form>';
+
+      byId('story-ed').innerHTML = e.historia_html || '';
+      bindEditListeners();
+      refreshFilesPane();
+      refreshPublishPane();
+    }
+
+    function vendorRow(i, v) {
+      v = v || {};
+      return '<div class="row vendor-row" style="margin-bottom:8px; align-items:flex-end">' +
+        '<div style="flex:1"><input type="text" data-vendor="role" placeholder="Espaço / Decoração ..." value="' + esc(v.role || '') + '"></div>' +
+        '<div style="flex:1"><input type="text" data-vendor="name" placeholder="Nome" value="' + esc(v.name || '') + '"></div>' +
+        '<div style="flex:1"><input type="text" data-vendor="instagram" placeholder="@instagram" value="' + esc(v.instagram || '') + '"></div>' +
+        '<button type="button" class="small danger" data-remove-vendor>Remover</button>' +
+        '</div>';
+    }
+
+    function bindEditListeners() {
+      var ed = byId('story-ed');
+
+      $$('.toolbar [data-cmd]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          ed.focus();
+          document.execCommand(btn.getAttribute('data-cmd'), false, btn.getAttribute('data-val') || null);
+        });
+      });
+
+      byId('btn-insert-story').addEventListener('click', function () { openStoryPicker(); });
+      byId('btn-add-vendor').addEventListener('click', function () {
+        byId('vendors').insertAdjacentHTML('beforeend', vendorRow(Date.now(), {}));
+      });
+      byId('vendors').addEventListener('click', function (ev) {
+        if (ev.target.closest('[data-remove-vendor]')) ev.target.closest('.vendor-row').remove();
+      });
+
+      byId('btn-regenerate-slug').addEventListener('click', function () {
+        var couple = byId('f-couple').value.trim();
+        var city = byId('f-city').value.trim();
+        if (!couple) { toast('Preencha o nome do casal primeiro.', true); return; }
+        var base = couple.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+        var slug = base;
+        if (city) slug = base + '-' + city.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+        byId('slug-field').value = slug;
+      });
+
+      byId('btn-delete').addEventListener('click', function () {
+        if (!confirm('Apagar o evento "' + state.event.couple + '" e suas referências? (As fotos no Drive permanecem).')) return;
+        run('apiDelete', state.slug).then(function () { toast('Evento apagado.'); renderList(); }, function (err) { toast(err.message, true); });
+      });
+
+      byId('btn-publish').addEventListener('click', onPublish);
+      byId('btn-preview').addEventListener('click', onPreview);
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Upload de fotos                                                     */
+    /* ------------------------------------------------------------------ */
+    function onUpload(kind) {
+      var formMap = { cover: 'f-cover', gallery: 'f-gallery', story: 'f-story' };
+      var form = byId(formMap[kind]);
+      var submit = form.querySelector('button[type=submit]');
+      var original = submit.textContent;
+      submit.disabled = true; submit.textContent = 'Enviando…';
+
+      var p;
+      if (kind === 'cover') p = runForm('apiUploadCover', form, state.slug);
+      else p = runForm('apiUploadFiles', form, state.slug, kind);
+
+      p.then(function (files) {
+        state.files = files;
+        toast('Fotos enviadas para o Google Drive.');
+        form.reset();
+        refreshFilesPane();
+        refreshPublishPane();
+      }, function (err) {
+        toast('Falha no envio: ' + err.message, true);
+      }).then(function () {
+        submit.disabled = false; submit.textContent = original;
+      });
+    }
+
+    function onRemoveFile(kind, name) {
+      run('apiRemoveFile', state.slug, kind, name).then(function (files) {
+        state.files = files;
+        refreshFilesPane();
+        refreshPublishPane();
+      }, function (err) { toast(err.message, true); });
+    }
+
+    function refreshFilesPane() {
+      var f = state.files || { cover: null, gallery: [], story: [] };
+
+      byId('files-cover').innerHTML = f.cover
+        ? fileRow(f.cover.name, 'cover', f.cover.name, true)
+        : '<p class="hint upload-note">Nenhuma capa enviada.</p>';
+
+      byId('files-gallery').innerHTML = (f.gallery.length
+        ? f.gallery.map(function (x) { return fileRow(x.name, 'gallery', x.name, false); }).join('')
+        : '<p class="hint upload-note">Nenhuma foto na galeria.</p>');
+
+      byId('files-story').innerHTML = (f.story.length
+        ? f.story.map(function (x) { return fileRow(x.name, 'story', x.name, false); }).join('')
+        : '<p class="hint upload-note">Nenhuma foto no story.</p>');
+    }
+
+    function fileRow(name, kind, dataName, isCover) {
+      var extra = kind === 'story'
+        ? '<button class="small primary" data-action="insertstory" data-name="' + esc(dataName) + '">Inserir no texto</button>'
+        : '';
+      return '<div class="file-row"><span class="name">' + esc(name) + (isCover ? ' <span class="badge ready" style="margin-left:4px">capa</span>' : '') +
+        '</span>' + extra +
+        '<button class="small danger" data-action="removefile" data-kind="' + esc(kind) + '" data-name="' + esc(dataName) + '">Remover</button></div>';
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Inserir foto do story no editor                                     */
+    /* ------------------------------------------------------------------ */
+    function openStoryPicker() {
+      var f = state.files || { story: [] };
+      if (!f.story.length) { toast('Envie fotos na aba Story primeiro.', true); return; }
+      var list = f.story.map(function (x, i) {
+        return '<button type="button" class="small" data-story-name="' + esc(x.name) + '" style="text-align:left; flex:1">' + esc(x.name) + '</button>';
+      }).join('');
+      var overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(22,18,14,.5);display:flex;align-items:center;justify-content:center;z-index:60';
+      overlay.innerHTML = '<div class="card" style="width:min(90vw,480px)"><h2>Inserir foto no texto</h2>' +
+        '<p class="muted">Escolha uma foto do story. Depois digite a legenda (alt).</p>' +
+        '<div class="row" style="flex-direction:column;align-items:stretch;gap:6px;margin-bottom:12px">' + list + '</div>' +
+        '<button class="ghost" id="close-picker">Cancelar</button></div>';
+      overlay.addEventListener('click', function (ev) {
+        var btn = ev.target.closest('[data-story-name]');
+        if (btn) {
+          var name = btn.getAttribute('data-story-name');
+          var alt = prompt('Legenda para a imagem (opcional):', '');
+          insertStoryImage(name, alt == null ? '' : alt);
+          overlay.remove();
+        } else if (ev.target.id === 'close-picker' || ev.target === overlay) {
+          overlay.remove();
+        }
+      });
+      document.body.appendChild(overlay);
+    }
+
+    function insertStoryImage(name, alt) {
+      var ed = byId('story-ed');
+      ed.focus();
+      var figure = '<figure class="story-img"><img data-story="' + esc(name) + '" alt="' + esc(alt || '') + '">' +
+        '<figcaption>' + esc(alt || '') + '</figcaption></figure>';
+      document.execCommand('insertHTML', false, '<p>' + figure + '</p>');
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Salvar                                                              */
+    /* ------------------------------------------------------------------ */
+    function collectEdit() {
+      var tags = byId('f-tags').value.split(',').map(function (t) { return t.trim(); }).filter(Boolean);
+      var vendors = $$('#vendors .vendor-row').map(function (row) {
+        var get = function (n) { var el = row.querySelector('[data-vendor="' + n + '"]'); return el ? el.value.trim() : ''; };
+        var name = get('name');
+        if (!name) return null;
+        return { role: get('role'), name: name, instagram: get('instagram') };
+      }).filter(Boolean);
+
+      return {
+        title: byId('f-title').value.trim(),
+        couple: byId('f-couple').value.trim(),
+        date: byId('f-date').value,
+        location: byId('f-location').value.trim(),
+        city: byId('f-city').value.trim(),
+        state: byId('f-state').value.trim(),
+        venue: byId('f-venue').value.trim(),
+        description: byId('f-description').value.trim(),
+        excerpt: byId('f-excerpt').value.trim(),
+        featured: byId('f-featured').checked,
+        tags: tags,
+        vendors: vendors,
+        seoTitle: byId('f-seoTitle').value.trim(),
+        seoDescription: byId('f-seoDescription').value.trim(),
+        historia_html: byId('story-ed').innerHTML,
+      };
+    }
+
+    function onSave() {
+      var payload = collectEdit();
+      run('apiSave', state.slug, payload).then(function (e) {
+        state.event = e;
+        toast('Alterações salvas.');
+        refreshPublishPane();
+      }, function (err) { toast(err.message, true); });
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Checklist + publicar                                                */
+    /* ------------------------------------------------------------------ */
+    function collectStatusProbe() {
+      var e = state.event;
+      var files = state.files || { cover: null, gallery: [], story: [] };
+      var min = state.config ? state.config.minGallery : 8;
+      var probe = {
+        title: e.title, couple: e.couple, date: e.date,
+        location: e.location, city: e.city, state: e.state, venue: e.venue,
+        description: e.description, excerpt: e.excerpt, historia_html: e.historia_html,
+        cover_id: files.cover ? files.cover.id : '',
+        gallery: files.gallery, story: files.story,
+      };
+      var missed = [];
+      ['title', 'couple', 'date', 'location', 'city', 'state', 'venue', 'description', 'excerpt', 'historia_html'].forEach(function (f) {
+        if (String(probe[f] || '').trim() === '') missed.push(f);
+      });
+      if (!files.cover) missed.push('cover');
+      if (files.gallery.length < min) missed.push('gallery (' + files.gallery.length + '/' + min + ')');
+      if (files.story.length === 0) missed.push('story');
+      return { missed: missed };
+    }
+
+    function refreshPublishPane() {
+      var probe = collectStatusProbe();
+      var items = [
+        ['Título e casal', !!state.event.title && !!state.event.couple],
+        ['Data', !!state.event.date],
+        ['Local · cidade · estado · venue', !!state.event.location && !!state.event.city && !!state.event.state && !!state.event.venue],
+        ['Description', !!state.event.description],
+        ['Excerpt', !!state.event.excerpt],
+        ['História (texto)', !!(state.event.historia_html || '').replace(/<[^>]+>/g, '').trim()],
+        ['Capa enviada', !!(state.files && state.files.cover)],
+        ['Galeria (mín. ' + (state.config ? state.config.minGallery : 8) + ')', !!(state.files && state.files.gallery && state.files.gallery.length >= (state.config ? state.config.minGallery : 8))],
+        ['Fotos do story', !!(state.files && state.files.story && state.files.story.length)],
+      ];
+      byId('checklist').innerHTML = items.map(function (it) {
+        return '<li>' + (it[1] ? '<span class="ok">✓</span>' : '<span class="warn">✗</span>') + '<span class="muted">' + esc(it[0]) + '</span></li>';
+      }).join('');
+      byId('checklist').insertAdjacentHTML('beforeend', '<li class="muted" style="margin-top:6px">' +
+        (probe.missed.length ? 'Falta: <span class="warn">' + esc(probe.missed.join(', ')) + '</span>'
+          : '<span class="ok">Tudo pronto para publicar.</span>') + '</li>');
+    }
+
+    function onPublish() {
+      var btn = byId('btn-publish');
+      btn.disabled = true;
+      run('apiPublish', state.slug).then(function (r) {
+        toast('Automação disparada. O workflow vai gerar /casamentos/' + r.slug + ' e fazer commit.');
+        btn.disabled = false;
+        renderList();
+      }, function (err) { toast('Não foi possível publicar: ' + err.message, true); btn.disabled = false; });
+    }
+
+    function onPreview() {
+      var pre = byId('json-preview');
+      if (!pre.hidden) { pre.hidden = true; return; }
+      run('apiPublication', state.slug).then(function (json) {
+        pre.textContent = JSON.stringify(json, null, 2);
+        pre.hidden = false;
+      }, function (err) { toast(err.message, true); });
+    }
+
+    /* ------------------------------------------------------------------ */
+    renderList();
+  </script>
+</body>
+</html>
