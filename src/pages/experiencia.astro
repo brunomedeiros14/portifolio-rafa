@@ -1,0 +1,74 @@
+---
+import CTA from '../components/CTA.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const steps = [
+  { num: '01', title: 'Primeiro contato', text: 'Vocês me chamam pelo WhatsApp ou e-mail e me contam o sonho: data, lugar, tamanho da festa, o que mais importa. Respondo pessoalmente — sem robô.' },
+  { num: '02', title: 'Encontro', text: 'Marcamos uma conversa (presencial ou online) e eu mostro histórias completas de casamentos reais, com tudo que correu bem e o que eu teria feito diferente.' },
+  { num: '03', title: 'Proposta', text: 'Vocês recebem uma proposta clara com cobertura, número de fotos, prazo, autorização de uso e valor. Sem letra miúda — e dou tempo para decidirem.' },
+  { num: '04', title: 'Preparação', text: 'Conversamos sobre cronograma, ensaio pré-wedding opcional e o mapa de lugares do dia. Eu chego sempre antes, com plano A, B e C para luz e chuva.' },
+  { num: '05', title: 'O grande dia', text: 'Cobertura discreta e completa. O objetivo é que vocês vivam o dia por inteiro — enquanto eu guardo cada parte dele.' },
+  { num: '06', title: 'Entrega', text: 'Curadoria e edição em até 60 dias. Álbum digital completo + seleção para impressão, em alta resolução, com liberação de uso total.' },
+];
+---
+
+<BaseLayout
+  title="Experiência"
+  description="Como funciona contratar a fotografia do seu casamento com Rafael Dias: do primeiro contato à entrega do álbum, um processo claro e transparente."
+  headerTransparent={false}
+>
+  <main class="bg-background">
+    <header class="border-b border-line">
+      <div class="mx-auto max-w-(--content-max) px-4 pb-14 pt-[calc(var(--header-h)+2rem)] sm:px-6 md:pb-18">
+        <p class="reveal text-xs font-medium uppercase tracking-[0.24em] text-accent">Experiência</p>
+        <h1 class="reveal mt-3 max-w-3xl font-display text-4xl font-medium tracking-tight sm:text-5xl" style="--reveal-delay:80ms">
+          Um processo simples, de mãos dadas
+        </h1>
+        <p class="reveal mt-5 max-w-2xl text-base leading-relaxed text-muted" style="--reveal-delay:160ms">
+          Desde o primeiro contato até a noite em que vocês abrirem o álbum em casa, vocês sabem
+          exatamente o que esperar.
+        </p>
+      </div>
+    </header>
+
+    <section class="mx-auto max-w-3xl px-4 py-16 sm:px-6 md:py-20">
+      <ol class="space-y-12">
+        {steps.map((step) => (
+          <li class="reveal grid gap-4 sm:grid-cols-[5rem_1fr] sm:gap-8">
+            <p class="font-display text-2xl italic text-accent sm:pt-1">{step.num}</p>
+            <div class="border-t border-line pt-4">
+              <h2 class="font-display text-2xl font-medium tracking-tight">{step.title}</h2>
+              <p class="mt-3 text-base leading-relaxed text-muted">{step.text}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </section>
+
+    <section class="bg-surface py-20">
+      <div class="mx-auto max-w-(--content-max) px-4 sm:px-6">
+        <SectionHeading
+          eyebrow="Entregáveis"
+          title="O que você recebe"
+          align="center"
+        />
+        <div class="mt-10 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { k: '50+', v: 'fotografias por hora de cobertura, o quanto a história pedir' },
+            { k: '100%', v: 'das fotos com edição individual de luz e cor' },
+            { k: '60 dias', v: 'prazo de entrega com curatorial em alta resolução' },
+            { k: 'Uso total', v: 'para imprimir, publicar e guardar para sempre' },
+          ].map((item) => (
+            <div class="reveal border-t border-line pt-6 text-center">
+              <p class="font-display text-3xl font-medium text-accent">{item.k}</p>
+              <p class="mt-3 text-sm leading-relaxed text-muted">{item.v}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <CTA title="Quer saber se temos agenda livre?" />
+</BaseLayout>

@@ -1,0 +1,129 @@
+---
+import { Picture } from 'astro:assets';
+import CTA from '../components/CTA.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE, absolute } from '../site.config';
+
+import portrait from '../assets/profile.png';
+import portraitSecondary from '../assets/secondary_profile.png';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: SITE.name,
+  jobTitle: SITE.role,
+  url: absolute('/sobre'),
+  image: absolute(portrait.src),
+  address: { '@type': 'PostalAddress', addressLocality: SITE.city, addressRegion: SITE.state, addressCountry: 'BR' },
+  sameAs: [SITE.instagram, SITE.whatsappUrl],
+};
+---
+
+<BaseLayout
+  title="Sobre"
+  description="Conheça Rafael Dias, fotógrafo de casamento em Belo Horizonte e Minas Gerais: abordagem editorial, natural e atemporal para histórias reais."
+  jsonLd={jsonLd}
+  headerTransparent={false}
+>
+  <main class="bg-background">
+    <header class="border-b border-line">
+      <div class="mx-auto max-w-(--content-max) px-4 pb-14 pt-[calc(var(--header-h)+2rem)] sm:px-6 md:pb-18">
+        <p class="reveal text-xs font-medium uppercase tracking-[0.24em] text-accent">Sobre</p>
+        <h1 class="reveal mt-3 max-w-3xl font-display text-4xl font-medium tracking-tight sm:text-5xl" style="--reveal-delay:80ms">
+          Fotografia é a minha forma de <em class="italic text-accent">guardar</em> o dia.
+        </h1>
+      </div>
+    </header>
+
+    <section class="mx-auto max-w-(--content-max) px-4 py-16 sm:px-6 md:py-24">
+      <div class="grid items-start gap-12 md:grid-cols-12 md:gap-16">
+        <div class="md:col-span-5">
+          <div class="reveal media aspect-4/5 overflow-hidden rounded-sm bg-line">
+            <Picture
+              src={portrait}
+              alt="Rafael Dias em campo, fotografando ao entardecer"
+              widths={[480, 1280]}
+              sizes="(min-width: 1024px) 40vw, 92vw"
+              formats={['avif']}
+              fallbackFormat="avif"
+              loading="eager"
+              decoding="async"
+              fetchpriority="high"
+              class="h-full w-full object-cover"
+            />
+          </div>
+        </div>
+        <div class="md:col-span-7">
+          <div class="prose-style space-y-5 text-base leading-relaxed text-muted">
+            <p>
+              Meu nome é <strong class="font-medium text-text">Rafael Dias</strong> e eu fotografo
+              casamentos desde que percebi que o valor de uma fotografia não está na técnica, e sim
+              no que ela devolve para quem a guarda. Comecei fotografando casamentos de amigos —
+              hoje, cada edição é uma coleção de memórias que vão atravessar gerações.
+            </p>
+            <p>
+              Sou apaixonado pela luz de Minas Gerais: o entardecer de Ouro Preto, o céu de
+              Tiradentes, os casarões de Nova Lima. Mas o assunto favorito continua sendo o mesmo —
+              pessoas que se amam e resolveram dizer isso em voz alta.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-surface py-20">
+      <div class="mx-auto max-w-(--content-max) px-4 sm:px-6">
+        <div class="grid items-center gap-12 md:grid-cols-2 md:gap-16">
+          <div class="order-2 md:order-1">
+            <SectionHeading
+              eyebrow="Filosofia"
+              title="Menos pose. Mais presença."
+            />
+            <div class="mt-6 space-y-5 text-base leading-relaxed text-muted">
+              <p>
+                Minha direção de casais é mínima. Guio o essencial e espero o resto — porque o
+                resto, quando é real, não se repete. Trabalho quase sempre com luz natural e deixo
+                que o dia conte a própria história.
+              </p>
+              <ul class="space-y-3">
+                {[
+                  'Cobertura completa, do preparo à pista de dança',
+                  'Retratos naturais e atemporais, sem modismo',
+                  'Entrega em alta resolução, para imprimir sem limites',
+                  'Autorização de uso plena, sem taxas escondidas',
+                ].map((item) => (
+                  <li class="flex items-start gap-3 text-sm">
+                    <span class="mt-0.5 text-accent" aria-hidden="true">✦</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          <div class="order-1 media aspect-[4/3] overflow-hidden rounded-sm bg-line md:order-2">
+            <Picture
+              src={portraitSecondary}
+              alt="Um momento de celebração ao entardecer"
+              widths={[480, 1280]}
+              sizes="(min-width: 1024px) 45vw, 92vw"
+              formats={['avif']}
+              fallbackFormat="avif"
+              loading="lazy"
+              decoding="async"
+              class="h-full w-full object-cover"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <CTA title="Vamos criar a sua história?" />
+</BaseLayout>
+
+<style>
+  .prose-style p {
+    margin-block: 1em;
+  }
+</style>

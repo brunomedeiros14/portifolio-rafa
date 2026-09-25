@@ -1,0 +1,75 @@
+---
+import { SITE, absolute } from '../site.config';
+
+interface Props {
+  /** <title> da página — sem o nome do site */
+  title: string;
+  /** Meta description (120–160 chars) */
+  description: string;
+  /** Caminho (ou URL absoluta). Default: página atual */
+  canonical?: string;
+  /** Imagem para Open Graph (caminho ou URL) */
+  ogImage?: string;
+  /** Tipo Open Graph. Default: website */
+  type?: 'website' | 'article';
+  /** JSON-LD como objeto serializável */
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  /** Impede indexação (páginas privadas / 404) */
+  noindex?: boolean;
+}
+
+const {
+  title,
+  description,
+  canonical = Astro.url.pathname,
+  ogImage = '/og-default.jpg',
+  type = 'website',
+  jsonLd,
+  noindex = false,
+} = Astro.props;
+
+const resolvedCanonical = absolute(canonical);
+const resolvedOgImage = absolute(ogImage);
+
+const DEFAULT_OG_TITLE = `${SITE.name} — ${SITE.role}`;
+const FULL_TITLE = title === SITE.name || title === DEFAULT_OG_TITLE ? SITE.name : `${title} | ${SITE.name}`;
+---
+
+<title>{FULL_TITLE}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={resolvedCanonical} />
+
+<meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow'} />
+<meta name="generator" content={Astro.generator} />
+<meta name="lang" content={SITE.language} />
+
+{/* Theme / mobile */}
+<meta name="theme-color" content="#16120e" />
+<meta name="color-scheme" content="light" />
+
+{/* Open Graph */}
+<meta property="og:type" content={type} />
+<meta property="og:site_name" content={SITE.name} />
+<meta property="og:title" content={type === 'article' ? FULL_TITLE : DEFAULT_OG_TITLE} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={resolvedCanonical} />
+<meta property="og:image" content={resolvedOgImage} />
+<meta property="og:image:alt" content={title} />
+<meta property="og:locale" content={SITE.locale} />
+
+{/* Twitter / X */}
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={FULL_TITLE} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={resolvedOgImage} />
+
+{/* Favicon */}
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+{/* Manifest / precarga de recurso crítico */}
+<link rel="manifest" href="/site.webmanifest" />
+{
+  jsonLd ? <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} /> : null
+}

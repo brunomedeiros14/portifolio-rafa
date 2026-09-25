@@ -1,0 +1,174 @@
+---
+interface Props {
+  /** Mesmo id do container da galeria. */
+  id: string;
+}
+
+const { id } = Astro.props;
+---
+
+<dialog
+  id={`lightbox-${id}`}
+  data-gallery-target={id}
+  class="lb m-0 h-full max-h-none w-full max-w-none border-0 bg-ink/92 p-0 text-white backdrop:bg-ink/80"
+  aria-label="Visualizador de fotografias"
+>
+  <button
+    type="button"
+    class="lb-close absolute right-4 top-4 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/25 text-white transition-colors hover:bg-white/10"
+    data-lb-close
+    aria-label="Fechar visor (tecla Esc)"
+  >
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+      <path d="M6 6l12 12M18 6 6 18" stroke-linecap="round" />
+    </svg>
+  </button>
+
+  <figure class="flex h-full flex-col items-center justify-center gap-4 px-4 py-16 sm:px-16">
+    <div class="lb-stage flex min-h-0 items-center justify-center">
+      <img
+        class="lb-img max-h-[78vh] max-w-full rounded-sm object-contain"
+        alt=""
+      />
+    </div>
+    <figcaption class="lb-caption px-2 text-center text-sm text-white/70" aria-live="polite"></figcaption>
+  </figure>
+
+  <button
+    type="button"
+    class="lb-prev absolute left-3 top-1/2 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 text-white transition-colors hover:bg-white/10 sm:inline-flex"
+    data-lb-prev
+    aria-label="Foto anterior (seta esquerda)"
+  >
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+      <path d="M15 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  </button>
+  <button
+    type="button"
+    class="lb-next absolute right-3 top-1/2 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 text-white transition-colors hover:bg-white/10 sm:inline-flex"
+    data-lb-next
+    aria-label="Próxima foto (seta direita)"
+  >
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+      <path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  </button>
+</dialog>
+
+<style is:global>
+  dialog.lb {
+    overscroll-behavior: contain;
+  }
+
+  dialog.lb[open] {
+    animation: lb-fade 240ms ease;
+  }
+
+  @keyframes lb-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+</style>
+
+<script>
+  const dialogs = Array.from(
+    document.querySelectorAll<HTMLDialogElement>('dialog[data-gallery-target]'),
+  );
+
+  const read = (node: HTMLElement) => ({
+    src: node.dataset.src ?? '',
+    width: node.dataset.width ?? '',
+    height: node.dataset.height ?? '',
+    caption: node.dataset.caption ?? '',
+  });
+
+  dialogs.forEach((dialog) => {
+    const gallery = dialog.dataset.galleryTarget ?? '';
+    const items = Array.from(
+      document.querySelectorAll<HTMLElement>(`[data-lightbox-item][data-gallery="${CSS.escape(gallery)}"]`),
+    );
+    if (items.length === 0) return;
+
+    const imgEl = dialog.querySelector<HTMLImageElement>('.lb-img')!;
+    const captionEl = dialog.querySelector<HTMLElement>('.lb-caption')!;
+    const prevEl = dialog.querySelector<HTMLButtonElement>('[data-lb-prev]')!;
+    const nextEl = dialog.querySelector<HTMLButtonElement>('[data-lb-next]')!;
+    const closeEl = dialog.querySelector<HTMLButtonElement>('[data-lb-close]')!;
+
+    let index = 0;
+
+    const render = () => {
+      const item = read(items[index]!);
+      imgEl.src = item.src;
+      imgEl.alt = item.caption;
+      imgEl.setAttribute('width', item.width);
+      imgEl.setAttribute('height', item.height);
+      captionEl.textContent = item.caption;
+      prevEl.style.visibility = items.length > 1 ? 'visible' : 'hidden';
+      nextEl.style.visibility = items.length > 1 ? 'visible' : 'hidden';
+      // Pré-carregamento inteligente do próximo slide.
+      const next = items[(index + 1) % items.length];
+      if (next?.dataset.src) new Image().src = next.dataset.src;
+    };
+
+    const go = (next: number) => {
+      index = (next + items.length) % items.length;
+      render();
+    };
+
+    const openAt = (at: number) => {
+      index = at;
+      render();
+      dialog.showModal();
+      document.body.classList.add('overflow-hidden');
+    };
+
+    const closeLightbox = () => {
+      dialog.close();
+      document.body.classList.remove('overflow-hidden');
+    };
+
+    items.forEach((button, i) => {
+      button.addEventListener('click', () => openAt(i));
+    });
+
+    closeEl.addEventListener('click', closeLightbox);
+    dialog.addEventListener('close', () => document.body.classList.remove('overflow-hidden'));
+    dialog.addEventListener('click', (event) => {
+      if (event.target === dialog) closeLightbox();
+    });
+
+    prevEl.addEventListener('click', () => go(index - 1));
+    nextEl.addEventListener('click', () => go(index + 1));
+
+    dialog.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowRight') go(index + 1);
+      else if (event.key === 'ArrowLeft') go(index - 1);
+      else if (event.key === 'Home') go(0);
+      else if (event.key === 'End') go(items.length - 1);
+    });
+
+    // Suporte a swipe (touch).
+    let touchX = 0;
+    dialog.addEventListener(
+      'touchstart',
+      (event) => {
+        touchX = event.changedTouches[0]!.clientX;
+      },
+      { passive: true },
+    );
+    dialog.addEventListener(
+      'touchend',
+      (event) => {
+        const delta = event.changedTouches[0]!.clientX - touchX;
+        if (Math.abs(delta) > 48) go(index + (delta < 0 ? 1 : -1));
+      },
+      { passive: true },
+    );
+  });
+</script>

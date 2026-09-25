@@ -1,0 +1,45 @@
+---
+import { Picture } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+import { formatDate } from '../site.config';
+
+interface Props {
+  wedding: CollectionEntry<'weddings'>;
+  priority?: boolean;
+}
+
+const { wedding, priority = false } = Astro.props;
+const { data } = wedding;
+---
+
+<article class="group">
+  <a
+    href={`/casamentos/${data.slug}`}
+    class="block"
+    aria-label={`Ver o casamento de ${data.couple} em ${data.location}`}
+  >
+    <div class="media relative aspect-[4/5] overflow-hidden rounded-sm bg-line">
+      <Picture
+        src={data.cover}
+        alt={data.excerpt}
+        widths={[480, 1280]}
+        sizes="(min-width: 1280px) 340px, (min-width: 1024px) 30vw, (min-width: 640px) 45vw, 92vw"
+        formats={['avif']}
+        fallbackFormat="avif"
+        loading={priority ? 'eager' : 'lazy'}
+        decoding="async"
+        fetchpriority={priority ? 'high' : undefined}
+        class="h-full w-full object-cover"
+      />
+      <div class="absolute inset-0 bg-gradient-to-t from-ink/50 via-transparent to-transparent opacity-70 transition-opacity duration-500 group-hover:opacity-40" aria-hidden="true" />
+      <p class="absolute bottom-4 left-4 text-xs font-medium uppercase tracking-[0.2em] text-white/90">
+        {data.location}, {data.state}
+      </p>
+    </div>
+  </a>
+  <h3 class="mt-4 font-display text-xl font-medium tracking-tight transition-colors group-hover:text-accent">
+    {data.couple}
+  </h3>
+  <p class="mt-1 text-sm text-muted">{formatDate(data.date)}</p>
+  <p class="mt-2 line-clamp-2 text-sm leading-relaxed text-muted">{data.excerpt}</p>
+</article>

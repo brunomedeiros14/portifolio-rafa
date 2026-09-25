@@ -1,0 +1,79 @@
+---
+import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import SEO from '../components/SEO.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  canonical?: string;
+  ogImage?: string;
+  type?: 'website' | 'article';
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  noindex?: boolean;
+  /** Header transparente sobre hero (default true) */
+  headerTransparent?: boolean;
+  headerSolidOnLoad?: boolean;
+}
+
+const {
+  title,
+  description,
+  canonical,
+  ogImage,
+  type,
+  jsonLd,
+  noindex,
+  headerTransparent = true,
+  headerSolidOnLoad,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <ClientRouter />
+    <SEO
+      title={title}
+      description={description}
+      canonical={canonical}
+      ogImage={ogImage}
+      type={type}
+      jsonLd={jsonLd}
+      noindex={noindex}
+    />
+    <link
+      rel="preload"
+      href="/fonts/fraunces-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+  </head>
+  <body>
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-full focus:bg-accent focus:px-5 focus:py-2.5 focus:text-sm focus:text-white"
+    >
+      Pular para o conteúdo
+    </a>
+    <Header transparent={headerTransparent} solidOnLoad={headerSolidOnLoad} />
+    <main id="main"><slot /></main>
+    <Footer />
+    <script>
+      document.documentElement.classList.add('js');
+    </script>
+    <script>
+      import { mountReveal } from '../scripts/reveal';
+
+      const add = () => document.querySelectorAll('.reveal:not(.is-visible)').forEach(mountReveal);
+      add();
+      document.addEventListener('astro:page-load', add);
+      document.addEventListener('astro:after-swap', add);
+    </script>
+  </body>
+</html>

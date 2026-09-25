@@ -1,0 +1,55 @@
+---
+import { getCollection } from 'astro:content';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import CTA from '../../components/CTA.astro';
+import WeddingGrid from '../../components/WeddingGrid.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { SITE, absolute } from '../../site.config';
+
+const weddings = await getCollection('weddings');
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'Casamentos',
+  url: absolute('/casamentos'),
+  provider: { '@type': 'Person', name: SITE.name },
+  hasPart: weddings.map(({ data }) => ({
+    '@type': 'Article',
+    headline: `${data.couple} — casamento`,
+    url: absolute(`/casamentos/${data.slug}`),
+    image: absolute(data.cover.src),
+  })),
+};
+---
+
+<BaseLayout
+  title="Casamentos"
+  description="Histórias reais de casamento fotografadas por Rafael Dias em Belo Horizonte, Nova Lima, Ouro Preto, Tiradentes e por todo Minas Gerais."
+  headerTransparent={false}
+  jsonLd={jsonLd}
+>
+  <header class="border-b border-line bg-background">
+    <div class="mx-auto max-w-(--content-max) px-4 pt-[calc(var(--header-h)+2rem)] sm:px-6">
+      <Breadcrumbs items={[{ label: 'Casamentos' }]} />
+    </div>
+    <div class="mx-auto max-w-(--content-max) px-4 pb-16 pt-10 sm:px-6 md:pb-20">
+      <p class="reveal text-xs font-medium uppercase tracking-[0.24em] text-accent">Portfólio</p>
+      <h1 class="reveal mt-3 max-w-3xl font-display text-4xl font-medium tracking-tight sm:text-5xl" style="--reveal-delay:80ms">
+        Cada casamento, uma história
+      </h1>
+      <p class="reveal mt-5 max-w-2xl text-base leading-relaxed text-muted" style="--reveal-delay:160ms">
+        Uma curadoria das cerimônias que tive o privilégio de fotografar. {weddings.length} histórias
+        completas — e cada uma com galeria, bastidores e lugares reais de Minas Gerais.
+      </p>
+    </div>
+  </header>
+
+  <div class="bg-surface">
+    <div class="mx-auto max-w-(--content-max) px-4 py-16 sm:px-6 md:py-20">
+      <WeddingGrid weddings={weddings} priorityFirst />
+    </div>
+  </div>
+
+  <CTA />
+</BaseLayout>

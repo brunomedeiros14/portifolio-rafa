@@ -1,0 +1,25 @@
+---
+import WeddingLayout from '../../layouts/WeddingLayout.astro';
+import { getCollection } from 'astro:content';
+import { weddingSimilarity } from '../../utils/weddings';
+
+export async function getStaticPaths() {
+  const weddings = await getCollection('weddings');
+
+  return weddings.map((wedding) => {
+    const related = weddings
+      .filter((other) => other.data.slug !== wedding.data.slug)
+      .sort((a, b) => weddingSimilarity(b, wedding) - weddingSimilarity(a, wedding))
+      .slice(0, 3);
+
+    return {
+      params: { slug: wedding.data.slug },
+      props: { wedding, related },
+    };
+  });
+}
+
+const { wedding, related } = Astro.props;
+---
+
+<WeddingLayout wedding={wedding} related={related} />

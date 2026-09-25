@@ -1,0 +1,70 @@
+---
+import { Picture } from 'astro:assets';
+import { getCollection } from 'astro:content';
+import CTA from '../../components/CTA.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { formatDate } from '../../site.config';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime(),
+);
+---
+
+<BaseLayout
+  title="Blog"
+  description="Artigos úteis sobre casamento em Minas Gerais: locais, luz, ensaios pré-wedding e como escolher o fotógrafo perfeito."
+  headerTransparent={false}
+>
+  <header class="border-b border-line bg-background">
+    <div class="mx-auto max-w-(--content-max) px-4 pb-16 pt-[calc(var(--header-h)+2rem)] sm:px-6 md:pb-20">
+      <p class="reveal text-xs font-medium uppercase tracking-[0.24em] text-accent">Diário</p>
+      <h1 class="reveal mt-3 max-w-3xl font-display text-4xl font-medium tracking-tight sm:text-5xl">
+        Blog de casamento
+      </h1>
+      <p class="reveal mt-5 max-w-2xl text-base leading-relaxed text-muted" style="--reveal-delay:120ms">
+        Textos úteis para noivas e noivos de verdade — sobre lugares, luz, ensaios e a escolha de
+        quem vai registrar o seu dia.
+      </p>
+    </div>
+  </header>
+
+  <div class="bg-surface">
+    <div class="mx-auto max-w-(--content-max) px-4 py-16 sm:px-6 md:py-20">
+      <div class="grid gap-x-10 gap-y-14 md:grid-cols-2">
+        {posts.map((post, index) => (
+          <article class="group">
+            <a href={`/blog/${post.data.slug}`} class="block" data-astro-prefetch>
+              {post.data.cover ? (
+                <div class="media aspect-16/10 overflow-hidden rounded-sm bg-line">
+                  <Picture
+                    src={post.data.cover}
+                    alt={post.data.description}
+                    widths={[480, 1024]}
+                    sizes="(min-width: 1024px) 544px, 92vw"
+                    formats={['avif']}
+                    fallbackFormat="avif"
+                    loading={index === 0 ? 'eager' : 'lazy'}
+                    decoding="async"
+                    fetchpriority={index === 0 ? 'high' : undefined}
+                    class="h-full w-full object-cover"
+                  />
+                </div>
+              ) : null}
+              <div class="mt-5">
+                <p class="text-xs font-medium uppercase tracking-[0.2em] text-accent">
+                  {formatDate(post.data.date)}
+                </p>
+                <h2 class="mt-2 font-display text-2xl font-medium tracking-tight transition-colors group-hover:text-accent">
+                  {post.data.title}
+                </h2>
+                <p class="mt-2 line-clamp-3 text-sm leading-relaxed text-muted">{post.data.description}</p>
+              </div>
+            </a>
+          </article>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <CTA />
+</BaseLayout>

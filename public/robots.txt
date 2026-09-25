@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Recursos necessários para renderização e indexação
+Allowed: /favicon.svg
+Allowed: /apple-touch-icon.png
+Allowed: /images
+
+Sitemap: https://rafaeldiasfotos.com.br/sitemap-index.xml

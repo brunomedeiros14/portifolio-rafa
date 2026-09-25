@@ -1,0 +1,41 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Página não encontrada"
+  description="Essa página não existe ou foi movida. Volte para a home e descubra os casamentos fotografados por Rafael Dias."
+  noindex={true}
+  headerTransparent={false}
+>
+  <main class="flex min-h-[70svh] flex-col items-center justify-center bg-background px-4 py-24 text-center">
+    <p class="font-display text-lg italic text-accent">404</p>
+    <h1 class="mt-4 max-w-xl font-display text-4xl font-medium tracking-tight sm:text-5xl">
+      Essa página não existe — mas a fotografia é bem real.
+    </h1>
+    <p class="mt-5 max-w-xl text-base leading-relaxed text-muted">
+      O endereço pode ter sido digitado errado ou a página foi movida. Que tal voltar para o
+      início e conhecer as histórias que já contei por aqui?
+    </p>
+    <div class="mt-10 flex flex-wrap items-center justify-center gap-4">
+      <a
+        href="/"
+        class="inline-flex items-center justify-center rounded-full bg-accent px-7 py-3.5 text-sm font-medium text-white transition-colors hover:bg-accent-soft"
+      >
+        Voltar para a home
+      </a>
+      <a
+        href="/casamentos"
+        class="inline-flex items-center justify-center rounded-full border border-text/20 px-7 py-3.5 text-sm font-medium transition-colors hover:border-accent"
+      >
+        Ver casamentos
+      </a>
+      <a
+        href="/contato"
+        class="inline-flex items-center justify-center rounded-full border border-text/20 px-7 py-3.5 text-sm font-medium transition-colors hover:border-accent"
+      >
+        Falar comigo
+      </a>
+    </div>
+  </main>
+</BaseLayout>

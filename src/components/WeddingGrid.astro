@@ -1,0 +1,18 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import WeddingCard from './WeddingCard.astro';
+
+interface Props {
+  weddings: Array<CollectionEntry<'weddings'>>;
+  /** Prioridade de carregamento da primeira imagem (LCP). */
+  priorityFirst?: boolean;
+}
+
+const { weddings, priorityFirst = false } = Astro.props;
+---
+
+<div class="grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+  {weddings.map((wedding, index) => (
+    <WeddingCard wedding={wedding} priority={priorityFirst && index === 0} />
+  ))}
+</div>

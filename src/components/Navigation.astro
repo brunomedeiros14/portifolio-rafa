@@ -1,0 +1,21 @@
+---
+import { NAV_LINKS } from '../site.config';
+---
+
+<nav aria-label="Navegação principal">
+  <ul class="flex flex-col gap-1 lg:flex-row lg:items-center lg:gap-8">
+    {NAV_LINKS.map((link) => (
+      <li>
+        <a
+          href={link.href}
+          class:list={[
+            'link-line relative block py-2 text-sm font-medium tracking-[0.02em] text-current lg:py-1',
+          ]}
+          aria-current={Astro.url.pathname === link.href ? 'page' : undefined}
+        >
+          {link.label}
+        </a>
+      </li>
+    ))}
+  </ul>
+</nav>

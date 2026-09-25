@@ -1,11 +1,249 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
+import { Picture } from 'astro:assets';
+import { getCollection } from 'astro:content';
+import CTA from '../components/CTA.astro';
+import Gallery from '../components/Gallery.astro';
+import Hero from '../components/Hero.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import WeddingGrid from '../components/WeddingGrid.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE, absolute } from '../site.config';
+import { getGalleryItems, getWeddingImages, weddingFolder, type GalleryItem } from '../utils/weddings';
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+const featured = (await getCollection('weddings', ({ data }) => data.featured)).sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime(),
+);
+
+const heroWedding = featured[0];
+const aboutImage = featured[1];
+
+// Seleção editorial: algumas fotografias fortes de histórias próximas.
+const selected: GalleryItem[] = [];
+for (const wedding of featured.slice(0, 3)) {
+  const images = getWeddingImages(weddingFolder(wedding), wedding.data.cover).slice(0, 3);
+  selected.push(...getGalleryItems(images, wedding.data.couple));
+}
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ProfessionalService',
+  name: SITE.name,
+  description: SITE.description,
+  url: absolute('/'),
+  image: heroWedding ? absolute(heroWedding.data.cover.src) : undefined,
+  areaServed: SITE.areas.map((city) => ({ '@type': 'City', name: city })),
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: SITE.city,
+    addressRegion: SITE.state,
+    addressCountry: 'BR',
+  },
+  sameAs: [SITE.instagram, SITE.whatsappUrl],
+};
 ---
 
-<Layout>
-	<Welcome />
-</Layout>
+<BaseLayout
+  title={SITE.name}
+  description={SITE.description}
+  jsonLd={[jsonLd, { '@context': 'https://schema.org', '@type': 'WebSite', name: SITE.name, url: absolute('/') }]}
+>
+  {heroWedding ? (
+    <Hero
+      image={heroWedding.data.cover}
+      alt={heroWedding.data.excerpt}
+      eyebrow={`${SITE.role} · ${SITE.city}, ${SITE.state}`}
+      title={`Histórias de amor, fotografadas como acontecem`}
+      subtitle="Fotografia editorial e documental de casamento em Belo Horizonte, Nova Lima, Ouro Preto, Tiradentes e toda Minas Gerais."
+      ctas={[
+        { label: 'Vamos conversar', href: '/contato', primary: true },
+        { label: 'Ver casamentos', href: '/casamentos' },
+      ]}
+    />
+  ) : null}
+
+  <main class="bg-background">
+    {/* Posicionamento */}
+    <section class="mx-auto max-w-3xl px-4 py-20 text-center sm:px-6 md:py-28">
+      <p class="reveal text-xs font-medium uppercase tracking-[0.24em] text-accent">
+        Fotografia de casamento
+      </p>
+      <h2 class="reveal mx-auto mt-5 max-w-2xl font-display text-3xl font-medium leading-tight tracking-tight sm:text-4xl md:text-[2.6rem]" style="--reveal-delay:80ms">
+        Não fotografar o que é "perfeito". Fotografar o que é <em class="italic text-accent">verdadeiro</em>.
+      </h2>
+      <p class="reveal mx-auto mt-6 max-w-xl text-base leading-relaxed text-muted" style="--reveal-delay:160ms">
+        Sou Rafael Dias, fotógrafo de casamento. As histórias de amor que fotografo parecem
+        acontecer diante da câmera sem esforço, porque é assim que eu trabalho: uma presença
+        silenciosa, a luz certa e o equilíbrio entre direção e espera. Menos produção, mais
+        memória. Cada cerimônia, cada olhar trocado e cada lágrima de alegria entram no registro
+        como aconteceram — sem retoques na emoção.
+      </p>
+    </section>
+
+    {/* Casamentos em destaque */}
+    <section class="bg-surface py-20 md:py-28">
+      <div class="mx-auto max-w-(--content-max) px-4 sm:px-6">
+        <div class="reveal flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+          <SectionHeading
+            eyebrow="Histórias recentes"
+            title="Casamentos selecionados"
+            description="Uma pequena seleção dos casamentos mais bonitos que fotografei por Minas Gerais."
+          />
+          <a href="/casamentos" class="link-line shrink-0 text-sm font-medium text-accent" data-astro-prefetch>
+            Ver todos →
+          </a>
+        </div>
+        <p class="reveal mt-8 max-w-2xl text-base leading-relaxed text-muted" style="--reveal-delay:100ms">
+          Cada história aqui representa um dia inteiro vivido ao lado de famílias, padrinhos e
+          amigos: o preparo, a cerimônia, os retratos ao entardecer e a festa que só termina de
+          madrugada. Aos poucos, este portfólio vai crescendo com novos casais de Belo Horizonte,
+          Nova Lima, Ouro Preto, Tiradentes e outras cidades mineiras. Navegue pelos casamentos,
+          veja os detalhes de cada cerimônia e sinta o clima de cada festa como se estivesse lá.
+        </p>
+        <div class="mt-12">
+          <WeddingGrid weddings={featured} priorityFirst />
+        </div>
+      </div>
+    </section>
+
+    {/* Sobre o fotógrafo */}
+    <section class="mx-auto max-w-(--content-max) px-4 py-20 sm:px-6 md:py-28" aria-labelledby="sobre-heading">
+      <div class="grid items-center gap-10 md:grid-cols-2 md:gap-16">
+        {aboutImage ? (
+          <div class="reveal media relative aspect-[4/5] overflow-hidden rounded-sm bg-line">
+            <Picture
+              src={aboutImage.data.cover}
+              alt={`${aboutImage.data.couple} — ${aboutImage.data.excerpt}`}
+              widths={[480, 1280]}
+              sizes="(min-width: 1024px) 45vw, 92vw"
+              formats={['avif']}
+              fallbackFormat="avif"
+              loading="lazy"
+              decoding="async"
+              class="h-full w-full object-cover"
+            />
+          </div>
+        ) : null}
+        <div>
+          <SectionHeading
+            eyebrow="Sobre"
+            title="Uma abordagem editorial e humana"
+          />
+          <div class="reveal mt-6 space-y-5 text-base leading-relaxed text-muted" style="--reveal-delay:120ms">
+            <p>
+              Acredito que fotografia de casamento não é sobre poses perfeitas, e sim sobre
+              preservar o que aconteceu de verdade: o nervosismo antes da entrada, a risada da
+              madrinha, o abraço apertado no final da noite.
+            </p>
+            <p>
+              Trabalho com luz natural, pouca direção e bastante presença. Cada casamento é
+              tratado como uma história editorial — com começo, meio, fim e emoção.
+            </p>
+            <p>
+              Meu compromisso é devolver a vocês imagens que despertem a memória vivida: a textura
+              do vestido, o cheiro do buffet, a música que embalou a primeira dança. Por isso eu
+              fotografo o essencial e deixei o resto falar, com edição demorada e um cuidado
+              artesanal na entrega do álbum.
+            </p>
+          </div>
+          <div class="reveal mt-8">
+            <a href="/sobre" class="inline-flex items-center justify-center rounded-full border border-text/20 px-6 py-3 text-sm font-medium transition-colors hover:border-accent hover:bg-accent hover:text-white">
+              Sobre mim
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* Seleção editorial — fotografias soltas */}
+    <section class="bg-ink py-20 text-white md:py-28">
+      <div class="mx-auto max-w-(--content-max) px-4 sm:px-6">
+        <div class="reveal mb-12 max-w-2xl">
+          <p class="text-xs font-medium uppercase tracking-[0.24em] text-accent-soft">Seleção editorial</p>
+          <h2 class="mt-3 font-display text-3xl font-medium tracking-tight sm:text-4xl">
+            Fotografias que já guardaram histórias
+          </h2>
+          <p class="mt-4 text-sm leading-relaxed text-white/70">
+            Momentos separados das galerias completas: detalhes, emoções e encontros que resumem
+            como as histórias de amor acontecem em cada casamento que acompanho.
+          </p>
+        </div>
+        <div class="reveal">
+          <Gallery id="home-editorial" items={selected} />
+        </div>
+      </div>
+    </section>
+
+    {/* Experiência */}
+    <section class="mx-auto max-w-(--content-max) px-4 py-20 sm:px-6 md:py-28" aria-labelledby="experiencia-heading">
+      <SectionHeading
+        eyebrow="Como funciona"
+        title="Sua experiência comigo"
+        description="Do primeiro café ao álbum na mesa da sala, um processo simples e transparente."
+      />
+      <div class="mt-12 grid gap-10 md:grid-cols-3">
+        {[
+          { step: '01', title: 'Conversa', text: 'Café, vídeo ou mensagem. Conte a história de vocês, o lugar, o estilo — e eu mostro como trabalho, sem enrolação. Saímos da conversa com o roteiro do dia, horários e os lugares que importam para vocês.' },
+          { step: '02', title: 'O grande dia', text: 'Presença discreta do início ao fim: preparativos, cerimônia, retratos e festa. Sem cronômetro, acompanhando o ritmo da emoção — desde o vestido sendo abotoado até o último brinde na madrugada.' },
+          { step: '03', title: 'História entregue', text: 'Curadoria e edição com calma. Em até 60 dias você recebe suas melhores fotografias, prontas para imprimir e eternizar, em alta resolução e com autorização de uso plena.' },
+        ].map((item) => (
+          <div class="reveal border-t border-line pt-6">
+            <p class="font-display text-sm italic text-accent">{item.step}</p>
+            <h3 class="mt-3 font-display text-xl font-medium tracking-tight">{item.title}</h3>
+            <p class="mt-3 text-sm leading-relaxed text-muted">{item.text}</p>
+          </div>
+        ))}
+      </div>
+      <div class="reveal mt-10">
+        <a href="/experiencia" class="link-line text-sm font-medium text-accent" data-astro-prefetch>
+          Como funciona
+        </a>
+      </div>
+      <div class="reveal mt-12 max-w-2xl space-y-4 text-sm leading-relaxed text-muted">
+        <p class="font-medium text-text">Tudo o que você encontra em um contrato:</p>
+        <div class="grid gap-x-8 gap-y-2 sm:grid-cols-2">
+          {[
+            'Cobertura do preparo à pista de dança',
+            'Dois fotógrafos nos dias inteiros',
+            'Ensaios pré-casamento ou no dia',
+            'Galeria online com todas as imagens',
+            'Impressão profissional incluída',
+            'Suporte humano antes e depois da festa',
+          ].map((item) => (
+            <p class="flex items-start gap-2">
+              <span class="mt-0.5 text-accent" aria-hidden="true">✦</span>
+              {item}
+            </p>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    {/* Locais */}
+    <section class="bg-surface py-20">
+      <div class="mx-auto max-w-(--content-max) px-4 sm:px-6">
+        <SectionHeading
+          eyebrow="Onde atuo"
+          title="Casamentos por Minas Gerais"
+          description="De Belo Horizonte às cidades históricas — e com alegria para além de Minas."
+          align="center"
+        />
+        <p class="reveal mx-auto mt-6 max-w-2xl text-center text-base leading-relaxed text-muted">
+          Atendo casamentos na capital e no interior, sem taxa de deslocamento dentro de Minas.
+          Se a festa de vocês sai do estado, combinamos um orçamento transparente para viagem e
+          hospedagem. Gosto de trabalhar tanto em salões de fazenda quanto em cerimônias ao ar
+          livre, igrejas centenárias ou quintais de casa — o cenário ideal é aquele que faz os
+          dois se sentirem à vontade.
+        </p>
+        <ul class="reveal mt-10 flex flex-wrap justify-center gap-3">
+          {SITE.areas.map((area) => (
+            <li class="rounded-full border border-line bg-background px-5 py-2.5 text-sm text-text">
+              {area}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+
+    <CTA />
+  </main>
+</BaseLayout>

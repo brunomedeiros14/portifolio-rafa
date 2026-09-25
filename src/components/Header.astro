@@ -1,0 +1,161 @@
+---
+import Navigation from './Navigation.astro';
+import { SITE } from '../site.config';
+
+interface Props {
+  /** Começa transparente (sobre um hero escuro) e vira sólido ao rolar. */
+  transparent?: boolean;
+  /** Marca ativa quando a página possui um <h1> próprio na base. */
+  solidOnLoad?: boolean;
+}
+
+const { transparent = true, solidOnLoad = !transparent } = Astro.props;
+---
+
+<header
+  id="site-header"
+  class:list={[
+    'fixed inset-x-0 top-0 z-50 transition-colors duration-300',
+    transparent ? 'header-transparent' : 'header-solid',
+    solidOnLoad ? 'is-scrolled' : '',
+  ]}
+>
+  <div class="mx-auto flex h-(--header-h) max-w-(--content-max) items-center justify-between px-4 sm:px-6">
+    <a
+      href="/"
+      class="group flex items-baseline gap-1.5 font-display text-[1.35rem] font-medium tracking-tight"
+      aria-label={`${SITE.name} — ${SITE.role} — início`}
+    >
+      <span>Rafael</span>
+      <span class="italic text-accent transition-transform duration-500 group-hover:-rotate-3">Dias</span>
+    </a>
+
+    <div class="hidden lg:block">
+      <Navigation />
+    </div>
+
+    <div class="hidden items-center gap-6 lg:flex">
+      <a
+        href="/contato"
+        class="rounded-full border border-current/25 px-5 py-2 text-sm font-medium tracking-wide transition-colors hover:bg-accent hover:border-accent hover:text-white"
+      >
+        Fale comigo
+      </a>
+    </div>
+
+    <button
+      id="menu-toggle"
+      type="button"
+      class="inline-flex items-center gap-2 px-1 py-2 text-sm font-medium lg:hidden"
+      aria-controls="mobile-menu"
+      aria-expanded="false"
+    >
+      <span class="menu-label">Menu</span>
+      <svg aria-hidden="true" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M4 8h16M4 16h16" stroke-linecap="round" />
+      </svg>
+    </button>
+  </div>
+
+  <div id="mobile-menu" class="header-menu hidden lg:hidden">
+    <div class="mx-auto max-w-(--content-max) px-4 pb-8 pt-2 sm:px-6">
+      <Navigation />
+      <a
+        href="/contato"
+        class="mt-4 inline-flex w-full items-center justify-center rounded-full bg-accent px-5 py-3 text-sm font-medium text-white"
+      >
+        Quero um orçamento
+      </a>
+    </div>
+  </div>
+</header>
+
+<style is:global>
+  header.header-transparent:not(.is-scrolled) {
+    color: #fff;
+    background: transparent;
+  }
+
+  header.header-transparent:not(.is-scrolled) #mobile-menu {
+    color: var(--color-text);
+  }
+
+  header.header-transparent:not(.is-scrolled) a.link-line {
+    text-shadow: 0 1px 8px rgb(0 0 0 / 0.35);
+  }
+
+  header.is-scrolled,
+  header.header-solid {
+    background: rgb(250 247 242 / 0.88);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    color: var(--color-text);
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  header.header-transparent:not(.is-scrolled) .border-current {
+    border-color: rgb(255 255 255 / 0.5);
+  }
+
+  /* Menu mobile aberto */
+  #mobile-menu {
+    background: rgb(250 247 242 / 0.97);
+    border-top: 1px solid var(--color-line);
+  }
+
+  #mobile-menu.is-open {
+    display: block;
+  }
+
+  body.menu-open {
+    overflow: hidden;
+  }
+</style>
+
+<script>
+  const header = document.querySelector<HTMLElement>('#site-header');
+  const toggle = document.querySelector<HTMLElement>('#menu-toggle');
+  const menu = document.querySelector<HTMLElement>('#mobile-menu');
+
+  const setScrolled = () => {
+    if (window.scrollY > 24) header?.classList.add('is-scrolled');
+    else if (!header?.classList.contains('header-solid')) header?.classList.remove('is-scrolled');
+  };
+
+  window.addEventListener('scroll', setScrolled, { passive: true });
+  setScrolled();
+
+  const setMenu = (open: boolean) => {
+    if (!menu) return;
+    menu.classList.toggle('is-open', open);
+    toggle?.setAttribute('aria-expanded', String(open));
+    document.body.classList.toggle('menu-open', open);
+    if (open) menu.removeAttribute('aria-hidden');
+    else menu.setAttribute('aria-hidden', 'true');
+  };
+
+  toggle?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    setMenu(!menu?.classList.contains('is-open'));
+  });
+
+  // Fecha ao tocar fora do header.
+  document.addEventListener('click', (event) => {
+    const target = event.target as HTMLElement | null;
+    if (menu?.classList.contains('is-open') && !target?.closest('#site-header')) setMenu(false);
+  });
+
+  // Fecha ao tocar em qualquer link do menu (ôncora interna ou navegação).
+  menu?.addEventListener('click', (event) => {
+    if ((event.target as HTMLElement).closest('a')) setMenu(false);
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && menu?.classList.contains('is-open')) setMenu(false);
+  });
+
+  window.addEventListener('astro:page-load', () => {
+    setMenu(false);
+    setScrolled();
+  });
+</script>

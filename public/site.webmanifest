@@ -1,0 +1,24 @@
+{
+  "name": "Rafael Dias — Fotógrafo de Casamento",
+  "short_name": "Rafael Dias - Fotos",
+  "description": "Fotografia de casamento editorial e documental em Belo Horizonte e Minas Gerais.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf7f2",
+  "theme_color": "#16120e",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

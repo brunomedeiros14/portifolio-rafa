@@ -1,0 +1,33 @@
+---
+interface Props {
+  items: Array<{ label: string; href?: string }>;
+  /** Fallback para journeys fora de coleção (home, blog…) */
+  home?: string;
+}
+
+const { items, home = 'Início' } = Astro.props;
+---
+
+<nav aria-label="Trilha" class="text-sm">
+  <ol class="flex flex-wrap items-center gap-x-2 gap-y-1 text-muted">
+    <li>
+      <a href="/" data-astro-prefetch class="transition-colors hover:text-text">
+        {home}
+      </a>
+    </li>
+    {items.map((item) => (
+      <li class="flex items-center gap-x-2">
+        <span aria-hidden="true" class="text-text/20">/</span>
+        {item.href ? (
+          <a href={item.href} data-astro-prefetch class="transition-colors hover:text-text">
+            {item.label}
+          </a>
+        ) : (
+          <span aria-current="page" class="text-text">
+            {item.label}
+          </span>
+        )}
+      </li>
+    ))}
+  </ol>
+</nav>

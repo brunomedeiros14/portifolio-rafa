@@ -1,0 +1,291 @@
+@import 'tailwindcss';
+
+/* ------------------------------------------------------------------ */
+/* Design tokens                                                       */
+/* ------------------------------------------------------------------ */
+@theme {
+  /* Superfícies e tipografia */
+  --color-background: #faf7f2;
+  --color-surface: #ffffff;
+  --color-text: #1b1714;
+  --color-muted: #6f665c;
+  --color-accent: #9c6f4d;
+  --color-accent-soft: #b98b60;
+  --color-line: #e9e2d6;
+  --color-ink: #16120e;
+  --color-ink-soft: #241d17;
+
+  /* Famílias */
+  --font-display: 'Fraunces', 'Georgia', 'Times New Roman', serif;
+  --font-body:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+
+  /* Elevação branda */
+  --shadow-card: 0 1px 2px rgb(22 18 14 / 0.04), 0 8px 24px rgb(22 18 14 / 0.06);
+}
+
+/* ------------------------------------------------------------------ */
+/* Tokens estruturais (avulsos, acessíveis via CSS)                    */
+/* ------------------------------------------------------------------ */
+:root {
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2.5rem;
+  --space-2xl: 4rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.75rem;
+  --content-max: 72rem;
+  --header-h: 4.5rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* Fontes self-hosted (subset latino)                                  */
+/* ------------------------------------------------------------------ */
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 300 600;
+  font-display: swap;
+  src: url('/fonts/fraunces-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Fraunces';
+  font-style: italic;
+  font-weight: 300 600;
+  font-display: swap;
+  src: url('/fonts/fraunces-latin-italic.woff2') format('woff2');
+}
+
+/* ------------------------------------------------------------------ */
+/* Base                                                               */
+/* ------------------------------------------------------------------ */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    font-family: var(--font-body);
+    background-color: var(--color-background);
+    color: var(--color-text);
+    line-height: 1.6;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 480;
+    line-height: 1.06;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  ::selection {
+    background-color: var(--color-accent);
+    color: #fff;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+    border-radius: var(--radius-sm);
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Realce doméstico dos links do corpo */
+  .story a,
+  .prose a {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+
+  .story a:hover,
+  .prose a:hover {
+    color: var(--color-text);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Scroll reveal — só ativado quando JS e motion permitem             */
+/* ------------------------------------------------------------------ */
+html.js .reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+
+html.js .reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Editor de conteúdo dos artigos (MDX)                                  */
+/* ------------------------------------------------------------------ */
+.story {
+  font-size: 1.0625rem;
+  line-height: 1.85;
+}
+
+.story p {
+  margin-block: 1.25em;
+}
+
+.story h2 {
+  font-size: clamp(1.55rem, 1.3rem + 1vw, 2rem);
+  margin-block: 2.2em 0.6em;
+}
+
+.story h3 {
+  font-size: clamp(1.2rem, 1.1rem + 0.5vw, 1.4rem);
+  margin-block: 1.8em 0.4em;
+}
+
+.story ul,
+.story ol {
+  padding-left: 1.4rem;
+  margin-block: 1.25em;
+}
+
+.story ul {
+  list-style: disc;
+}
+
+.story li {
+  margin-block: 0.35em;
+}
+
+.story blockquote {
+  border-left: 2px solid var(--color-accent);
+  padding-left: 1.25rem;
+  margin-block: 1.75em;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  line-height: 1.4;
+  font-style: italic;
+  color: var(--color-muted);
+}
+
+.story img,
+.prose img {
+  border-radius: var(--radius-sm);
+  margin-block: 1.5em;
+}
+
+.story :not(pre) > code {
+  background: var(--color-line);
+  border-radius: 0.25em;
+  padding: 0.1em 0.35em;
+  font-size: 0.9em;
+}
+
+/* ------------------------------------------------------------------ */
+/* Image reveal (hover editorial)                                     */
+/* ------------------------------------------------------------------ */
+.media {
+  overflow: hidden;
+  position: relative;
+}
+
+.media img {
+  transform: scale(1.01);
+  transition:
+    transform 900ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    opacity 700ms ease;
+}
+
+.media:hover img,
+.media:focus-within img {
+  transform: scale(1.03);
+}
+
+/* Link underline animado */
+.link-line {
+  position: relative;
+  text-decoration: none;
+}
+
+.link-line::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 350ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.link-line:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* ------------------------------------------------------------------ */
+/* Transições de página (View Transitions)                              */
+/* ------------------------------------------------------------------ */
+#site-header {
+  view-transition-name: site-header;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 220ms;
+  animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* ------------------------------------------------------------------ */
+/* Reduced motion                                                     */
+/* ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  html.js .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .media img,
+  .media:hover img {
+    transform: none;
+    transition: none;
+  }
+
+  .link-line::after {
+    display: none;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
