@@ -4,9 +4,7 @@
  * Estrutura de pastas:
  *   <DRIVE_ROOT_ID>/
  *     <slug>/
- *       cover/     (imagem de capa, 1 arquivo)
- *       gallery/   (fotos da galeria, várias)
- *       story/     (fotos inseridas no texto da história, várias)
+ *       <uuid.ext>   (todas as fotos na mesma pasta, nome UUID + extensão original)
  *
  * Todos os arquivos são compartilhados como "qualquer pessoa com o link"
  * para que o workflow do GitHub consiga baixar sem autenticação.
@@ -29,12 +27,6 @@ const Drive = {
     return it.hasNext() ? it.next() : root.createFolder(slug);
   },
 
-  kindFolder(slug, kind) {
-    const dir = Drive.folderFor(slug);
-    const it = dir.getFoldersByName(kind);
-    return it.hasNext() ? it.next() : dir.createFolder(kind);
-  },
-
   /** Marca o arquivo como público (leitura para qualquer pessoa com o link). */
   setPublic(file) {
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
@@ -45,20 +37,33 @@ const Drive = {
     return `https://drive.google.com/uc?export=download&id=${id}`;
   },
 
+  /** Extensão preservada do nome original; fallback pelo MIME. */
+  extension_(rawName, mime) {
+    const byName = String(rawName || '').match(/\.([A-Za-z0-9]{1,10})$/);
+    if (byName) return `.${byName[1].toLowerCase()}`;
+    const byMime = {
+      'image/jpeg': '.jpg',
+      'image/png': '.png',
+      'image/webp': '.webp',
+      'image/avif': '.avif',
+      'image/heic': '.heic',
+      'image/heif': '.heif',
+      'image/gif': '.gif',
+      'image/bmp': '.bmp',
+    }[String(mime || '').split(';')[0]];
+    return byMime || '.jpg';
+  },
+
   /**
-   * Salva um upload recebido em base64 (payload { data, name, type }) dentro da pasta do evento.
-   * Antes de salvar, remove um arquivo anterior com o mesmo nome pra impedir duplicidades.
+   * Salva uma foto recebida em base64 (payload { data, name, type }) na pasta do evento.
+   * O nome no Drive é um UUID com a extensão original preservada.
    * Retorna { name, id }.
    */
-  savePayload(slug, kind, payload) {
-    const folder = Drive.kindFolder(slug, kind);
-    const name = Drive.sanitizeName_(payload.name || '', payload.type || '');
+  savePhoto(slug, payload) {
+    const folder = Drive.folderFor(slug);
+    const name = `${Utilities.getUuid()}${Drive.extension_(payload.name || '', payload.type || '')}`;
     const bytes = Utilities.base64Decode(String(payload.data || ''));
-    const blob = Utilities.newBlob(bytes, payload.type || 'image/jpeg', name);
-
-    const existing = folder.getFilesByName(name);
-    while (existing.hasNext()) existing.next().setTrashed(true);
-
+    const blob = Utilities.newBlob(bytes, String(payload.type || 'image/jpeg').split(';')[0], name);
     const file = folder.createFile(blob);
     file.setName(name);
     Drive.setPublic(file);
@@ -66,25 +71,9 @@ const Drive = {
   },
 
   /** Remove (joga no lixo) o arquivo com o nome informado, se existir. */
-  remove(slug, kind, name) {
-    const folder = Drive.kindFolder(slug, kind);
-    const it = folder.getFilesByName(name);
+  removePhoto(slug, name) {
+    const folder = Drive.folderFor(slug);
+    const it = folder.getFilesByName(String(name || ''));
     if (it.hasNext()) it.next().setTrashed(true);
-  },
-
-  /** Garante um nome final de arquivo com extensão correta. */
-  sanitizeName_(rawName, mime) {
-    let name = rawName && String(rawName).trim() ? String(rawName).trim() : 'imagem';
-    const extByName = /(\.[^.]+)$/.test(name) ? name.match(/(\.[^.]+)$/)[1] : '';
-    const extByMime = {
-      'image/jpeg': '.jpg',
-      'image/png': '.png',
-      'image/webp': '.webp',
-      'image/avif': '.avif',
-      'image/heic': '.heic',
-      'image/heif': '.heif',
-    }[mime || ''];
-    if (!extByName && extByMime) name = `${name}${extByMime}`;
-    return name.replace(/[/\\]/g, '-').replace(/\.{2,}/g, '.').trim();
   },
 };

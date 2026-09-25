@@ -33,8 +33,8 @@ commit + push → build/deploy → nova URL /casamentos/<slug>
 | `Ui.js`                 | Entrega o HTML (`HtmlService`)                               |
 | `Slug.js`               | Gera slug sem conflito (caso → caso+cidade → caso-2, 3, …)   |
 | `Events.js`             | CRUD na planilha "Eventos" + checklist de prontidão          |
-| `Drive.js`              | Upload/publicação/remoção de arquivos no Google Drive        |
-| `Publish.js`            | Endpoint `publication` + disparo do repository_dispatch      |
+| `Drive.js`              | Upload individual em pasta única do evento (nome UUID + extensão)   |
+| `Publish.js`            | Endpoint `publication` + disparo do repository_dispatch              |
 | `Api.js`                | Funções globais chamadas pela UI (`google.script.run`)       |
 | `index.html`            | Interface (lista, formulário, WYSIWYG, upload, publicar)     |
 | `appsscript.json`       | Manifesto (escopos OAuth)                                    |
@@ -91,8 +91,12 @@ commit + push → build/deploy → nova URL /casamentos/<slug>
 1. Abra o Web App (URL `/exec`).
 2. **+ Novo evento** → informe o casal (slug gerado sem conflito).
 3. **Editar** → preencha os dados obrigatórios. Use o **editor WYSIWYG** para a história
-   (o texto vira o corpo do MDX) e "Inserir foto do story" para intercalar imagens.
-4. **Fotos** → envie capa, galeria e story. Arquivos vão para o Drive como **públicos com link**.
+   (o texto vira o corpo do MDX).
+4. **Fotos** → arraste ou selecione quantas quiser: cada foto sobe individualmente em segundo
+   plano para a **mesma pasta** do evento (nome **UUID.ext** no Drive). Tudo entra como **galeria**
+   por padrão; marque **Capa** em uma e use **Story** nas fotos que você inserir no texto
+   (botão do tile ou no toolbar do editor). Enquanto há uploads em andamento, salvar/publicar
+   ficam temporariamente bloqueados.
 5. Quando o checklist mostrar "Tudo pronto", clique em **Executar automação**.
 6. O workflow gera `src/content/weddings/<slug>/` com `index.mdx` + imagens, valida
    (`pnpm check`) e faz commit/push.
@@ -140,4 +144,7 @@ Resposta (200, sempre — erros vêm no corpo):
 - Upload via UI funciona bem para JPGs otimizados. Cada request do Apps Script tem limite de
   payload (~50 MB); para fotos muito pesadas, otimize/crop antes de enviar.
 - As fotos ficam **públicas com link** no Drive (necessário para o GitHub baixar).
+- A **classificação** é dinâmica na publicação: as fotos citadas no WYSIWYG viram `story`,
+  a marcada como capa vira `cover` e todo o restante vira `gallery`. As fotos ficam todas na
+  mesma pasta do evento com nome UUID + extensão original (evita colisão e preserva o tipo).
 - O slug da pasta no repositório é igual ao slug do evento (URL pública).

@@ -148,6 +148,17 @@
       background: rgba(22, 18, 14, .7); color: #fff; padding: 3px 6px; border-radius: 999px;
       text-transform: uppercase; letter-spacing: .04em;
     }
+    .badge-chip.badge-story { top: 21px; background: rgba(156, 111, 77, .95); }
+    .photo-tile.uploading img { filter: saturate(.6) brightness(.9); }
+    .photo-tile .tile-overlay {
+      position: absolute; inset: 0; z-index: 1;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(250, 247, 242, .5); cursor: default;
+    }
+    .photo-tile .tile-overlay .spinner.sm { width: 18px; height: 18px; border-width: 2px; }
+    .photo-tile .tile-overlay.tile-error {
+      background: rgba(178, 59, 59, .55); color: #fff; font-weight: 700; font-size: 16px;
+    }
     .photo-tile .tile-insert {
       position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); z-index: 2;
       font-size: 10px; font-weight: 700; line-height: 1; padding: 4px 8px; border-radius: 999px;
@@ -195,7 +206,7 @@
 
   <script>
     'use strict';
-    var state = { slug: null, event: null, files: null, config: null, pending: [] };
+    var state = { slug: null, event: null, files: null, config: null, uploads: [] };
 
     function $(sel, root) { return (root || document).querySelector(sel); }
     function $$(sel, root) { return Array.from((root || document).querySelectorAll(sel)); }
@@ -219,6 +230,15 @@
         var r = google.script.run
           .withSuccessHandler(function (v) { idle(); resolve(v); })
           .withFailureHandler(function (e) { idle(); reject(e); });
+        r[fn].apply(r, args);
+      });
+    }
+
+    /** Chamada sem o loader global — usada no envio em segundo plano das fotos. */
+    function runQuiet(fn) {
+      var args = Array.prototype.slice.call(arguments, 1);
+      return new Promise(function (resolve, reject) {
+        var r = google.script.run.withSuccessHandler(resolve).withFailureHandler(reject);
         r[fn].apply(r, args);
       });
     }
@@ -267,8 +287,6 @@
       if (action === 'home') { renderList(); return; }
       if (action === 'create') { renderCreate(); return; }
       if (action === 'edit') { renderEdit(el.getAttribute('data-slug')); return; }
-      if (action === 'removefile') { onRemoveFile(el.getAttribute('data-kind'), el.getAttribute('data-name')); return; }
-      if (action === 'insertstory') { insertStoryImage(el.getAttribute('data-name')); return; }
     });
 
     document.addEventListener('submit', function (ev) {
@@ -472,20 +490,14 @@
         '</div>' +
 
         '<div class="card"><h2>Fotos</h2>' +
-        '<p class="muted">Jogue todas as fotos na área abaixo. Marque a <strong>Capa</strong> e as usadas no <strong>Story</strong>; o restante entra na galeria.</p>' +
+        '<p class="muted">Arraste ou selecione as fotos: cada uma é enviada em segundo plano (uma por vez) para a pasta do evento. Tudo entra como <strong>galeria</strong>; as que você inserir no <strong>Story</strong> entram no texto e uma pode virar a <strong>Capa</strong>.</p>' +
         '<div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Enviar fotos">' +
         '<span class="dz-main">Arraste as fotos para cá</span>' +
-        '<small>ou clique para selecionar — envie tudo de uma vez</small>' +
+        '<small>ou clique para selecionar — envio em segundo plano</small>' +
         '<input type="file" id="photo-file" multiple accept="image/*" hidden>' +
         '</div>' +
-        '<div id="pending-thumbs" class="thumbs" style="margin-top:12px"></div>' +
-        '<div class="row" style="margin-top:12px">' +
-        '<button type="button" class="primary" id="btn-upload-photos" disabled>Enviar fotos</button>' +
-        '<span class="hint" id="upload-summary"></span></div>' +
-        '<h3 style="margin-top:20px">Já enviadas</h3>' +
-        '<div id="files-cover"></div>' +
-        '<div id="files-gallery"></div>' +
-        '<div id="files-story"></div>' +
+        '<div id="photos-grid" class="thumbs" style="margin-top:12px"></div>' +
+        '<div id="upload-bar" style="margin-top:12px"></div>' +
         '</div>' +
 
         '<div class="card"><h2>Automação / publicação</h2>' +
@@ -507,7 +519,7 @@
       byId('story-ed').innerHTML = e.historia_html || '';
       fixupStoryEditor();
       bindEditListeners();
-      refreshFilesPane();
+      renderPhotos();
       refreshPublishPane();
     }
 
@@ -577,88 +589,56 @@
       });
       dz.addEventListener('drop', function (ev) {
         var files = ev.dataTransfer && ev.dataTransfer.files;
-        if (files && files.length) addPendingFiles(files);
+        if (files && files.length) addUploads(files);
       });
       byId('photo-file').addEventListener('change', function () {
-        addPendingFiles(byId('photo-file').files);
+        addUploads(byId('photo-file').files);
         byId('photo-file').value = '';
       });
-      byId('pending-thumbs').addEventListener('click', onPendingClick);
-      byId('btn-upload-photos').addEventListener('click', onUploadPhotos);
+      byId('photos-grid').addEventListener('click', function (ev) {
+        var rm = ev.target.closest('[data-remove-photo]');
+        if (rm) { onRemovePhoto(rm.getAttribute('data-name')); return; }
+        var sc = ev.target.closest('[data-setcover]');
+        if (sc) {
+          var name = sc.getAttribute('data-name');
+          onSetCover(state.files && state.files.cover && state.files.cover.name === name ? '' : name);
+          return;
+        }
+        var ins = ev.target.closest('[data-insertstory]');
+        if (ins) { insertStoryImage(ins.getAttribute('data-name')); return; }
+        var retry = ev.target.closest('[data-retry]');
+        if (retry) { retryUpload(retry.getAttribute('data-id')); return; }
+        var cancel = ev.target.closest('[data-cancel-upload]');
+        if (cancel) { cancelUpload(cancel.getAttribute('data-id')); return; }
+      });
+      ed.addEventListener('input', renderPhotos);
     }
 
     /* ------------------------------------------------------------------ */
-    /* Upload de fotos (dropzone + marcação capa/story/galeria)            */
+    /* Upload de fotos (fundo, 1 por vez, pasta única, nome UUID)         */
     /* ------------------------------------------------------------------ */
-    function addPendingFiles(fileList) {
+    function uploadsPending() {
+      return state.uploads.filter(function (u) { return u.status === 'pending' || u.status === 'uploading'; }).length;
+    }
+
+    function addUploads(fileList) {
       if (!fileList || !fileList.length) { toast('Selecione uma imagem primeiro.', true); return; }
       var files = Array.prototype.filter.call(fileList, function (f) { return !f.type || f.type.indexOf('image/') === 0; });
       if (files.length < fileList.length) toast('Arquivos não-imagem ignorados.', true);
       if (!files.length) return;
-      state.pending = state.pending.concat(files.map(function (f) {
-        return {
-          id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+      files.forEach(function (f) {
+        state.uploads.push({
+          id: 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
           file: f,
-          name: f.name,
+          label: f.name,
           objectUrl: URL.createObjectURL(f),
-          cover: false,
-          story: false,
-        };
-      }));
-      renderPending();
-    }
-
-    function renderPending() {
-      var box = byId('pending-thumbs');
-      box.innerHTML = state.pending.map(function (p) {
-        return '<div class="photo-tile' + (p.cover ? ' is-cover' : '') + '" data-pid="' + esc(p.id) + '" title="' + esc(p.name) + '">' +
-          '<img src="' + p.objectUrl + '" alt="">' +
-          '<button type="button" class="tile-x" data-remove-pending title="Remover">\u00d7</button>' +
-          '<button type="button" class="tile-mark mark-cover' + (p.cover ? ' on' : '') + '" data-mark-pending="cover" title="Usar como capa">Capa</button>' +
-          '<button type="button" class="tile-mark mark-story' + (p.story ? ' on' : '') + '" data-mark-pending="story" title="Usar no story">Story</button>' +
-          '</div>';
-      }).join('');
-      updateUploadSummary();
-    }
-
-    function onPendingClick(ev) {
-      var tile = ev.target.closest('.photo-tile');
-      if (!tile) return;
-      var pid = tile.getAttribute('data-pid');
-      var p = state.pending.filter(function (x) { return x.id === pid; })[0];
-      if (!p) return;
-      if (ev.target.closest('[data-remove-pending]')) {
-        try { URL.revokeObjectURL(p.objectUrl); } catch (e) {}
-        state.pending = state.pending.filter(function (x) { return x.id !== pid; });
-        renderPending();
-        return;
-      }
-      if (ev.target.closest('[data-mark-pending="cover"]')) {
-        state.pending.forEach(function (x) { x.cover = x.id === pid; });
-        renderPending();
-        return;
-      }
-      if (ev.target.closest('[data-mark-pending="story"]')) {
-        p.story = !p.story;
-        renderPending();
-        return;
-      }
-    }
-
-    function updateUploadSummary() {
-      var btn = byId('btn-upload-photos');
-      var sum = byId('upload-summary');
-      if (!btn || !sum) return;
-      var n = state.pending.length;
-      if (n === 0) { btn.disabled = true; btn.textContent = 'Enviar fotos'; sum.textContent = ''; return; }
-      var cover = state.pending.filter(function (p) { return p.cover; }).length;
-      var story = state.pending.filter(function (p) { return p.story; }).length;
-      btn.disabled = false;
-      btn.textContent = 'Enviar fotos (' + n + ')';
-      var parts = ['galeria: ' + (n - cover - story)];
-      if (cover) parts.push('capa: 1');
-      if (story) parts.push('story: ' + story);
-      sum.textContent = parts.join(' \u00b7 ');
+          status: 'pending',
+          error: '',
+        });
+      });
+      renderPhotos();
+      updateUploadBar();
+      processUploadQueue();
     }
 
     function readPayload(file) {
@@ -672,95 +652,156 @@
       });
     }
 
-    function toPayloads(list) {
-      return list.reduce(function (chain, p) {
-        return chain.then(function (acc) {
-          return readPayload(p.file).then(function (pl) { acc.push(pl); return acc; });
+    var uploadRunning = false;
+    function processUploadQueue() {
+      if (uploadRunning) return;
+      uploadRunning = true;
+      (function pump() {
+        var next = state.uploads.filter(function (u) { return u.status === 'pending'; })[0];
+        if (!next) {
+          uploadRunning = false;
+          updateUploadBar();
+          return;
+        }
+        next.status = 'uploading';
+        renderPhotos();
+        updateUploadBar();
+        readPayload(next.file).then(function (pl) {
+          return runQuiet('apiUploadPhoto', state.slug, pl);
+        }).then(function (files) {
+          state.files = files;
+          state.uploads = state.uploads.filter(function (u) { return u.id !== next.id; });
+          try { URL.revokeObjectURL(next.objectUrl); } catch (e) {}
+          renderPhotos();
+          refreshPublishPane();
+          pump();
+        }, function (err) {
+          next.status = 'error';
+          next.error = err.message || 'Falha no envio';
+          renderPhotos();
+          updateUploadBar();
+          pump();
         });
-      }, Promise.resolve([]));
+      })();
     }
 
-    function onUploadPhotos() {
-      if (!state.pending.length) return;
-      var cover = state.pending.filter(function (p) { return p.cover; });
-      var story = state.pending.filter(function (p) { return p.story; });
-      var gallery = state.pending.filter(function (p) { return !p.cover && !p.story; });
-      busy('Enviando fotos para o Drive\u2026');
+    function retryUpload(id) {
+      var u = state.uploads.filter(function (x) { return x.id === id; })[0];
+      if (!u) return;
+      u.status = 'pending';
+      u.error = '';
+      renderPhotos();
+      updateUploadBar();
+      processUploadQueue();
+    }
 
-      var chain = Promise.resolve();
-      if (cover.length) {
-        chain = chain.then(function () {
-          return toPayloads(cover).then(function (pl) {
-            return run('apiUploadCover', state.slug, pl[0]).then(function (files) { state.files = files; });
-          });
-        });
-      }
-      if (story.length) {
-        chain = chain.then(function () {
-          return toPayloads(story).then(function (pl) {
-            return run('apiUploadFiles', state.slug, 'story', pl).then(function (files) { state.files = files; });
-          });
-        });
-      }
-      if (gallery.length) {
-        chain = chain.then(function () {
-          return toPayloads(gallery).then(function (pl) {
-            return run('apiUploadFiles', state.slug, 'gallery', pl).then(function (files) { state.files = files; });
-          });
-        });
-      }
+    function cancelUpload(id) {
+      var u = state.uploads.filter(function (x) { return x.id === id; })[0];
+      if (!u) return;
+      try { URL.revokeObjectURL(u.objectUrl); } catch (e) {}
+      state.uploads = state.uploads.filter(function (x) { return x.id !== id; });
+      renderPhotos();
+      updateUploadBar();
+    }
 
-      chain.then(function () {
-        state.pending.forEach(function (p) { try { URL.revokeObjectURL(p.objectUrl); } catch (e) {} });
-        state.pending = [];
-        toast('Fotos enviadas para o Google Drive.');
-        renderPending();
-        refreshFilesPane();
+    function storyPhotoNames() {
+      var names = [];
+      $$('#story-ed img[data-story]').forEach(function (im) {
+        var n = im.getAttribute('data-story');
+        if (n && names.indexOf(n) === -1) names.push(n);
+      });
+      return names;
+    }
+
+    function tileImgUrl(p) {
+      return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(p.id) + '&sz=w200';
+    }
+
+    function uploadedTile(p) {
+      var isCover = state.files && state.files.cover && state.files.cover.name === p.name;
+      var inStory = storyPhotoNames().indexOf(p.name) !== -1;
+      return '<div class="photo-tile' + (isCover ? ' is-cover' : '') + '" title="' + esc(p.label || p.name) + '">' +
+        '<img src="' + tileImgUrl(p) + '" alt="">' +
+        (isCover ? '<span class="badge-chip">capa</span>' : '') +
+        (inStory ? '<span class="badge-chip badge-story">story</span>' : '') +
+        '<button type="button" class="tile-x" data-remove-photo data-name="' + esc(p.name) + '" title="Remover">\u00d7</button>' +
+        '<button type="button" class="tile-mark mark-cover' + (isCover ? ' on' : '') + '" data-setcover data-name="' + esc(p.name) + '" title="Usar como capa">Capa</button>' +
+        '<button type="button" class="tile-mark mark-story' + (inStory ? ' on' : '') + '" data-insertstory data-name="' + esc(p.name) + '" title="Inserir no story">Story</button>' +
+        '</div>';
+    }
+
+    function uploadingTile(u) {
+      var overlay = '<span class="tile-overlay"><span class="spinner sm"></span></span>';
+      if (u.status === 'pending') overlay = '<span class="tile-overlay"><span class="hint">aguardando</span></span>';
+      if (u.status === 'error') overlay = '<span class="tile-overlay tile-error" title="' + esc(u.error) + '">!</span>';
+      var retry = u.status === 'error'
+        ? '<button type="button" class="tile-insert" data-retry data-id="' + esc(u.id) + '" title="Tentar novamente">Reenviar</button>'
+        : '';
+      return '<div class="photo-tile uploading" title="' + esc(u.label) + '">' +
+        '<img src="' + u.objectUrl + '" alt="">' + overlay +
+        '<button type="button" class="tile-x" data-cancel-upload data-id="' + esc(u.id) + '" title="Cancelar">\u00d7</button>' +
+        retry +
+        '</div>';
+    }
+
+    function renderPhotos() {
+      var grid = byId('photos-grid');
+      if (!grid) return;
+      var tiles = [];
+      (state.files && state.files.photos || []).forEach(function (p) { tiles.push(uploadedTile(p)); });
+      state.uploads.forEach(function (u) { tiles.push(uploadingTile(u)); });
+      grid.innerHTML = tiles.join('') ||
+        '<p class="hint upload-note">Nenhuma foto ainda. Arraste ou selecione acima.</p>';
+      updateUploadBar();
+    }
+
+    function updateUploadBar() {
+      var bar = byId('upload-bar');
+      if (!bar) return;
+      var n = (state.files && state.files.photos || []).length;
+      var pending = uploadsPending();
+      var errs = state.uploads.filter(function (u) { return u.status === 'error'; }).length;
+      var parts = ['Enviadas: ' + n];
+      if (pending) parts.push('Fila: ' + pending);
+      if (errs) parts.push('Falhas: ' + errs + ' (Reenviar)');
+      bar.innerHTML = '<span class="hint">' + esc(parts.join(' \u00b7 ')) + '</span>' +
+        (pending
+          ? '<span class="hint warn" style="margin-left:8px">Salvar e publicar ficam bloqueados até os envios terminarem.</span>'
+          : '');
+      updateSaveLock();
+    }
+
+    function updateSaveLock() {
+      var locked = uploadsPending() > 0;
+      var saveBtn = byId('f-edit') && byId('f-edit').querySelector('[type=submit]');
+      var pubBtn = byId('btn-publish');
+      if (saveBtn) saveBtn.disabled = locked;
+      if (saveBtn) saveBtn.textContent = locked ? 'Aguarde o envio das fotos\u2026' : 'Salvar alterações';
+      if (pubBtn) pubBtn.disabled = locked;
+      if (pubBtn) pubBtn.textContent = locked ? 'Aguardando uploads\u2026' : 'Executar automação';
+    }
+
+    function onRemovePhoto(name) {
+      if (!confirm('Remover esta foto?')) return;
+      busy('Removendo foto\u2026');
+      run('apiRemovePhoto', state.slug, name).then(function (files) {
+        state.files = files;
+        renderPhotos();
         refreshPublishPane();
       }, function (err) {
-        toast('Falha no envio: ' + err.message, true);
-      }).then(function () {
-        idle();
-        updateUploadSummary();
-      });
+        toast(err.message, true);
+      }).then(function () { idle(); });
     }
 
-    function onRemoveFile(kind, name) {
-      run('apiRemoveFile', state.slug, kind, name).then(function (files) {
+    function onSetCover(name) {
+      busy('Salvando capa\u2026');
+      run('apiSetCover', state.slug, name).then(function (files) {
         state.files = files;
-        refreshFilesPane();
+        renderPhotos();
         refreshPublishPane();
-      }, function (err) { toast(err.message, true); });
-    }
-
-    function refreshFilesPane() {
-      var f = state.files || { cover: null, gallery: [], story: [] };
-
-      byId('files-cover').innerHTML = f.cover
-        ? '<div class="thumbs">' + fileTile(f.cover.name, 'cover', f.cover.id, 'Capa') + '</div>'
-        : '<p class="hint upload-note">Nenhuma capa enviada.</p>';
-
-      byId('files-gallery').innerHTML = (f.gallery.length
-        ? '<div class="thumbs">' + f.gallery.map(function (x) { return fileTile(x.name, 'gallery', x.id, ''); }).join('') + '</div>'
-        : '<p class="hint upload-note">Nenhuma foto na galeria.</p>');
-
-      byId('files-story').innerHTML = (f.story.length
-        ? '<div class="thumbs">' + f.story.map(function (x) { return fileTile(x.name, 'story', x.id, 'Story'); }).join('') + '</div>'
-        : '<p class="hint upload-note">Nenhuma foto no story.</p>');
-
-      updateUploadSummary();
-    }
-
-    function fileTile(name, kind, id, badge) {
-      var insert = kind === 'story'
-        ? '<button type="button" class="tile-insert" data-action="insertstory" data-name="' + esc(name) + '" title="Inserir no texto">+ Inserir</button>'
-        : '';
-      return '<div class="photo-tile" title="' + esc(name) + '">' +
-        '<img src="https://drive.google.com/thumbnail?id=' + encodeURIComponent(id) + '&sz=w200" alt="">' +
-        (badge ? '<span class="badge-chip">' + esc(badge) + '</span>' : '') +
-        insert +
-        '<button type="button" class="tile-x" data-action="removefile" data-kind="' + esc(kind) + '" data-name="' + esc(name) + '" title="Remover">\u00d7</button>' +
-        '</div>';
+      }, function (err) {
+        toast(err.message, true);
+      }).then(function () { idle(); });
     }
 
     /* ------------------------------------------------------------------ */
@@ -771,19 +812,20 @@
     }
 
     function storyFile(name) {
-      return (state.files && state.files.story || []).filter(function (x) { return x.name === name; })[0];
+      return (state.files && state.files.photos || []).filter(function (x) { return x.name === name; })[0];
     }
 
     function openStoryPicker() {
-      var f = state.files || { story: [] };
-      if (!f.story.length) { toast('Envie fotos na aba Story primeiro.', true); return; }
-      var list = f.story.map(function (x, i) {
-        return '<button type="button" class="small" data-story-name="' + esc(x.name) + '" style="text-align:left; flex:1">' + esc(x.name) + '</button>';
+      var photos = state.files ? state.files.photos || [] : [];
+      if (!photos.length) { toast('Envie fotos primeiro.', true); return; }
+      var list = photos.map(function (x) {
+        return '<button type="button" class="small" data-story-name="' + esc(x.name) + '" style="text-align:left; flex:1">' +
+          esc(x.label || x.name) + (x.name === x.label ? '' : ' <span class="muted">(' + esc(x.name) + ')</span>') + '</button>';
       }).join('');
       var overlay = document.createElement('div');
       overlay.style.cssText = 'position:fixed;inset:0;background:rgba(22,18,14,.5);display:flex;align-items:center;justify-content:center;z-index:60';
       overlay.innerHTML = '<div class="card" style="width:min(90vw,480px)"><h2>Inserir foto no texto</h2>' +
-        '<p class="muted">Escolha uma foto do story. A legenda é editada clicando nela, abaixo da foto, dentro do editor.</p>' +
+        '<p class="muted">A foto entra no <strong>story</strong> e a legenda é editada clicando nela, abaixo da imagem, dentro do editor.</p>' +
         '<div class="row" style="flex-direction:column;align-items:stretch;gap:6px;margin-bottom:12px">' + list + '</div>' +
         '<button class="ghost" id="close-picker">Cancelar</button></div>';
       overlay.addEventListener('click', function (ev) {
@@ -882,7 +924,7 @@
       }, function (err) {
         toast(err.message, true);
       }).then(function () {
-        btn.disabled = false; btn.textContent = 'Salvar alterações';
+        updateSaveLock();
       });
     }
 
@@ -891,27 +933,34 @@
     /* ------------------------------------------------------------------ */
     function collectStatusProbe() {
       var e = state.event;
-      var files = state.files || { cover: null, gallery: [], story: [] };
+      var files = state.files || { cover: null, photos: [] };
       var min = state.config ? state.config.minGallery : 8;
+      var photos = files.photos || [];
+      var storyNames = storyPhotoNames();
+      var galleryCount = photos.filter(function (p) {
+        return storyNames.indexOf(p.name) === -1 && (!files.cover || files.cover.name !== p.name);
+      }).length;
       var probe = {
         title: e.title, couple: e.couple, date: e.date,
         location: e.location, city: e.city, state: e.state, venue: e.venue,
         description: e.description, excerpt: e.excerpt, historia_html: e.historia_html,
         cover_id: files.cover ? files.cover.id : '',
-        gallery: files.gallery, story: files.story,
+        galleryCount: galleryCount,
+        storyCount: storyNames.length,
       };
       var missed = [];
       ['title', 'couple', 'date', 'location', 'city', 'state', 'venue', 'description', 'excerpt', 'historia_html'].forEach(function (f) {
         if (String(probe[f] || '').trim() === '') missed.push(f);
       });
       if (!files.cover) missed.push('cover');
-      if (files.gallery.length < min) missed.push('gallery (' + files.gallery.length + '/' + min + ')');
-      if (files.story.length === 0) missed.push('story');
-      return { missed: missed };
+      if (galleryCount < min) missed.push('gallery (' + galleryCount + '/' + min + ')');
+      if (storyNames.length === 0) missed.push('story');
+      return { missed: missed, galleryCount: galleryCount, storyCount: storyNames.length };
     }
 
     function refreshPublishPane() {
       var probe = collectStatusProbe();
+      var min = state.config ? state.config.minGallery : 8;
       var items = [
         ['Título e casal', !!state.event.title && !!state.event.couple],
         ['Data', !!state.event.date],
@@ -920,8 +969,8 @@
         ['Excerpt', !!state.event.excerpt],
         ['História (texto)', !!(state.event.historia_html || '').replace(/<[^>]+>/g, '').trim()],
         ['Capa enviada', !!(state.files && state.files.cover)],
-        ['Galeria (mín. ' + (state.config ? state.config.minGallery : 8) + ')', !!(state.files && state.files.gallery && state.files.gallery.length >= (state.config ? state.config.minGallery : 8))],
-        ['Fotos do story', !!(state.files && state.files.story && state.files.story.length)],
+        ['Galeria (mín. ' + min + ')', probe.galleryCount >= min],
+        ['Fotos do story', probe.storyCount > 0],
       ];
       byId('checklist').innerHTML = items.map(function (it) {
         return '<li>' + (it[1] ? '<span class="ok">✓</span>' : '<span class="warn">✗</span>') + '<span class="muted">' + esc(it[0]) + '</span></li>';
@@ -941,8 +990,7 @@
         renderList();
       }, function (err) {
         toast('Não foi possível publicar: ' + err.message, true);
-        btn.disabled = false;
-        btn.textContent = 'Executar automação';
+        updateSaveLock();
       }).then(function () {
         idle();
       });

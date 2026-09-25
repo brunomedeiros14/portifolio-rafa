@@ -38,6 +38,14 @@ const Publish = {
         url: Drive.downloadUrl(f.id),
       }));
 
+    const photos = Array.isArray(event.gallery) ? event.gallery : [];
+    const storyNames = Events.storyRefs_(event.historia_html);
+    const isStory = (p) => storyNames.indexOf(p.name) !== -1;
+    const story = driveLinks(photos.filter(isStory));
+    const gallery = driveLinks(
+      photos.filter((p) => !isStory(p) && p.name !== event.cover_name),
+    );
+
     return {
       slug: event.slug,
       title: event.title,
@@ -57,10 +65,10 @@ const Publish = {
       cover: event.cover_id
         ? { filename: event.cover_name || 'cover.jpg', url: Drive.downloadUrl(event.cover_id) }
         : null,
-      gallery: driveLinks(event.gallery),
+      gallery,
       story: {
         html: event.historia_html || '',
-        images: driveLinks(event.story),
+        images: story,
       },
     };
   },

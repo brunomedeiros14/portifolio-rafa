@@ -159,42 +159,61 @@ const Events = {
     throw new Error(`Evento não encontrado: ${slug}`);
   },
 
-  setCover(slug, saved) {
+  /** Marca uma foto (por nome) como capa; '' limpa. */
+  setCover(slug, name) {
+    const current = Events.get(slug);
+    const photo = String(name || '')
+      ? (current.gallery || []).filter((f) => f.name === name)[0]
+      : null;
+    const patch = {
+      cover_id: photo ? photo.id : '',
+      cover_name: photo ? photo.name : '',
+    };
+    Events.setRow_(slug, patch);
+  },
+
+  /** Adiciona uma foto à lista única do evento (gallery = todas as fotos). */
+  appendPhoto(slug, saved) {
+    const current = Events.get(slug);
+    const list = Array.isArray(current.gallery) ? current.gallery : [];
     Events.setRow_(slug, {
-      cover_id: saved.id,
-      cover_name: saved.name,
+      gallery: list.concat([saved]),
+      story: Events.storyRefs_(current.historia_html),
     });
   },
 
-  appendFiles(slug, kind, saved) {
+  /** Remove a foto do Drive e da lista; limpa a capa se ela era a capa. */
+  removePhoto(slug, name) {
     const current = Events.get(slug);
-    const list = kind === 'story' ? current.story : current.gallery;
-    const patch = {};
-    patch[kind] = list.concat(saved);
+    const patch = {
+      gallery: (current.gallery || []).filter((f) => f.name !== name),
+    };
+    if (current.cover_name === name) {
+      patch.cover_id = '';
+      patch.cover_name = '';
+    }
     Events.setRow_(slug, patch);
   },
 
-  removeFile(slug, kind, name) {
-    const current = Events.get(slug);
-    const patch = {};
-    if (kind === 'cover') {
-      patch.cover_id = '';
-      patch.cover_name = '';
-    } else if (kind === 'gallery') {
-      patch.gallery = (current.gallery || []).filter((f) => f.name !== name);
-    } else if (kind === 'story') {
-      patch.story = (current.story || []).filter((f) => f.name !== name);
+  /** Nomes de fotos (data-story) referenciados no HTML da história. */
+  storyRefs_(html) {
+    const out = [];
+    const re = /data-story\s*=\s*"([^"]+)"/g;
+    let m;
+    let text = String(html || '');
+    while ((m = re.exec(text)) !== null) {
+      if (out.indexOf(m[1]) === -1) out.push(m[1]);
     }
-    Events.setRow_(slug, patch);
+    return out;
   },
 
   listFiles(slug) {
     const e = Events.get(slug);
     if (!e) return null;
+    const photos = Array.isArray(e.gallery) ? e.gallery : [];
     return {
       cover: e.cover_id ? { name: e.cover_name, id: e.cover_id } : null,
-      gallery: e.gallery || [],
-      story: e.story || [],
+      photos,
     };
   },
 
@@ -217,11 +236,15 @@ const Events = {
       if (Events.blank_(event[field])) missed.push(field);
     }
     if (Events.blank_(event.cover_id)) missed.push('cover');
+
     const minGallery = Number(PropertiesService.getScriptProperties().getProperty('MIN_GALLERY') || '8');
-    const galleryCount = Array.isArray(event.gallery) ? event.gallery.length : 0;
+    const photos = Array.isArray(event.gallery) ? event.gallery : [];
+    const storyNames = Events.storyRefs_(event.historia_html);
+    const galleryCount = photos.filter(
+      (p) => storyNames.indexOf(p.name) === -1 && p.name !== event.cover_name,
+    ).length;
     if (galleryCount < minGallery) missed.push(`gallery (${galleryCount}/${minGallery})`);
-    const storyCount = Array.isArray(event.story) ? event.story.length : 0;
-    if (storyCount === 0) missed.push('story');
+    if (storyNames.length === 0) missed.push('story');
     return { status: missed.length === 0 ? 'ready' : 'pending', missed };
   },
 

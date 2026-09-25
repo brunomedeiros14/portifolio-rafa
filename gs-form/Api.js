@@ -41,35 +41,37 @@ function apiDelete(slug) {
   return { ok: true };
 }
 
-/** Upload da capa — o payload chega em base64 (google.script.run não serializa File/Blob). */
-function apiUploadCover(slug, payload) {
+/** Upload individual de uma foto (payload base64 { data, name, type }).
+ *  Salva na pasta única do evento com nome UUID + extensão original e entra
+ *  como "gallery" por padrão. Retorna a lista atualizada de arquivos. */
+function apiUploadPhoto(slug, payload) {
   const s = String(slug || '').trim();
   if (!s) throw new Error('Evento não identificado.');
-  if (!payload || !payload.data || !payload.name) throw new Error('Selecione uma imagem de capa.');
-  const saved = Drive.savePayload(s, 'cover', payload);
-  Events.setCover(s, saved);
+  if (!payload || !payload.data || !payload.name) throw new Error('Selecione uma imagem.');
+  const saved = Drive.savePhoto(s, payload);
+  Events.appendPhoto(s, {
+    name: saved.name,
+    id: saved.id,
+    label: String(payload.name || saved.name),
+  });
   return Events.listFiles(s);
 }
 
-/** Upload em lote de galeria ou story (payloads base64). */
-function apiUploadFiles(slug, kind, payloads) {
+/** Marca/limpa a capa pelo nome da foto ('' limpa). */
+function apiSetCover(slug, name) {
   const s = String(slug || '').trim();
-  const k = String(kind || '').trim();
   if (!s) throw new Error('Evento não identificado.');
-  if (!['gallery', 'story'].includes(k)) throw new Error(`Tipo inválido: ${k}`);
-  const list = (Array.isArray(payloads) ? payloads : [payloads]).filter((p) => p && p.data && p.name);
-  if (list.length === 0) throw new Error('Selecione ao menos uma imagem.');
-  const saved = [];
-  for (const payload of list) saved.push(Drive.savePayload(s, k, payload));
-  Events.appendFiles(s, k, saved);
+  Events.setCover(s, String(name || ''));
   return Events.listFiles(s);
 }
 
-/** Remove um arquivo (Drive + referência na planilha). */
-function apiRemoveFile(slug, kind, name) {
-  Drive.remove(slug, kind, name);
-  Events.removeFile(slug, kind, name);
-  return Events.listFiles(slug);
+/** Remove uma foto (Drive + lista). Se era a capa, limpa. */
+function apiRemovePhoto(slug, name) {
+  const s = String(slug || '').trim();
+  if (!s) throw new Error('Evento não identificado.');
+  Drive.removePhoto(s, name);
+  Events.removePhoto(s, name);
+  return Events.listFiles(s);
 }
 
 /** Arquivos do evento ({cover, gallery, story}). */
