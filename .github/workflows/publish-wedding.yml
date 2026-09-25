@@ -42,9 +42,9 @@ jobs:
         run: |
           HTTP_CODE=$(curl \
             --silent \
+            --location \
             --output publication.json \
             --write-out "%{http_code}" \
-            -X POST \
             -H "Content-Type: application/json" \
             -d "{
               \"action\": \"publication\",
