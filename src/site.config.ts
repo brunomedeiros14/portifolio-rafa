@@ -1,8 +1,6 @@
 export const SITE = {
   /** Nome público / marca do fotógrafo */
   name: "Rafael Dias - Fotos",
-  /** Nome curto usado no logo */
-  brand: "Rafael",
   role: "Fotógrafo de casamento",
   /** URL canônica (troque pela produção real) */
   url: "https://rafaeldiasfotos.com.br",
@@ -27,19 +25,6 @@ export const SITE = {
   whatsappUrl: "https://wa.me/5531993366755",
   instagram: "https://www.instagram.com/rafaeldias.foto",
   instagramHandle: "@rafaeldias.foto",
-  socials: [
-    {
-      label: "Instagram",
-      href: "https://www.instagram.com/rafaeldias.foto",
-      external: true,
-    },
-    { label: "WhatsApp", href: "https://wa.me/5531993366755", external: true },
-    {
-      label: "E-mail",
-      href: "mailto:rafaelr7dias@hotmail.com ",
-      external: false,
-    },
-  ],
 } as const;
 
 export const NAV_LINKS = [
