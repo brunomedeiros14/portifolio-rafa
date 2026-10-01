@@ -4,6 +4,9 @@ dist/
 # generated types
 .astro/
 
+# transient CMS payload written by the publish workflow
+publication.json
+
 # dependencies
 node_modules/
 
