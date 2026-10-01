@@ -20,7 +20,7 @@ export const SITE = {
     "Brumadinho",
     "muito além de Minas",
   ],
-  email: "rafaelr7dias@hotmail.com ",
+  email: "rafaelr7dias@hotmail.com",
   whatsapp: "55 31 99336-6755",
   whatsappUrl: "https://wa.me/5531993366755",
   instagram: "https://www.instagram.com/rafaeldias.foto",
