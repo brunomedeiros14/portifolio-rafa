@@ -13,8 +13,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "sync": "astro sync",
-    "check": "astro check",
-    "gen:images": "node scripts/generate-images.mjs"
+    "check": "astro check"
   },
   "dependencies": {
     "@astrojs/mdx": "^8.0.2",
