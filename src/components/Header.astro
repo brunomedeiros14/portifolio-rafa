@@ -49,6 +49,7 @@ const { transparent = true, solidOnLoad = !transparent } = Astro.props;
       class="inline-flex items-center gap-2 px-1 py-2 text-sm font-medium lg:hidden"
       aria-controls="mobile-menu"
       aria-expanded="false"
+      aria-label="Abrir menu"
     >
       <span class="menu-label">Menu</span>
       <svg aria-hidden="true" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -57,7 +58,7 @@ const { transparent = true, solidOnLoad = !transparent } = Astro.props;
     </button>
   </div>
 
-  <div id="mobile-menu" class="header-menu hidden lg:hidden">
+  <div id="mobile-menu" class="header-menu hidden lg:hidden" aria-hidden="true" inert>
     <div class="mx-auto max-w-(--content-max) px-4 pb-8 pt-2 sm:px-6">
       <Navigation />
       <a
@@ -113,49 +114,8 @@ const { transparent = true, solidOnLoad = !transparent } = Astro.props;
 </style>
 
 <script>
-  const header = document.querySelector<HTMLElement>('#site-header');
-  const toggle = document.querySelector<HTMLElement>('#menu-toggle');
-  const menu = document.querySelector<HTMLElement>('#mobile-menu');
+  import { initHeader } from '../scripts/header';
+  import { onPageLoad } from '../scripts/lifecycle';
 
-  const setScrolled = () => {
-    if (window.scrollY > 24) header?.classList.add('is-scrolled');
-    else if (!header?.classList.contains('header-solid')) header?.classList.remove('is-scrolled');
-  };
-
-  window.addEventListener('scroll', setScrolled, { passive: true });
-  setScrolled();
-
-  const setMenu = (open: boolean) => {
-    if (!menu) return;
-    menu.classList.toggle('is-open', open);
-    toggle?.setAttribute('aria-expanded', String(open));
-    document.body.classList.toggle('menu-open', open);
-    if (open) menu.removeAttribute('aria-hidden');
-    else menu.setAttribute('aria-hidden', 'true');
-  };
-
-  toggle?.addEventListener('click', (event) => {
-    event.stopPropagation();
-    setMenu(!menu?.classList.contains('is-open'));
-  });
-
-  // Fecha ao tocar fora do header.
-  document.addEventListener('click', (event) => {
-    const target = event.target as HTMLElement | null;
-    if (menu?.classList.contains('is-open') && !target?.closest('#site-header')) setMenu(false);
-  });
-
-  // Fecha ao tocar em qualquer link do menu (ôncora interna ou navegação).
-  menu?.addEventListener('click', (event) => {
-    if ((event.target as HTMLElement).closest('a')) setMenu(false);
-  });
-
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && menu?.classList.contains('is-open')) setMenu(false);
-  });
-
-  window.addEventListener('astro:page-load', () => {
-    setMenu(false);
-    setScrolled();
-  });
+  onPageLoad(initHeader);
 </script>

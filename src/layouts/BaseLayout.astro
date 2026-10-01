@@ -36,6 +36,11 @@ const {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {/* Precisa rodar antes da primeira pintura: um modulo no fim do <body> e
+        diferido e causaria flash do conteudo (visivel -> oculto). */}
+    <script is:inline>
+      document.documentElement.classList.add('js');
+    </script>
     <ClientRouter />
     <SEO
       title={title}
@@ -65,15 +70,10 @@ const {
     <main id="main"><slot /></main>
     <Footer />
     <script>
-      document.documentElement.classList.add('js');
-    </script>
-    <script>
-      import { mountReveal } from '../scripts/reveal';
+      import { initReveal } from '../scripts/reveal';
+      import { onPageLoad } from '../scripts/lifecycle';
 
-      const add = () => document.querySelectorAll('.reveal:not(.is-visible)').forEach(mountReveal);
-      add();
-      document.addEventListener('astro:page-load', add);
-      document.addEventListener('astro:after-swap', add);
+      onPageLoad(initReveal);
     </script>
   </body>
 </html>
