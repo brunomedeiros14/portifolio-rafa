@@ -77,11 +77,6 @@ export function getGalleryItems(
   }));
 }
 
-/** Proporção da imagem: ratio = largura / altura. */
-export function aspectRatioOf(image: ImageMetadata): number {
-  return image.width / image.height;
-}
-
 /** Escore de relevância entre casamentos (cidade + tags + estado). */
 export function weddingSimilarity(
   a: { data: { city: string; state: string; tags: string[] } },
