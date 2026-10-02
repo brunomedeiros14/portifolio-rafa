@@ -9,6 +9,8 @@ import WeddingGrid from '../components/WeddingGrid.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { SITE, absolute } from '../site.config';
 import { ogImageFrom } from '../utils/og';
+
+import portrait from '../assets/profile.png';
 import { ID, node, personRef } from '../utils/schema';
 import { getGalleryItems, getWeddingImages, weddingFolder, type GalleryItem } from '../utils/weddings';
 
@@ -28,7 +30,9 @@ for (const wedding of featured.slice(0, 3)) {
   selected.push(...getGalleryItems(images, wedding.data.couple));
 }
 
-const heroOg = heroWedding ? await ogImageFrom(heroWedding.data.cover) : undefined;
+// A home não é uma página de casamento: o compartilhamento mostra o retrato,
+// não a capa de um casal específico. O JSON-LD segue a mesma imagem.
+const portraitOg = await ogImageFrom(portrait);
 
 // A Person fica num bloco próprio para que autor, publisher e provider em
 // outras páginas possam apontar para o mesmo @id.
@@ -39,7 +43,7 @@ const person = node({
   jobTitle: SITE.role,
   description: SITE.description,
   url: absolute('/sobre'),
-  image: heroOg ? absolute(heroOg.src) : undefined,
+  image: absolute(portraitOg.src),
   address: {
     '@type': 'PostalAddress',
     addressLocality: SITE.city,
@@ -59,7 +63,7 @@ const jsonLd = [
     name: SITE.name,
     description: SITE.description,
     url: absolute('/'),
-    ...(heroOg ? { image: absolute(heroOg.src) } : {}),
+    image: absolute(portraitOg.src),
     priceRange: '$$$',
     founder: { '@id': ID.person },
     employee: { '@id': ID.person },

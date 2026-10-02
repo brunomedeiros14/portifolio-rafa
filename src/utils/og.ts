@@ -27,19 +27,27 @@ export interface OgImage {
  * Pior, a URL original também arrastava o JPEG de 2,5 MB para o `dist/`.
  */
 export async function ogImageFrom(cover: ImageMetadata): Promise<OgImage> {
+  // O sharp não amplia: pedir 1200px para uma capa de 1080 devolve 1080. Como
+  // as dimensões declaradas em `og:image:width/height` vêm daqui, devolver as
+  // pedidas anunciava um arquivo maior do que o que existe — e o retrato, que
+  // é quadrado, saía em 1080x630, proporção 1.71 em vez de 1.91.
+  const width = Math.min(OG_WIDTH, cover.width);
+  const height = Math.round(width / (OG_WIDTH / OG_HEIGHT));
+
   const out = await getImage({
     src: cover,
-    width: OG_WIDTH,
-    height: OG_HEIGHT,
+    width,
+    height,
     fit: 'cover',
     position: 'attention',
     format: 'jpeg',
     quality: 80,
   });
 
+  // As dimensões reais do arquivo, não as do pedido.
   return {
     src: out.src,
-    width: OG_WIDTH,
-    height: OG_HEIGHT,
+    width: out.attributes.width,
+    height: out.attributes.height,
   };
 }

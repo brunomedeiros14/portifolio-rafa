@@ -1,6 +1,8 @@
 ---
 import { SITE, absolute, canonicalPath } from '../site.config';
-import { OG_HEIGHT, OG_WIDTH } from '../utils/og';
+import { OG_HEIGHT, OG_WIDTH, ogImageFrom } from '../utils/og';
+
+import portrait from '../assets/profile.png';
 
 interface Props {
   /** <title> da página — sem o nome do site */
@@ -13,7 +15,11 @@ interface Props {
    * URL ausente, então não existe um endereço canônico para ela.
    */
   canonical?: string | false;
-  /** Imagem para Open Graph (caminho ou URL) */
+  /**
+   * Imagem para Open Graph (caminho ou URL). Sem ela, usa o retrato do
+   * fotógrafo: quem compartilha uma página que não é um casamento quer ver
+   * quem assina o trabalho, não uma foto de outro casal.
+   */
   ogImage?: string;
   /** Dimensões da og:image. Redes só reservam o card se forem explícitas. */
   ogImageWidth?: number;
@@ -38,9 +44,9 @@ const {
   title,
   description,
   canonical = Astro.url.pathname,
-  ogImage = '/og-default.jpg',
-  ogImageWidth = OG_WIDTH,
-  ogImageHeight = OG_HEIGHT,
+  ogImage,
+  ogImageWidth,
+  ogImageHeight,
   ogImageAlt,
   type = 'website',
   publishedTime,
@@ -52,7 +58,18 @@ const {
 } = Astro.props;
 
 const resolvedCanonical = canonical === false ? null : absolute(canonicalPath(canonical));
-const resolvedOgImage = absolute(ogImage);
+
+// Só entra no pipeline de imagem quando a página não traz a sua própria — as
+// páginas de casamento e de post já passam a capa, e reprocessar o retrato
+// nelas só gastaria build.
+const defaultOg = ogImage ? undefined : await ogImageFrom(portrait);
+const resolvedOgImage = absolute(ogImage ?? defaultOg!.src);
+
+// As dimensões precisam ser as do arquivo, não as constantes do Open Graph: o
+// retrato dá 1080x567 e anunciar 1200x630 faz o scraper reservar um card maior
+// do que a imagem que ele vai encontrar.
+const resolvedOgWidth = ogImageWidth ?? defaultOg?.width ?? OG_WIDTH;
+const resolvedOgHeight = ogImageHeight ?? defaultOg?.height ?? OG_HEIGHT;
 
 const DEFAULT_OG_TITLE = `${SITE.name} — ${SITE.role}`;
 
@@ -132,10 +149,10 @@ const ogImageType = OG_IMAGE_TYPES[ogImageExt];
 <meta property="og:image:alt" content={imageAlt} />
 <meta property="og:locale" content={SITE.locale} />
 {
-  ogImageWidth && ogImageHeight ? (
+  resolvedOgWidth && resolvedOgHeight ? (
     <>
-      <meta property="og:image:width" content={String(ogImageWidth)} />
-      <meta property="og:image:height" content={String(ogImageHeight)} />
+      <meta property="og:image:width" content={String(resolvedOgWidth)} />
+      <meta property="og:image:height" content={String(resolvedOgHeight)} />
     </>
   ) : null
 }
@@ -158,8 +175,8 @@ const ogImageType = OG_IMAGE_TYPES[ogImageExt];
 <meta name="twitter:description" content={description} />
 <meta name="twitter:image" content={resolvedOgImage} />
 <meta name="twitter:image:alt" content={imageAlt} />
-{ogImageWidth && <meta name="twitter:image:width" content={String(ogImageWidth)} />}
-{ogImageHeight && <meta name="twitter:image:height" content={String(ogImageHeight)} />}
+{resolvedOgWidth && <meta name="twitter:image:width" content={String(resolvedOgWidth)} />}
+{resolvedOgHeight && <meta name="twitter:image:height" content={String(resolvedOgHeight)} />}
 
 {/* Favicon */}
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
