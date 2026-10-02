@@ -7,14 +7,14 @@
  *
  * O campo obrigatório de frontmatter `slug` é também a chave da linha (coluna A).
  *
- * `city`, `venue` e `vendors` foram removidos: `location` passou a aceitar
- * cidade ou estabelecimento. Como a planilha é posicional, `alignHeaders_`
+ * O local vive em três colunas: `city` e `state` são obrigatórias, `venue`
+ * (o estabelecimento) é opcional. Como a planilha é posicional, `alignHeaders_`
  * reescreve uma aba antiga no layout novo — sem ela, cada gravação seguinte
  * jogaria `state` na coluna `city` e empurraria o resto da linha.
  */
 const Events = {
   HEADERS: [
-    'slug', 'title', 'couple', 'date', 'location', 'state',
+    'slug', 'title', 'couple', 'date', 'city', 'state', 'venue',
     'description', 'excerpt', 'featured', 'tags',
     'seoTitle', 'seoDescription',
     'cover_id', 'cover_name', 'gallery', 'status', 'created_at', 'updated_at',
@@ -23,11 +23,11 @@ const Events = {
   /**
    * Colunas removidas ao longo do tempo, na ordem em que saíram.
    *
-   * `city`/`venue`/`vendors` foram absorvidas por `location`.
+   * `vendors` saiu quando o bloco de fornecedores foi removido do site.
    * `historia_html`/`story` saíram junto com o texto editorial: sobrou só a
    * frase de apoio da intro.
    */
-  DROPPED_HEADERS: ['city', 'venue', 'vendors', 'historia_html', 'story'],
+  DROPPED_HEADERS: ['vendors', 'historia_html', 'story'],
 
   ensureSetup() {
     const props = PropertiesService.getScriptProperties();
@@ -67,8 +67,8 @@ const Events = {
    *
    * Roda em toda leitura/escrita. É idempotente: quando o cabeçalho já bate,
    * não escreve nada. Só reescreve quando falta alguma coluna nova ou sobra
-   * alguma antiga, migrando `city` para dentro de `location` quando ela ainda
-   * não aparece no texto.
+   * alguma antiga, inclusive desfazendo o `location` único: o texto
+   * "Fazenda X, Nova Lima" volta a virar `venue` + `city`.
    */
   alignHeaders_(sheet) {
     const lastRow = sheet.getLastRow();
@@ -91,13 +91,26 @@ const Events = {
       return i === undefined ? '' : row[i];
     };
 
-    // `location` passa a carregar cidade ou estabelecimento. Se a linha antiga
-    // tinha `city` separado, junta no texto em vez de perder a informação.
-    const joinLocation = (row) => {
-      const location = String(oldValue(row, 'location') || '').trim();
-      const city = String(oldValue(row, 'city') || '').trim();
-      if (!city || location.toLowerCase().includes(city.toLowerCase())) return location;
-      return location ? `${location}, ${city}` : city;
+    // Desfaz o `location` único. A cidade é sempre o último trecho separado por
+    // vírgula ("Fazenda X, Nova Lima" → venue "Fazenda X" + city "Nova Lima");
+    // sem vírgula o texto todo é a cidade e o local fica vazio.
+    const splitLocation = (row) => {
+      const raw = String(oldValue(row, 'location') || '').trim();
+      const legacyCity = String(oldValue(row, 'city') || '').trim();
+      if (legacyCity) {
+        const venue = raw.toLowerCase() === legacyCity.toLowerCase() ? '' : raw;
+        return { city: legacyCity, venue };
+      }
+      if (!raw) return { city: '', venue: '' };
+      const parts = raw.split(',').map((part) => part.trim()).filter(Boolean);
+      if (parts.length < 2) return { city: parts[0] || '', venue: '' };
+      // "Igreja de São Francisco, Tiradentes, MG": a sigla que já está em
+      // `state` não é cidade, então fica fora da quebra.
+      const state = String(oldValue(row, 'state') || '').trim();
+      if (parts.length > 2 && state && parts[parts.length - 1].toLowerCase() === state.toLowerCase()) {
+        parts.pop();
+      }
+      return { city: parts[parts.length - 1], venue: parts.slice(0, -1).join(', ') };
     };
 
     const width = Events.HEADERS.length;
@@ -106,7 +119,9 @@ const Events = {
       const row = values[r];
       rebuilt.push(
         Events.HEADERS.map((name) => {
-          if (name === 'location') return joinLocation(row);
+          const place = splitLocation(row);
+          if (name === 'city') return place.city;
+          if (name === 'venue') return place.venue;
           return oldValue(row, name);
         }),
       );
@@ -165,7 +180,7 @@ const Events = {
   create(payload) {
     const slug = Slug.ensureUnique(
       Slug.slugify(payload && payload.couple),
-      payload && payload.location,
+      payload && payload.city,
       Events.slugs_(),
     );
     const now = new Date().toISOString();
@@ -174,8 +189,9 @@ const Events = {
       title: (payload && payload.title) || '',
       couple: (payload && payload.couple) || '',
       date: (payload && payload.date) || '',
-      location: (payload && payload.location) || '',
+      city: (payload && payload.city) || '',
       state: (payload && payload.state) || '',
+      venue: (payload && payload.venue) || '',
       description: (payload && payload.description) || '',
       excerpt: (payload && payload.excerpt) || '',
       featured: !!(payload && payload.featured),
@@ -282,7 +298,7 @@ const Events = {
   computeStatus(event) {
     const missed = [];
     const textFields = [
-      'title', 'couple', 'date', 'location', 'state', 'description', 'excerpt',
+      'title', 'couple', 'date', 'city', 'state', 'description', 'excerpt',
     ];
     for (const field of textFields) {
       if (Events.blank_(event[field])) missed.push(field);
@@ -335,8 +351,9 @@ const Events = {
       slug: String(at('slug') || ''),
       title: String(at('title') || ''),
       couple: String(at('couple') || ''),
-      location: String(at('location') || ''),
+      city: String(at('city') || ''),
       state: String(at('state') || ''),
+      venue: String(at('venue') || ''),
       description: String(at('description') || ''),
       excerpt: String(at('excerpt') || ''),
       date: Events.normalizeDate_(at('date')),

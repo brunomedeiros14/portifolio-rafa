@@ -41,7 +41,7 @@ const jsonLd = node({
       item: {
         '@type': 'Article',
         '@id': absolute(`/casamentos/${data.slug}#article`),
-        headline: `${data.couple} — casamento em ${data.location}`,
+        headline: `${data.couple} — casamento em ${data.city}`,
         description: data.excerpt,
         url: absolute(`/casamentos/${data.slug}`),
         datePublished: data.date.toISOString().slice(0, 10),

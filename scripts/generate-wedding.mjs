@@ -8,6 +8,7 @@
 //
 // O MDX sai só com frontmatter: a página do casamento é capa, data, local,
 // uma frase de apoio na intro e galeria. Não há corpo de texto nem pasta story/.
+// `venue` é opcional e só entra no frontmatter quando preenchido.
 //
 // A geração é atômica: tudo é escrevido em um diretório temporário (.staging-<slug>)
 // e só movido para o destino final se TODOS os passos tiverem sucesso.
@@ -32,7 +33,7 @@ try {
 if (!pub || pub.error) fail(`Erro retornado pelo endpoint do gs-form: ${pub && pub.error}`);
 
 const REQUIRED = [
-  'slug', 'title', 'couple', 'date', 'location', 'state', 'description', 'excerpt', 'cover',
+  'slug', 'title', 'couple', 'date', 'city', 'state', 'description', 'excerpt', 'cover',
 ];
 for (const field of REQUIRED) {
   if (String(pub[field] ?? '').trim() === '') fail(`Campo obrigatório ausente: ${field}`);
@@ -114,15 +115,16 @@ async function main() {
     `slug: ${yaml(slug)}`,
     `couple: ${yaml(pub.couple)}`,
     `date: ${pub.date}`,
-    `location: ${yaml(pub.location)}`,
+    `city: ${yaml(pub.city)}`,
     `state: ${yaml(pub.state)}`,
+    String(pub.venue || '').trim() ? `venue: ${yaml(pub.venue)}` : null,
     `description: ${yaml(pub.description)}`,
     `excerpt: ${yaml(pub.excerpt)}`,
     `cover: "./images/${coverName}"`,
     `featured: ${pub.featured ? 'true' : 'false'}`,
     `draft: ${pub.draft ? 'true' : 'false'}`,
     pub.tags && pub.tags.length ? `tags:\n${yamlList(pub.tags)}` : 'tags: []',
-  ].concat(pub.seoTitle ? `seoTitle: ${yaml(pub.seoTitle)}` : []);
+  ].filter((line) => line !== null).concat(pub.seoTitle ? `seoTitle: ${yaml(pub.seoTitle)}` : []);
   if (pub.seoDescription) frontmatter.push(`seoDescription: ${yaml(pub.seoDescription)}`);
   frontmatter.push('---');
 

@@ -13,14 +13,16 @@ const weddings = defineCollection({
       slug: z.string(),
       couple: z.string(),
       date: z.coerce.date(),
-      /**
-       * Cidade **ou** estabelecimento, do jeito que vai ser lido: "Ouro Preto"
-       * ou "Fazenda X, Nova Lima". Antes havia `city` e `venue` separados, o
-       * que obrigava o autor a escolher um dos dois e ainda repetia o mesmo
-       * dado até três vezes na página. `state` continua à parte.
-       */
-      location: z.string(),
+      /** Cidade — obrigatória. É o que aparece sozinho nos cards e no slug. */
+      city: z.string(),
+      /** Sigla do estado: "MG". */
       state: z.string(),
+      /**
+       * Estabelecimento (fazenda, museu, igreja, hotel). **Opcional**: com ele
+       * preenchido a página mostra "Fazenda X, Nova Lima, MG"; vazio, mostra só
+       * "Nova Lima, MG". Nos cards nunca aparece.
+       */
+      venue: z.string().optional(),
       /** Frase de apoio exibida na intro, entre a capa e a galeria. */
       description: z.string(),
       excerpt: z.string().max(220),

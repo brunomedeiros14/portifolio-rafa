@@ -117,8 +117,9 @@ Resposta (200, sempre — erros vêm no corpo):
   "title": "Marina + Pedro",
   "couple": "Marina e Pedro",
   "date": "2026-05-30",
-  "location": "Museu da Inconfidência, Ouro Preto",
+  "city": "Ouro Preto",
   "state": "MG",
+  "venue": "Museu da Inconfidência",
   "description": "...",
   "excerpt": "...",
   "featured": true,
@@ -141,12 +142,16 @@ Resposta (200, sempre — erros vêm no corpo):
   `gallery`. As fotos ficam na mesma pasta do evento com nome UUID + extensão original
   (evita colisão e preserva o tipo).
 - O slug da pasta no repositório é igual ao slug do evento (URL pública).
-- `location` é o único campo de local: escreve do jeito que vai ser lido, seja
-  cidade (`Ouro Preto`) ou estabelecimento (`Fazenda X, Nova Lima`). Não existe
-  mais `city`/`venue`, e o bloco de Fornecedores saiu do site.
+- O local tem três campos: `city` e `state` são obrigatórios, `venue` (o
+  estabelecimento — fazenda, museu, igreja, hotel) é **opcional**. Com `venue`
+  preenchido a página mostra `Fazenda X, Nova Lima, MG`; vazio, mostra só
+  `Nova Lima, MG`. Os cards das listagens mostram sempre apenas `city` + `state`,
+  e o slug usa a cidade (`amanda-e-joao-nova-lima`), nunca o estabelecimento.
 - **Migração da planilha:** `Events.alignHeaders_()` roda em todo acesso e reordena
-  uma aba antiga para o layout novo, lendo por nome de coluna e juntando o antigo
-  `city` dentro de `location`. Sem isso a escrita seguinte corromperia a linha, já
-  que `rowToValues_()` posiciona os valores pela ordem de `HEADERS`. É idempotente:
-  com o cabeçalho já correto não escreve nada. Depois da primeira execução, as colunas
-  listadas em `Events.DROPPED_HEADERS` são apagadas da aba.
+  uma aba antiga para o layout novo, lendo por nome de coluna e desfazendo o
+  `location` único: quebra o texto pela última vírgula, então
+  `Fazenda X, Nova Lima` volta a ser `venue` + `city`. Sem isso a escrita seguinte
+  corromperia a linha, já que `rowToValues_()` posiciona os valores pela ordem de
+  `HEADERS`. É idempotente: com o cabeçalho já correto não escreve nada. Depois da
+  primeira execução, as colunas listadas em `Events.DROPPED_HEADERS` são apagadas
+  da aba.

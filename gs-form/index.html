@@ -293,7 +293,7 @@
         return '<tr>' +
           '<td><strong>' + esc(e.couple) + '</strong>' + (e.featured ? ' ★' : '') +
           '<div class="hint">' + esc(e.slug) + '</div>' + missed + '</td>' +
-          '<td>' + esc(e.location) + (e.state ? ' · ' + esc(e.state) : '') + '</td>' +
+          '<td>' + esc([e.venue, e.city].filter(Boolean).join(', ')) + (e.state ? ' · ' + esc(e.state) : '') + '</td>' +
           '<td>' + fmtDate(e.date) + '</td>' +
           '<td>' + badge + '</td>' +
           '<td class="row" style="justify-content:flex-end">' +
@@ -325,8 +325,9 @@
         '<div class="field"><label>Nome do casal *</label><input type="text" name="couple" required autofocus placeholder="Marina e Pedro"></div>' +
         '<div class="field"><label>Título</label><input type="text" name="title" placeholder="Marina + Pedro"></div>' +
         '<div class="field"><label>Data</label><input type="date" name="date"></div>' +
-        '<div class="field"><label>Local (cidade ou estabelecimento)</label><input type="text" name="location" placeholder="Museu da Inconfidência, Ouro Preto"></div>' +
-        '<div class="field"><label>Estado</label><input type="text" name="state" placeholder="MG"></div>' +
+        '<div class="field"><label>Cidade *</label><input type="text" name="city" required placeholder="Ouro Preto"></div>' +
+        '<div class="field"><label>Estado *</label><input type="text" name="state" required placeholder="MG"></div>' +
+        '<div class="field"><label>Local (opcional)</label><input type="text" name="venue" placeholder="Museu da Inconfidência"></div>' +
         '</div>' +
         '<div class="actions"><button class="primary" type="submit">Criar evento</button>' +
         '<button type="button" class="ghost" data-action="home">Cancelar</button></div>' +
@@ -339,8 +340,9 @@
         couple: fd.get('couple').trim(),
         title: (fd.get('title') || '').trim(),
         date: (fd.get('date') || '').trim(),
+        city: (fd.get('city') || '').trim(),
         state: (fd.get('state') || '').trim(),
-        location: (fd.get('location') || '').trim(),
+        venue: (fd.get('venue') || '').trim(),
       };
       var submit = form.querySelector('[type=submit]');
       submit.disabled = true; submit.textContent = 'Criando…';
@@ -381,8 +383,9 @@
         '<div class="field"><label>Título</label><input type="text" id="f-title" value="' + esc(e.title) + '"></div>' +
         '<div class="field"><label>Nome do casal</label><input type="text" id="f-couple" value="' + esc(e.couple) + '"></div>' +
         '<div class="field"><label>Data</label><input type="date" id="f-date" value="' + esc(e.date) + '"></div>' +
-        '<div class="field"><label>Local (cidade ou estabelecimento)</label><input type="text" id="f-location" value="' + esc(e.location) + '"></div>' +
-        '<div class="field"><label>Estado</label><input type="text" id="f-state" value="' + esc(e.state) + '"></div>' +
+        '<div class="field"><label>Cidade *</label><input type="text" id="f-city" value="' + esc(e.city) + '"></div>' +
+        '<div class="field"><label>Estado *</label><input type="text" id="f-state" value="' + esc(e.state) + '"></div>' +
+        '<div class="field"><label>Local (opcional)</label><input type="text" id="f-venue" value="' + esc(e.venue) + '" placeholder="Museu da Inconfidência"></div>' +
         '</div>' +
         '<div class="field"><label>Description — frase da intro</label><textarea id="f-description" rows="3">' + esc(e.description) + '</textarea></div>' +
         '<div class="field"><label>Excerpt — legenda curta dos cards (máx. 220)</label><textarea id="f-excerpt" rows="2" maxlength="220">' + esc(e.excerpt) + '</textarea></div>' +
@@ -427,14 +430,14 @@
     function bindEditListeners() {
       byId('btn-regenerate-slug').addEventListener('click', function () {
         var couple = byId('f-couple').value.trim();
-        // O slug usava a cidade; agora usa o local, que pode ser cidade ou
-        // estabelecimento. Sem ele o slug fica só com o nome do casal.
-        var location = byId('f-location').value.trim();
+        // O slug usa a cidade e ignora o estabelecimento: o local é opcional e
+        // mudá-lo não deve quebrar a URL. Sem cidade, fica só com o nome do casal.
+        var city = byId('f-city').value.trim();
         if (!couple) { toast('Preencha o nome do casal primeiro.', true); return; }
         var slugify = function (t) { return t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); };
         var base = slugify(couple);
         var slug = base;
-        if (location) slug = base + '-' + slugify(location);
+        if (city) slug = base + '-' + slugify(city);
         byId('slug-field').value = slug;
       });
 
@@ -669,8 +672,9 @@
         title: byId('f-title').value.trim(),
         couple: byId('f-couple').value.trim(),
         date: byId('f-date').value,
-        location: byId('f-location').value.trim(),
+        city: byId('f-city').value.trim(),
         state: byId('f-state').value.trim(),
+        venue: byId('f-venue').value.trim(),
         description: byId('f-description').value.trim(),
         excerpt: byId('f-excerpt').value.trim(),
         featured: byId('f-featured').checked,
@@ -708,13 +712,13 @@
       }).length;
       var probe = {
         title: e.title, couple: e.couple, date: e.date,
-        location: e.location, state: e.state,
+        city: e.city, state: e.state,
         description: e.description, excerpt: e.excerpt,
         cover_id: files.cover ? files.cover.id : '',
         galleryCount: galleryCount,
       };
       var missed = [];
-      ['title', 'couple', 'date', 'location', 'state', 'description', 'excerpt'].forEach(function (f) {
+      ['title', 'couple', 'date', 'city', 'state', 'description', 'excerpt'].forEach(function (f) {
         if (String(probe[f] || '').trim() === '') missed.push(f);
       });
       if (!files.cover) missed.push('cover');
@@ -728,9 +732,9 @@
       var items = [
         ['Título e casal', !!state.event.title && !!state.event.couple],
         ['Data', !!state.event.date],
-        ['Local · estado', !!state.event.location && !!state.event.state],
+        ['Cidade · estado', !!state.event.city && !!state.event.state],
+        ['Local (opcional)', true],
         ['Description (intro)', !!state.event.description],
-        ['Description', !!state.event.description],
         ['Excerpt', !!state.event.excerpt],
         ['Capa enviada', !!(state.files && state.files.cover)],
         ['Galeria (mín. ' + min + ')', probe.galleryCount >= min],

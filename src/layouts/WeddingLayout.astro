@@ -7,7 +7,7 @@ import Hero from '../components/Hero.astro';
 import Gallery from '../components/Gallery.astro';
 import CTA from '../components/CTA.astro';
 import WeddingGrid from '../components/WeddingGrid.astro';
-import { getWeddingImages, getGalleryItems, weddingFolder } from '../utils/weddings';
+import { getWeddingImages, getGalleryItems, weddingFolder, weddingPlace } from '../utils/weddings';
 import { SITE, absolute, formatDate, canonicalPath } from '../site.config';
 import type { CollectionEntry } from 'astro:content';
 
@@ -25,6 +25,10 @@ const ogImage = await ogImageFrom(data.cover);
 
 const articleUrl = absolute(canonicalPath(`/casamentos/${data.slug}`));
 
+// "Fazenda X, Nova Lima · MG" — ou só "Nova Lima · MG" quando não há local.
+const place = weddingPlace(data);
+const placeLabel = `${place} · ${data.state}`;
+
 const jsonLd = [
   node({
     '@type': 'Article',
@@ -41,7 +45,7 @@ const jsonLd = [
     about: {
       '@type': 'Event',
       name: `Casamento de ${data.couple}`,
-      location: `${data.location} - ${data.state}`,
+      location: `${place}, ${data.state}`,
       startDate: data.date.toISOString().slice(0, 10),
       eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
       image: absolute(ogImage.src),
@@ -60,13 +64,13 @@ const jsonLd = [
 ---
 
 <BaseLayout
-  title={data.seoTitle ?? `${data.couple} — casamento em ${data.location} (${data.state})`}
+  title={data.seoTitle ?? `${data.couple} — casamento em ${data.city} (${data.state})`}
   description={data.seoDescription ?? data.excerpt}
   canonical={`/casamentos/${data.slug}`}
   ogImage={ogImage.src}
   ogImageWidth={ogImage.width}
   ogImageHeight={ogImage.height}
-  ogImageAlt={`${data.couple} — casamento em ${data.location}`}
+  ogImageAlt={`${data.couple} — casamento em ${data.city}`}
   type="article"
   publishedTime={data.date}
   noindex={data.draft}
@@ -77,7 +81,7 @@ const jsonLd = [
     <Hero
       image={data.cover}
       alt={`${data.couple} — ${data.excerpt}`}
-      eyebrow={`${data.location} · ${data.state}`}
+      eyebrow={placeLabel}
       title={data.couple}
       ctas={[{ label: 'Ver a galeria', href: '#galeria', primary: true }, { label: 'Conheça o fotógrafo', href: '/sobre' }]}
     />
@@ -97,6 +101,7 @@ const jsonLd = [
         <p class="mx-auto mt-6 max-w-xl font-display text-2xl font-normal leading-snug text-text sm:text-3xl">
           {data.description}
         </p>
+        <p class="mt-6 text-sm text-muted">{placeLabel}</p>
       </div>
     </section>
 
