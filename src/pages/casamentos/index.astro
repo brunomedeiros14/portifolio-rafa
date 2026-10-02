@@ -72,6 +72,11 @@ const jsonLd = node({
         Uma curadoria das cerimônias que tive o privilégio de fotografar. {weddings.length} histórias
         completas — e cada uma com galeria, bastidores e lugares reais de Minas Gerais.
       </p>
+      {/* Os cartões são <h3> (nome do casal). Sem um <h2> intermediário a
+          hierarquia saltava de h1 para h3, e o outline do leitor de tela
+          apresentava os casamentos como se fossem subseções do <h1> — o que
+          eles não são. */}
+      <h2 class="sr-only">Casamentos fotografados</h2>
     </div>
   </header>
 

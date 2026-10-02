@@ -26,9 +26,13 @@ const { id } = Astro.props;
 
   <figure class="flex h-full flex-col items-center justify-center gap-4 px-4 py-16 sm:px-16">
     <div class="lb-stage flex min-h-0 items-center justify-center">
+      {/* `width`/`height` são preenchidos por initLightbox com a variante
+          1920px de cada foto. Sem isso o <img>intrinsicamente sem tamanho faz
+          o dialog reflowar a cada troca de imagem. */}
       <img
         class="lb-img max-h-[78vh] max-w-full rounded-sm object-contain"
         alt=""
+        decoding="async"
       />
     </div>
     <figcaption class="flex flex-col items-center gap-1 px-2 text-center text-sm text-white/70">
