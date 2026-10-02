@@ -31,7 +31,7 @@ const fulls = await Promise.all(
 
 <div id={id} class="columns-2 gap-3 sm:gap-4 lg:columns-3">
   {items.map((item, index) => (
-    <figure class="mb-3 break-inside-avoid sm:mb-4">
+    <div class="mb-3 break-inside-avoid sm:mb-4">
       <button
         type="button"
         class="group relative block w-full cursor-zoom-in overflow-hidden rounded-sm bg-line"
@@ -44,9 +44,12 @@ const fulls = await Promise.all(
         data-caption={item.caption}
         aria-label={`Ampliar foto: ${item.caption}`}
       >
+        {/* alt="" de propósito: o nome acessível do botão já é
+            "Ampliar foto: <legenda>". Repetir a legenda no alt faria o leitor de
+            tela anunciar a mesma frase duas vezes por miniatura. */}
         <Picture
           src={item.image}
-          alt={item.caption}
+          alt=""
           widths={[480, 1024]}
           sizes="(min-width: 1280px) 384px, (min-width: 1024px) 31vw, (min-width: 640px) 48vw, 96vw"
           formats={['avif', 'webp']}
@@ -56,8 +59,7 @@ const fulls = await Promise.all(
           class="w-full transition-transform duration-700 ease-out group-hover:scale-[1.03]"
         />
       </button>
-      <figcaption class="sr-only">{item.caption}</figcaption>
-    </figure>
+    </div>
   ))}
 </div>
 
