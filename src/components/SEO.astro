@@ -84,6 +84,26 @@ const OG_TITLE = FULL_TITLE === SITE.name ? DEFAULT_OG_TITLE : FULL_TITLE;
 
 const imageAlt = ogImageAlt ?? description;
 const isArticle = type === 'article';
+
+/**
+ * MIME pela extensão da URL. O LinkedIn e o Facebook usam `og:image:type` para
+ * decidir se baixam a imagem; sem ele, alguns scrapers caem no default e
+ * recusam a renderização do card.
+ */
+const OG_IMAGE_TYPES: Record<string, string> = {
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.webp': 'image/webp',
+  '.gif': 'image/gif',
+};
+
+const ogImageExt = (() => {
+  const path = resolvedOgImage.split('?')[0];
+  const dot = path.lastIndexOf('.');
+  return dot === -1 ? '' : path.slice(dot).toLowerCase();
+})();
+const ogImageType = OG_IMAGE_TYPES[ogImageExt];
 ---
 
 <title>{FULL_TITLE}</title>
@@ -104,6 +124,11 @@ const isArticle = type === 'article';
 <meta property="og:description" content={description} />
 {resolvedCanonical && <meta property="og:url" content={resolvedCanonical} />}
 <meta property="og:image" content={resolvedOgImage} />
+{/* `secure_url` é a mesma URL: o site é https e o preview é gerado em contexto seguro. */}
+{resolvedOgImage.startsWith('https://') && (
+  <meta property="og:image:secure_url" content={resolvedOgImage} />
+)}
+{ogImageType && <meta property="og:image:type" content={ogImageType} />}
 <meta property="og:image:alt" content={imageAlt} />
 <meta property="og:locale" content={SITE.locale} />
 {
@@ -133,6 +158,8 @@ const isArticle = type === 'article';
 <meta name="twitter:description" content={description} />
 <meta name="twitter:image" content={resolvedOgImage} />
 <meta name="twitter:image:alt" content={imageAlt} />
+{ogImageWidth && <meta name="twitter:image:width" content={String(ogImageWidth)} />}
+{ogImageHeight && <meta name="twitter:image:height" content={String(ogImageHeight)} />}
 
 {/* Favicon */}
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
