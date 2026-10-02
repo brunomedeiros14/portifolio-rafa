@@ -4,6 +4,7 @@ import { ClientRouter } from 'astro:transitions';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import SEO from '../components/SEO.astro';
+import { absolute } from '../site.config';
 
 interface Props {
   title: string;
@@ -72,6 +73,10 @@ const {
       jsonLd={jsonLd}
       noindex={noindex}
     />
+    {/* Sem o <link rel=alternate type=application/rss+xml>, leitores de feed só
+        descobrem /rss.xml por adivinhação. */}
+    <link rel="alternate" type="application/rss+xml" title="Blog de casamento — Rafael Dias" href={absolute('/rss.xml')} />
+
     <link
       rel="preload"
       href="/fonts/fraunces-latin.woff2"
