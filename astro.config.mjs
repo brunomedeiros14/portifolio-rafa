@@ -30,7 +30,8 @@ function buildLastmodMap() {
   /** @param {string} file @param {string} urlPath */
   const register = (file, urlPath) => {
     const head = readFileSync(file, 'utf8').slice(0, 2000);
-    const dateMatch = head.match(/^updated:\s*["']?([\d-]{10})/m) ?? head.match(/^date:\s*["']?([\d-]{10})/m);
+    const dateMatch =
+      head.match(/^updated:\s*["']?([\d-]{10})/m) ?? head.match(/^date:\s*["']?([\d-]{10})/m);
     if (!dateMatch) return;
     const date = new Date(`${dateMatch[1]}T00:00:00Z`);
     if (Number.isNaN(date.getTime())) return;

@@ -18,8 +18,7 @@
         --warn: #b4682d;
         --danger: #b23b3b;
         --radius: 10px;
-        --shadow:
-          0 1px 2px rgba(22, 18, 14, 0.06), 0 8px 24px rgba(22, 18, 14, 0.06);
+        --shadow: 0 1px 2px rgba(22, 18, 14, 0.06), 0 8px 24px rgba(22, 18, 14, 0.06);
       }
       * {
         box-sizing: border-box;
@@ -31,7 +30,7 @@
         font:
           15px/1.5 system-ui,
           -apple-system,
-          "Segoe UI",
+          'Segoe UI',
           Roboto,
           sans-serif;
         -webkit-font-smoothing: antialiased;
@@ -72,6 +71,23 @@
         gap: 8px;
         align-items: center;
         flex-wrap: wrap;
+      }
+      /* Quem está logado. Fica antes dos botões e some em tela estreita. */
+      .who {
+        font-size: 12px;
+        color: var(--muted);
+        max-width: 22ch;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .who[hidden] {
+        display: none;
+      }
+      @media (max-width: 560px) {
+        .who {
+          display: none;
+        }
       }
       .grow {
         flex: 1;
@@ -150,9 +166,9 @@
         font-weight: 600;
         margin-bottom: 4px;
       }
-      input[type="text"],
-      input[type="date"],
-      input[type="url"],
+      input[type='text'],
+      input[type='date'],
+      input[type='url'],
       textarea,
       select {
         width: 100%;
@@ -453,12 +469,7 @@
         position: absolute;
         inset: 0;
         z-index: 1;
-        background: linear-gradient(
-          100deg,
-          #ece3d6 30%,
-          #faf6ef 50%,
-          #ece3d6 70%
-        );
+        background: linear-gradient(100deg, #ece3d6 30%, #faf6ef 50%, #ece3d6 70%);
         background-size: 240% 100%;
         animation: shimmer 1.1s ease-in-out infinite;
       }
@@ -584,7 +595,9 @@
     <header class="top">
       <div class="brand">Casamentos<small>Controle de publicação</small></div>
       <div class="row">
+        <span class="who" id="who" hidden></span>
         <button class="ghost" data-action="home" id="btn-home">Lista</button>
+        <button class="ghost" data-action="logout" id="btn-logout" hidden>Sair</button>
         <button class="primary" data-action="create">+ Novo evento</button>
       </div>
     </header>
@@ -599,7 +612,7 @@
     </div>
 
     <script>
-      "use strict";
+      'use strict';
       var state = {
         slug: null,
         event: null,
@@ -619,36 +632,73 @@
       }
 
       function esc(s) {
-        return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
           return {
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': "&quot;",
-            "'": "&#39;",
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;',
           }[c];
         });
       }
       function fmtDate(d) {
-        if (!d) return "—";
+        if (!d) return '—';
         var m = String(d).match(/^(\d{4})-(\d{2})-(\d{2})/);
-        return m ? m[3] + "/" + m[2] + "/" + m[1] : String(d);
+        return m ? m[3] + '/' + m[2] + '/' + m[1] : String(d);
+      }
+
+      /**
+       * Token de sessão.
+       *
+       * Não há cookie: o Web App do Apps Script não monta headers de resposta,
+       * então o servidor não consegue ler um. O token volta do `apiLogin` e
+       * viaja como primeiro argumento de cada `api*` (ver Auth.js). O
+       * `sessionStorage` é só conveniência — sobreviver a um F5 sem pedir a
+       * senha de novo. Em iframe com storage de terceiros bloqueado o painel
+       * continua funcionando e só perde o token ao recarregar, e é por isso que
+       * nada aqui é essencial: `authGate` na partida é quem garante acesso.
+       */
+      var session = { token: readStoredToken() };
+
+      function readStoredToken() {
+        try {
+          return window.sessionStorage.getItem('gs_token') || '';
+        } catch (err) {
+          return '';
+        }
+      }
+
+      function storeToken(token) {
+        session.token = token || '';
+        try {
+          if (token) window.sessionStorage.setItem('gs_token', token);
+          else window.sessionStorage.removeItem('gs_token');
+        } catch (err) {
+          /* sem storage: vale só a memória */
+        }
+      }
+
+      /** `run` sempre injeta o token como primeiro argumento. */
+      function call_(fn, args) {
+        var r = google.script.run;
+        return r[fn].apply(r, [session.token].concat(args || []));
       }
 
       function run(fn) {
         var args = Array.prototype.slice.call(arguments, 1);
         return new Promise(function (resolve, reject) {
           busy();
-          var r = google.script.run
+          call_(fn, args)
             .withSuccessHandler(function (v) {
               idle();
               resolve(v);
             })
             .withFailureHandler(function (e) {
               idle();
+              if (handleSessionError(e)) return;
               reject(e);
             });
-          r[fn].apply(r, args);
         });
       }
 
@@ -656,21 +706,62 @@
       function runQuiet(fn) {
         var args = Array.prototype.slice.call(arguments, 1);
         return new Promise(function (resolve, reject) {
-          var r = google.script.run
+          call_(fn, args)
             .withSuccessHandler(resolve)
-            .withFailureHandler(reject);
-          r[fn].apply(r, args);
+            .withFailureHandler(function (e) {
+              if (handleSessionError(e)) return;
+              reject(e);
+            });
+        });
+      }
+
+      /**
+       * Sessão expirada no meio de uma ação: recarrega em vez de mostrar o
+       * erro. O `doGet` decide entre painel e login, então o recarregamento é o
+       * caminho mais curto para a tela certa.
+       */
+      function handleSessionError(err) {
+        if (!/sessão expirada/i.test(String((err && err.message) || ''))) return false;
+        storeToken('');
+        location.reload();
+        return true;
+      }
+
+      function logout() {
+        run('apiLogout').then(
+          function () {
+            storeToken('');
+            location.reload();
+          },
+          function () {
+            storeToken('');
+            location.reload();
+          },
+        );
+      }
+
+      /** Confere a sessão antes de pintar o painel. */
+      function authGate() {
+        return run('apiAuthStatus').then(function (status) {
+          if (!status.authenticated) {
+            location.reload();
+            return;
+          }
+          var who = byId('who');
+          who.textContent = status.email + (status.via === 'conta' ? ' (conta Google)' : '');
+          who.hidden = false;
+          byId('btn-logout').hidden = status.via === 'conta';
         });
       }
 
       var toastTimer = null;
       function toast(msg, isErr) {
-        var t = byId("toast");
+        var t = byId('toast');
         t.textContent = msg;
-        t.className = isErr ? "show err" : "show";
+        t.className = isErr ? 'show err' : 'show';
         clearTimeout(toastTimer);
         toastTimer = setTimeout(function () {
-          t.className = "";
+          t.className = '';
         }, 3600);
       }
 
@@ -678,12 +769,12 @@
       var _loaderTimer = null;
       function busy(msg) {
         _busy++;
-        if (msg) byId("loader-msg").textContent = msg;
+        if (msg) byId('loader-msg').textContent = msg;
         if (_busy === 1) {
           clearTimeout(_loaderTimer);
           _loaderTimer = setTimeout(function () {
-            byId("loader").classList.add("show");
-            byId("loader").setAttribute("aria-hidden", "false");
+            byId('loader').classList.add('show');
+            byId('loader').setAttribute('aria-hidden', 'false');
           }, 120);
         }
       }
@@ -692,45 +783,49 @@
         if (_busy <= 0) {
           _busy = 0;
           clearTimeout(_loaderTimer);
-          byId("loader").classList.remove("show");
-          byId("loader").setAttribute("aria-hidden", "true");
+          byId('loader').classList.remove('show');
+          byId('loader').setAttribute('aria-hidden', 'true');
         }
       }
 
       function ensureConfig() {
         if (state.config) return Promise.resolve(state.config);
-        return run("apiConfig").then(function (cfg) {
+        return run('apiConfig').then(function (cfg) {
           state.config = cfg;
           return cfg;
         });
       }
 
-      document.addEventListener("click", function (ev) {
-        var el = ev.target.closest("[data-action]");
+      document.addEventListener('click', function (ev) {
+        var el = ev.target.closest('[data-action]');
         if (!el) return;
-        var action = el.getAttribute("data-action");
-        if (action === "home") {
+        var action = el.getAttribute('data-action');
+        if (action === 'home') {
           renderList();
           return;
         }
-        if (action === "create") {
+        if (action === 'create') {
           renderCreate();
           return;
         }
-        if (action === "edit") {
-          renderEdit(el.getAttribute("data-slug"));
+        if (action === 'edit') {
+          renderEdit(el.getAttribute('data-slug'));
+          return;
+        }
+        if (action === 'logout') {
+          logout();
           return;
         }
       });
 
-      document.addEventListener("submit", function (ev) {
+      document.addEventListener('submit', function (ev) {
         var form = ev.target;
-        if (form.id === "f-create") {
+        if (form.id === 'f-create') {
           ev.preventDefault();
           onCreate(form);
           return;
         }
-        if (form.id === "f-edit") {
+        if (form.id === 'f-edit') {
           ev.preventDefault();
           onSave();
           return;
@@ -742,43 +837,41 @@
       /* ------------------------------------------------------------------ */
       async function renderList() {
         var cfg = await ensureConfig();
-        var events = await run("apiList");
+        var events = await run('apiList');
         var rows = events
           .map(function (e) {
-            var ready = e.ready === "ready";
+            var ready = e.ready === 'ready';
             var badge =
-              e.status === "published"
+              e.status === 'published'
                 ? '<span class="badge published">publicado</span>'
                 : ready
                   ? '<span class="badge ready">pronto</span>'
                   : '<span class="badge pending">incompleto</span>';
             var missed =
               e.missed && e.missed.length
-                ? '<div class="hint warn">Falta: ' +
-                  esc(e.missed.join(", ")) +
-                  "</div>"
-                : "";
+                ? '<div class="hint warn">Falta: ' + esc(e.missed.join(', ')) + '</div>'
+                : '';
             return (
-              "<tr>" +
-              "<td><strong>" +
+              '<tr>' +
+              '<td><strong>' +
               esc(e.couple) +
-              "</strong>" +
-              (e.featured ? " ★" : "") +
+              '</strong>' +
+              (e.featured ? ' ★' : '') +
               '<div class="hint">' +
               esc(e.slug) +
-              "</div>" +
+              '</div>' +
               missed +
-              "</td>" +
-              "<td>" +
-              esc([e.venue, e.city].filter(Boolean).join(", ")) +
-              (e.state ? " · " + esc(e.state) : "") +
-              "</td>" +
-              "<td>" +
+              '</td>' +
+              '<td>' +
+              esc([e.venue, e.city].filter(Boolean).join(', ')) +
+              (e.state ? ' · ' + esc(e.state) : '') +
+              '</td>' +
+              '<td>' +
               fmtDate(e.date) +
-              "</td>" +
-              "<td>" +
+              '</td>' +
+              '<td>' +
               badge +
-              "</td>" +
+              '</td>' +
               '<td class="row" style="justify-content:flex-end">' +
               '<button class="small" data-action="edit" data-slug="' +
               esc(e.slug) +
@@ -786,22 +879,22 @@
               '<button class="small primary" data-action="edit" data-slug="' +
               esc(e.slug) +
               '" data-go="publish">Publicar</button>' +
-              "</td></tr>"
+              '</td></tr>'
             );
           })
-          .join("");
+          .join('');
 
-        byId("view").innerHTML =
+        byId('view').innerHTML =
           '<div class="card"><h2>Eventos <span class="muted">(' +
           events.length +
-          ")</span></h2>" +
+          ')</span></h2>' +
           '<p class="muted">Crie um evento, preencha os dados, envie as fotos e execute a automação para publicar no site.</p></div>' +
           (events.length
             ? '<div class="card" style="overflow-x:auto"><table class="list"><thead><tr>' +
-              "<th>Casamento</th><th>Cidade</th><th>Data</th><th>Status</th><th></th>" +
-              "</tr></thead><tbody>" +
+              '<th>Casamento</th><th>Cidade</th><th>Data</th><th>Status</th><th></th>' +
+              '</tr></thead><tbody>' +
               rows +
-              "</tbody></table></div>"
+              '</tbody></table></div>'
             : '<div class="card empty">Nenhum evento ainda. Clique em "+ Novo evento".</div>');
       }
 
@@ -809,10 +902,10 @@
       /* Criar                                                               */
       /* ------------------------------------------------------------------ */
       function renderCreate() {
-        byId("view").innerHTML =
+        byId('view').innerHTML =
           '<form id="f-create">' +
           '<div class="card">' +
-          "<h2>Novo evento</h2>" +
+          '<h2>Novo evento</h2>' +
           '<p class="muted">Comece pelo essencial. O slug é gerado automaticamente e o restante é preenchido na edição.</p>' +
           '<div class="grid">' +
           '<div class="field"><label>Nome do casal *</label><input type="text" name="couple" required autofocus placeholder="Yara e Ataíde"></div>' +
@@ -820,25 +913,25 @@
           '<div class="field"><label>Cidade *</label><input type="text" name="city" required placeholder="Ouro Preto"></div>' +
           '<div class="field"><label>Estado *</label><input type="text" name="state" required placeholder="MG"></div>' +
           '<div class="field"><label>Local (opcional)</label><input type="text" name="venue" placeholder="Museu da Inconfidência"></div>' +
-          "</div>" +
+          '</div>' +
           '<div class="actions"><button class="primary" type="submit">Criar evento</button>' +
           '<button type="button" class="ghost" data-action="home">Cancelar</button></div>' +
-          "</div></form>";
+          '</div></form>';
       }
 
       function onCreate(form) {
         var fd = new FormData(form);
         var payload = {
-          couple: fd.get("couple").trim(),
-          date: (fd.get("date") || "").trim(),
-          city: (fd.get("city") || "").trim(),
-          state: (fd.get("state") || "").trim(),
-          venue: (fd.get("venue") || "").trim(),
+          couple: fd.get('couple').trim(),
+          date: (fd.get('date') || '').trim(),
+          city: (fd.get('city') || '').trim(),
+          state: (fd.get('state') || '').trim(),
+          venue: (fd.get('venue') || '').trim(),
         };
-        var submit = form.querySelector("[type=submit]");
+        var submit = form.querySelector('[type=submit]');
         submit.disabled = true;
-        submit.textContent = "Criando…";
-        run("apiCreate", payload).then(
+        submit.textContent = 'Criando…';
+        run('apiCreate', payload).then(
           function (e) {
             toast('Evento "' + e.couple + '" criado com slug "' + e.slug + '"');
             renderEdit(e.slug);
@@ -846,7 +939,7 @@
           function (err) {
             toast(err.message, true);
             submit.disabled = false;
-            submit.textContent = "Criar evento";
+            submit.textContent = 'Criar evento';
           },
         );
       }
@@ -857,22 +950,22 @@
       async function renderEdit(slug) {
         state.slug = slug;
         try {
-          state.event = await run("apiGet", slug);
+          state.event = await run('apiGet', slug);
         } catch (err) {
           toast(err.message, true);
           renderList();
           return;
         }
-        state.files = await run("apiListFiles", slug);
+        state.files = await run('apiListFiles', slug);
 
         var e = state.event;
 
-        byId("view").innerHTML =
+        byId('view').innerHTML =
           '<div class="row" style="margin-bottom:14px">' +
           '<a class="ghost btn" data-action="home">← Lista</a>' +
           '<div class="grow"></div>' +
           '<button class="small danger" id="btn-delete">Apagar evento</button>' +
-          "</div>" +
+          '</div>' +
           '<form id="f-edit">' +
           '<div class="card"><h2>Dados do casamento</h2>' +
           '<div class="slug-box field"><label style="margin-bottom:4px">Slug (URL pública)</label>' +
@@ -896,44 +989,44 @@
           '<div class="field"><label>Local (opcional)</label><input type="text" id="f-venue" value="' +
           esc(e.venue) +
           '" placeholder="Museu da Inconfidência"></div>' +
-          "</div>" +
+          '</div>' +
           '<div class="field"><label>Description — frase da intro</label><textarea id="f-description" rows="3">' +
           esc(e.description) +
-          "</textarea></div>" +
+          '</textarea></div>' +
           '<div class="field"><label>Excerpt — legenda curta dos cards (máx. 220)</label><textarea id="f-excerpt" rows="2" maxlength="220">' +
           esc(e.excerpt) +
-          "</textarea></div>" +
+          '</textarea></div>' +
           '<label class="check"><input type="checkbox" id="f-featured"' +
-          (e.featured ? " checked" : "") +
-          "> Destacar na home</label>" +
+          (e.featured ? ' checked' : '') +
+          '> Destacar na home</label>' +
           '<div class="field"><label>Tags (separadas por vírgula)</label><input type="text" id="f-tags" value="' +
-          esc((e.tags || []).join(", ")) +
+          esc((e.tags || []).join(', ')) +
           '" placeholder="casamento, ouro-preto, casal"></div>' +
-          "</div>" +
+          '</div>' +
           '<div class="card"><h2>Fotos</h2>' +
           '<p class="muted">Arraste ou selecione as fotos: cada uma é enviada em segundo plano (uma por vez) para a pasta do evento. Todas entram na <strong>galeria</strong> e uma pode virar a <strong>Capa</strong>.</p>' +
           '<div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Enviar fotos">' +
           '<span class="dz-main">Arraste as fotos para cá</span>' +
-          "<small>ou clique para selecionar — envio em segundo plano</small>" +
+          '<small>ou clique para selecionar — envio em segundo plano</small>' +
           '<input type="file" id="photo-file" multiple accept="image/*" hidden>' +
-          "</div>" +
+          '</div>' +
           '<div id="photos-grid" class="thumbs" style="margin-top:12px"></div>' +
           '<div id="upload-bar" style="margin-top:12px"></div>' +
-          "</div>" +
+          '</div>' +
           '<div class="card"><h2>Automação / publicação</h2>' +
           '<ul class="checklist" id="checklist"></ul>' +
           '<div class="actions" style="margin-top:14px">' +
           '<button type="button" class="primary" id="btn-publish">Executar automação</button>' +
           '<button type="button" id="btn-preview">Ver JSON da publicação</button>' +
-          "</div>" +
+          '</div>' +
           '<pre class="json" id="json-preview" hidden></pre>' +
           '<div class="hint" style="margin-top:10px">A automação dispara o workflow "publish-wedding" no GitHub, que baixa estes dados, baixa as fotos do Drive, gera a pasta do evento e faz commit.</div>' +
-          "</div>" +
+          '</div>' +
           '<div class="row" style="justify-content:space-between; margin-top:6px">' +
           '<button type="submit" class="primary">Salvar alterações</button>' +
           '<button type="button" class="ghost" data-action="home">Voltar para a lista</button>' +
-          "</div>" +
-          "</form>";
+          '</div>' +
+          '</form>';
 
         bindEditListeners();
         renderPhotos();
@@ -941,30 +1034,30 @@
       }
 
       function bindEditListeners() {
-        byId("btn-regenerate-slug").addEventListener("click", function () {
-          var couple = byId("f-couple").value.trim();
+        byId('btn-regenerate-slug').addEventListener('click', function () {
+          var couple = byId('f-couple').value.trim();
           // O slug usa a cidade e ignora o estabelecimento: o local é opcional e
           // mudá-lo não deve quebrar a URL. Sem cidade, fica só com o nome do casal.
-          var city = byId("f-city").value.trim();
+          var city = byId('f-city').value.trim();
           if (!couple) {
-            toast("Preencha o nome do casal primeiro.", true);
+            toast('Preencha o nome do casal primeiro.', true);
             return;
           }
           var slugify = function (t) {
             return t
               .toLowerCase()
-              .normalize("NFD")
-              .replace(/[\u0300-\u036f]/g, "")
-              .replace(/[^a-z0-9]+/g, "-")
-              .replace(/^-+|-+$/g, "");
+              .normalize('NFD')
+              .replace(/[\u0300-\u036f]/g, '')
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/^-+|-+$/g, '');
           };
           var base = slugify(couple);
           var slug = base;
-          if (city) slug = base + "-" + slugify(city);
-          byId("slug-field").value = slug;
+          if (city) slug = base + '-' + slugify(city);
+          byId('slug-field').value = slug;
         });
 
-        byId("btn-delete").addEventListener("click", function () {
+        byId('btn-delete').addEventListener('click', function () {
           if (
             !confirm(
               'Apagar o evento "' +
@@ -973,9 +1066,9 @@
             )
           )
             return;
-          run("apiDelete", state.slug).then(
+          run('apiDelete', state.slug).then(
             function () {
-              toast("Evento apagado.");
+              toast('Evento apagado.');
               renderList();
             },
             function (err) {
@@ -984,65 +1077,61 @@
           );
         });
 
-        byId("btn-publish").addEventListener("click", onPublish);
-        byId("btn-preview").addEventListener("click", onPreview);
+        byId('btn-publish').addEventListener('click', onPublish);
+        byId('btn-preview').addEventListener('click', onPreview);
 
-        var dz = byId("dropzone");
-        dz.addEventListener("click", function () {
-          byId("photo-file").click();
+        var dz = byId('dropzone');
+        dz.addEventListener('click', function () {
+          byId('photo-file').click();
         });
-        dz.addEventListener("keydown", function (ev) {
-          if (ev.key === "Enter" || ev.key === " ") {
+        dz.addEventListener('keydown', function (ev) {
+          if (ev.key === 'Enter' || ev.key === ' ') {
             ev.preventDefault();
-            byId("photo-file").click();
+            byId('photo-file').click();
           }
         });
-        ["dragenter", "dragover"].forEach(function (type) {
+        ['dragenter', 'dragover'].forEach(function (type) {
           dz.addEventListener(type, function (ev) {
             ev.preventDefault();
-            dz.classList.add("drag");
+            dz.classList.add('drag');
           });
         });
-        ["dragleave", "drop"].forEach(function (type) {
+        ['dragleave', 'drop'].forEach(function (type) {
           dz.addEventListener(type, function (ev) {
             ev.preventDefault();
-            dz.classList.remove("drag");
+            dz.classList.remove('drag');
           });
         });
-        dz.addEventListener("drop", function (ev) {
+        dz.addEventListener('drop', function (ev) {
           var files = ev.dataTransfer && ev.dataTransfer.files;
           if (files && files.length) addUploads(files);
         });
-        byId("photo-file").addEventListener("change", function () {
-          addUploads(byId("photo-file").files);
-          byId("photo-file").value = "";
+        byId('photo-file').addEventListener('change', function () {
+          addUploads(byId('photo-file').files);
+          byId('photo-file').value = '';
         });
-        byId("photos-grid").addEventListener("click", function (ev) {
-          var rm = ev.target.closest("[data-remove-photo]");
+        byId('photos-grid').addEventListener('click', function (ev) {
+          var rm = ev.target.closest('[data-remove-photo]');
           if (rm) {
-            onRemovePhoto(rm.getAttribute("data-name"));
+            onRemovePhoto(rm.getAttribute('data-name'));
             return;
           }
-          var sc = ev.target.closest("[data-setcover]");
+          var sc = ev.target.closest('[data-setcover]');
           if (sc) {
-            var name = sc.getAttribute("data-name");
+            var name = sc.getAttribute('data-name');
             onSetCover(
-              state.files &&
-                state.files.cover &&
-                state.files.cover.name === name
-                ? ""
-                : name,
+              state.files && state.files.cover && state.files.cover.name === name ? '' : name,
             );
             return;
           }
-          var retry = ev.target.closest("[data-retry]");
+          var retry = ev.target.closest('[data-retry]');
           if (retry) {
-            retryUpload(retry.getAttribute("data-id"));
+            retryUpload(retry.getAttribute('data-id'));
             return;
           }
-          var cancel = ev.target.closest("[data-cancel-upload]");
+          var cancel = ev.target.closest('[data-cancel-upload]');
           if (cancel) {
-            cancelUpload(cancel.getAttribute("data-id"));
+            cancelUpload(cancel.getAttribute('data-id'));
             return;
           }
         });
@@ -1053,37 +1142,33 @@
       /* ------------------------------------------------------------------ */
       function uploadsPending() {
         return state.uploads.filter(function (u) {
-          return u.status === "pending" || u.status === "uploading";
+          return u.status === 'pending' || u.status === 'uploading';
         }).length;
       }
 
       function addUploads(fileList) {
         if (!fileList || !fileList.length) {
-          toast("Selecione uma imagem primeiro.", true);
+          toast('Selecione uma imagem primeiro.', true);
           return;
         }
         var files = Array.prototype.filter.call(fileList, function (f) {
-          return !f.type || f.type.indexOf("image/") === 0;
+          return !f.type || f.type.indexOf('image/') === 0;
         });
-        if (files.length < fileList.length)
-          toast("Arquivos não-imagem ignorados.", true);
+        if (files.length < fileList.length) toast('Arquivos não-imagem ignorados.', true);
         if (!files.length) return;
         var fresh = files.map(function (f) {
           var u = {
-            id:
-              "u" +
-              Date.now().toString(36) +
-              Math.random().toString(36).slice(2, 7),
+            id: 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
             file: f,
             label: f.name,
             objectUrl: URL.createObjectURL(f),
-            status: "pending",
-            error: "",
+            status: 'pending',
+            error: '',
           };
           state.uploads.push(u);
           return u;
         });
-        var grid = byId("photos-grid");
+        var grid = byId('photos-grid');
         if (grid) {
           appendTiles_(
             grid,
@@ -1091,7 +1176,7 @@
               .map(function (u) {
                 return uploadingTile(u);
               })
-              .join(""),
+              .join(''),
           );
         }
         updateUploadBar();
@@ -1103,9 +1188,9 @@
           var r = new FileReader();
           r.onload = function () {
             resolve({
-              data: String(r.result).split(",")[1],
+              data: String(r.result).split(',')[1],
               name: file.name,
-              type: file.type || "image/jpeg",
+              type: file.type || 'image/jpeg',
             });
           };
           r.onerror = reject;
@@ -1119,28 +1204,26 @@
         uploadRunning = true;
         (function pump() {
           var next = state.uploads.filter(function (u) {
-            return u.status === "pending";
+            return u.status === 'pending';
           })[0];
           if (!next) {
             uploadRunning = false;
             updateUploadBar();
             return;
           }
-          next.status = "uploading";
+          next.status = 'uploading';
           replaceUploadTile_(next, uploadingTile(next));
           updateUploadBar();
           readPayload(next.file)
             .then(function (pl) {
-              return runQuiet("apiUploadPhoto", state.slug, pl);
+              return runQuiet('apiUploadPhoto', state.slug, pl);
             })
             .then(
               function (files) {
                 var known = {};
-                ((state.files && state.files.photos) || []).forEach(
-                  function (p) {
-                    known[p.id] = true;
-                  },
-                );
+                ((state.files && state.files.photos) || []).forEach(function (p) {
+                  known[p.id] = true;
+                });
                 var added = (files.photos || []).filter(function (p) {
                   return !known[p.id];
                 });
@@ -1164,8 +1247,8 @@
                 pump();
               },
               function (err) {
-                next.status = "error";
-                next.error = err.message || "Falha no envio";
+                next.status = 'error';
+                next.error = err.message || 'Falha no envio';
                 replaceUploadTile_(next, uploadingTile(next));
                 updateUploadBar();
                 pump();
@@ -1179,8 +1262,8 @@
           return x.id === id;
         })[0];
         if (!u) return;
-        u.status = "pending";
-        u.error = "";
+        u.status = 'pending';
+        u.error = '';
         replaceUploadTile_(u, uploadingTile(u));
         updateUploadBar();
         processUploadQueue();
@@ -1197,26 +1280,21 @@
         state.uploads = state.uploads.filter(function (x) {
           return x.id !== id;
         });
-        var grid = byId("photos-grid");
+        var grid = byId('photos-grid');
         var node = grid && grid.querySelector('[data-upload-id="' + id + '"]');
         if (node) node.parentNode.removeChild(node);
         updateUploadBar();
       }
 
       function tileImgUrl(p) {
-        return (
-          "https://lh3.googleusercontent.com/d/" +
-          encodeURIComponent(p.id) +
-          "=w400"
-        );
+        return 'https://lh3.googleusercontent.com/d/' + encodeURIComponent(p.id) + '=w400';
       }
 
       function uploadedTile(p) {
-        var isCover =
-          state.files && state.files.cover && state.files.cover.name === p.name;
+        var isCover = state.files && state.files.cover && state.files.cover.name === p.name;
         return (
           '<div class="photo-tile is-loading' +
-          (isCover ? " is-cover" : "") +
+          (isCover ? ' is-cover' : '') +
           '" data-photo="' +
           esc(p.name) +
           '" title="' +
@@ -1227,16 +1305,16 @@
           tileImgUrl(p) +
           '" alt="" decoding="async">' +
           '<span class="tile-fail" title="A miniatura não carregou">!</span>' +
-          (isCover ? '<span class="badge-chip">capa</span>' : "") +
+          (isCover ? '<span class="badge-chip">capa</span>' : '') +
           '<button type="button" class="tile-x" data-remove-photo data-name="' +
           esc(p.name) +
           '" title="Remover">\u00d7</button>' +
           '<button type="button" class="tile-mark mark-cover' +
-          (isCover ? " on" : "") +
+          (isCover ? ' on' : '') +
           '" data-setcover data-name="' +
           esc(p.name) +
           '" title="Usar como capa">Capa</button>' +
-          "</div>"
+          '</div>'
         );
       }
 
@@ -1247,13 +1325,13 @@
        * bind — daí o `complete`.
        */
       function bindPhotoImages() {
-        all(".photo-tile[data-photo] img").forEach(function (img) {
-          var tile = img.closest(".photo-tile");
+        $$('.photo-tile[data-photo] img').forEach(function (img) {
+          var tile = img.closest('.photo-tile');
           var settle = function (ok) {
-            img.removeEventListener("load", onLoad);
-            img.removeEventListener("error", onError);
-            tile.classList.remove("is-loading");
-            tile.classList.add(ok ? "is-loaded" : "is-failed");
+            img.removeEventListener('load', onLoad);
+            img.removeEventListener('error', onError);
+            tile.classList.remove('is-loading');
+            tile.classList.add(ok ? 'is-loaded' : 'is-failed');
           };
           var onLoad = function () {
             settle(true);
@@ -1261,29 +1339,24 @@
           var onError = function () {
             settle(false);
           };
-          img.addEventListener("load", onLoad);
-          img.addEventListener("error", onError);
+          img.addEventListener('load', onLoad);
+          img.addEventListener('error', onError);
           if (img.complete) settle(img.naturalWidth > 0);
         });
       }
 
       function uploadingTile(u) {
-        var overlay =
-          '<span class="tile-overlay"><span class="spinner sm"></span></span>';
-        if (u.status === "pending")
-          overlay =
-            '<span class="tile-overlay"><span class="hint">aguardando</span></span>';
-        if (u.status === "error")
-          overlay =
-            '<span class="tile-overlay tile-error" title="' +
-            esc(u.error) +
-            '">!</span>';
+        var overlay = '<span class="tile-overlay"><span class="spinner sm"></span></span>';
+        if (u.status === 'pending')
+          overlay = '<span class="tile-overlay"><span class="hint">aguardando</span></span>';
+        if (u.status === 'error')
+          overlay = '<span class="tile-overlay tile-error" title="' + esc(u.error) + '">!</span>';
         var retry =
-          u.status === "error"
+          u.status === 'error'
             ? '<button type="button" class="tile-insert" data-retry data-id="' +
               esc(u.id) +
               '" title="Tentar novamente">Reenviar</button>'
-            : "";
+            : '';
         return (
           '<div class="photo-tile uploading" data-upload-id="' +
           esc(u.id) +
@@ -1298,12 +1371,12 @@
           esc(u.id) +
           '" title="Cancelar">\u00d7</button>' +
           retry +
-          "</div>"
+          '</div>'
         );
       }
 
       function renderPhotos() {
-        var grid = byId("photos-grid");
+        var grid = byId('photos-grid');
         if (!grid) return;
         var tiles = [];
         ((state.files && state.files.photos) || []).forEach(function (p) {
@@ -1313,7 +1386,7 @@
           tiles.push(uploadingTile(u));
         });
         grid.innerHTML =
-          tiles.join("") ||
+          tiles.join('') ||
           '<p class="hint upload-note">Nenhuma foto ainda. Arraste ou selecione acima.</p>';
         bindPhotoImages();
         updateUploadBar();
@@ -1326,7 +1399,7 @@
        */
       function appendTiles_(grid, html) {
         clearEmptyNote_(grid);
-        var holder = document.createElement("div");
+        var holder = document.createElement('div');
         holder.innerHTML = html;
         while (holder.firstChild) grid.appendChild(holder.firstChild);
       }
@@ -1339,7 +1412,7 @@
        */
       function replaceTile_(grid, selector, html) {
         clearEmptyNote_(grid);
-        var holder = document.createElement("div");
+        var holder = document.createElement('div');
         holder.innerHTML = html;
         var fresh = holder.firstChild;
         var node = selector ? grid.querySelector(selector) : null;
@@ -1349,58 +1422,52 @@
       }
 
       function clearEmptyNote_(grid) {
-        var note = grid.querySelector(".upload-note");
+        var note = grid.querySelector('.upload-note');
         if (note) note.parentNode.removeChild(note);
       }
 
       function replaceUploadTile_(upload, html) {
-        var grid = byId("photos-grid");
+        var grid = byId('photos-grid');
         if (!grid) return;
         replaceTile_(grid, '[data-upload-id="' + upload.id + '"]', html);
       }
 
       function updateUploadBar() {
-        var bar = byId("upload-bar");
+        var bar = byId('upload-bar');
         if (!bar) return;
         var n = ((state.files && state.files.photos) || []).length;
         var pending = uploadsPending();
         var errs = state.uploads.filter(function (u) {
-          return u.status === "error";
+          return u.status === 'error';
         }).length;
-        var parts = ["Enviadas: " + n];
-        if (pending) parts.push("Fila: " + pending);
-        if (errs) parts.push("Falhas: " + errs + " (Reenviar)");
+        var parts = ['Enviadas: ' + n];
+        if (pending) parts.push('Fila: ' + pending);
+        if (errs) parts.push('Falhas: ' + errs + ' (Reenviar)');
         bar.innerHTML =
           '<span class="hint">' +
-          esc(parts.join(" \u00b7 ")) +
-          "</span>" +
+          esc(parts.join(' \u00b7 ')) +
+          '</span>' +
           (pending
             ? '<span class="hint warn" style="margin-left:8px">Salvar e publicar ficam bloqueados até os envios terminarem.</span>'
-            : "");
+            : '');
         updateSaveLock();
       }
 
       function updateSaveLock() {
         var locked = uploadsPending() > 0;
-        var saveBtn =
-          byId("f-edit") && byId("f-edit").querySelector("[type=submit]");
-        var pubBtn = byId("btn-publish");
+        var saveBtn = byId('f-edit') && byId('f-edit').querySelector('[type=submit]');
+        var pubBtn = byId('btn-publish');
         if (saveBtn) saveBtn.disabled = locked;
         if (saveBtn)
-          saveBtn.textContent = locked
-            ? "Aguarde o envio das fotos\u2026"
-            : "Salvar alterações";
+          saveBtn.textContent = locked ? 'Aguarde o envio das fotos\u2026' : 'Salvar alterações';
         if (pubBtn) pubBtn.disabled = locked;
-        if (pubBtn)
-          pubBtn.textContent = locked
-            ? "Aguardando uploads\u2026"
-            : "Executar automação";
+        if (pubBtn) pubBtn.textContent = locked ? 'Aguardando uploads\u2026' : 'Executar automação';
       }
 
       function onRemovePhoto(name) {
-        if (!confirm("Remover esta foto?")) return;
-        busy("Removendo foto\u2026");
-        run("apiRemovePhoto", state.slug, name)
+        if (!confirm('Remover esta foto?')) return;
+        busy('Removendo foto\u2026');
+        run('apiRemovePhoto', state.slug, name)
           .then(
             function (files) {
               state.files = files;
@@ -1417,8 +1484,8 @@
       }
 
       function onSetCover(name) {
-        busy("Salvando capa\u2026");
-        run("apiSetCover", state.slug, name)
+        busy('Salvando capa\u2026');
+        run('apiSetCover', state.slug, name)
           .then(
             function (files) {
               state.files = files;
@@ -1438,36 +1505,36 @@
       /* Salvar                                                              */
       /* ------------------------------------------------------------------ */
       function collectEdit() {
-        var tags = byId("f-tags")
-          .value.split(",")
+        var tags = byId('f-tags')
+          .value.split(',')
           .map(function (t) {
             return t.trim();
           })
           .filter(Boolean);
 
         return {
-          couple: byId("f-couple").value.trim(),
-          date: byId("f-date").value,
-          city: byId("f-city").value.trim(),
-          state: byId("f-state").value.trim(),
-          venue: byId("f-venue").value.trim(),
-          description: byId("f-description").value.trim(),
-          excerpt: byId("f-excerpt").value.trim(),
-          featured: byId("f-featured").checked,
+          couple: byId('f-couple').value.trim(),
+          date: byId('f-date').value,
+          city: byId('f-city').value.trim(),
+          state: byId('f-state').value.trim(),
+          venue: byId('f-venue').value.trim(),
+          description: byId('f-description').value.trim(),
+          excerpt: byId('f-excerpt').value.trim(),
+          featured: byId('f-featured').checked,
           tags: tags,
         };
       }
 
       function onSave() {
         var payload = collectEdit();
-        var btn = byId("f-edit").querySelector("[type=submit]");
+        var btn = byId('f-edit').querySelector('[type=submit]');
         btn.disabled = true;
-        btn.textContent = "Salvando…";
-        run("apiSave", state.slug, payload)
+        btn.textContent = 'Salvando…';
+        run('apiSave', state.slug, payload)
           .then(
             function (e) {
               state.event = e;
-              toast("Alterações salvas.");
+              toast('Alterações salvas.');
               refreshPublishPane();
             },
             function (err) {
@@ -1497,23 +1564,15 @@
           state: e.state,
           description: e.description,
           excerpt: e.excerpt,
-          cover_id: files.cover ? files.cover.id : "",
+          cover_id: files.cover ? files.cover.id : '',
           galleryCount: galleryCount,
         };
         var missed = [];
-        [
-          "couple",
-          "date",
-          "city",
-          "state",
-          "description",
-          "excerpt",
-        ].forEach(function (f) {
-          if (String(probe[f] || "").trim() === "") missed.push(f);
+        ['couple', 'date', 'city', 'state', 'description', 'excerpt'].forEach(function (f) {
+          if (String(probe[f] || '').trim() === '') missed.push(f);
         });
-        if (!files.cover) missed.push("cover");
-        if (galleryCount < min)
-          missed.push("gallery (" + galleryCount + "/" + min + ")");
+        if (!files.cover) missed.push('cover');
+        if (galleryCount < min) missed.push('gallery (' + galleryCount + '/' + min + ')');
         return { missed: missed, galleryCount: galleryCount };
       }
 
@@ -1521,57 +1580,53 @@
         var probe = collectStatusProbe();
         var min = state.config ? state.config.minGallery : 8;
         var items = [
-          ["Casal", !!state.event.couple],
-          ["Data", !!state.event.date],
-          ["Cidade · estado", !!state.event.city && !!state.event.state],
-          ["Local (opcional)", true],
-          ["Description (intro)", !!state.event.description],
-          ["Excerpt", !!state.event.excerpt],
-          ["Capa enviada", !!(state.files && state.files.cover)],
-          ["Galeria (mín. " + min + ")", probe.galleryCount >= min],
+          ['Casal', !!state.event.couple],
+          ['Data', !!state.event.date],
+          ['Cidade · estado', !!state.event.city && !!state.event.state],
+          ['Local (opcional)', true],
+          ['Description (intro)', !!state.event.description],
+          ['Excerpt', !!state.event.excerpt],
+          ['Capa enviada', !!(state.files && state.files.cover)],
+          ['Galeria (mín. ' + min + ')', probe.galleryCount >= min],
         ];
-        byId("checklist").innerHTML = items
+        byId('checklist').innerHTML = items
           .map(function (it) {
             return (
-              "<li>" +
-              (it[1]
-                ? '<span class="ok">✓</span>'
-                : '<span class="warn">✗</span>') +
+              '<li>' +
+              (it[1] ? '<span class="ok">✓</span>' : '<span class="warn">✗</span>') +
               '<span class="muted">' +
               esc(it[0]) +
-              "</span></li>"
+              '</span></li>'
             );
           })
-          .join("");
-        byId("checklist").insertAdjacentHTML(
-          "beforeend",
+          .join('');
+        byId('checklist').insertAdjacentHTML(
+          'beforeend',
           '<li class="muted" style="margin-top:6px">' +
             (probe.missed.length
-              ? 'Falta: <span class="warn">' +
-                esc(probe.missed.join(", ")) +
-                "</span>"
+              ? 'Falta: <span class="warn">' + esc(probe.missed.join(', ')) + '</span>'
               : '<span class="ok">Tudo pronto para publicar.</span>') +
-            "</li>",
+            '</li>',
         );
       }
 
       function onPublish() {
-        var btn = byId("btn-publish");
+        var btn = byId('btn-publish');
         btn.disabled = true;
-        btn.textContent = "Disparando…";
-        busy("Disparando a automação no GitHub…");
-        run("apiPublish", state.slug)
+        btn.textContent = 'Disparando…';
+        busy('Disparando a automação no GitHub…');
+        run('apiPublish', state.slug)
           .then(
             function (r) {
               toast(
-                "Automação disparada. O workflow vai gerar /casamentos/" +
+                'Automação disparada. O workflow vai gerar /casamentos/' +
                   r.slug +
-                  " e fazer commit.",
+                  ' e fazer commit.',
               );
               renderList();
             },
             function (err) {
-              toast("Não foi possível publicar: " + err.message, true);
+              toast('Não foi possível publicar: ' + err.message, true);
               updateSaveLock();
             },
           )
@@ -1581,12 +1636,12 @@
       }
 
       function onPreview() {
-        var pre = byId("json-preview");
+        var pre = byId('json-preview');
         if (!pre.hidden) {
           pre.hidden = true;
           return;
         }
-        run("apiPublication", state.slug).then(
+        run('apiPublication', state.slug).then(
           function (json) {
             pre.textContent = JSON.stringify(json, null, 2);
             pre.hidden = false;
@@ -1598,7 +1653,9 @@
       }
 
       /* ------------------------------------------------------------------ */
-      renderList();
+      authGate().then(renderList, function (err) {
+        toast(err.message, true);
+      });
     </script>
   </body>
 </html>

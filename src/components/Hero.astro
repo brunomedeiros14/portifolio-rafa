@@ -19,15 +19,7 @@ interface Props {
   priority?: boolean;
 }
 
-const {
-  image,
-  alt,
-  eyebrow,
-  title,
-  subtitle,
-  ctas = [],
-  priority = true,
-} = Astro.props;
+const { image, alt, eyebrow, title, subtitle, ctas = [], priority = true } = Astro.props;
 ---
 
 <section class="relative flex min-h-[92svh] items-end overflow-hidden bg-ink">
@@ -43,18 +35,30 @@ const {
     fetchpriority={priority ? 'high' : undefined}
     class="absolute inset-0 h-full w-full object-cover"
   />
-  <div class="absolute inset-0 bg-linear-to-t from-ink/85 via-ink/25 to-ink/10" aria-hidden="true" />
-  <div class="absolute inset-x-0 top-0 h-44 bg-linear-to-b from-ink/75 via-ink/35 to-transparent" aria-hidden="true" />
+  <div
+    class="absolute inset-0 bg-linear-to-t from-ink/85 via-ink/25 to-ink/10"
+    aria-hidden="true"
+  />
+  <div
+    class="absolute inset-x-0 top-0 h-44 bg-linear-to-b from-ink/75 via-ink/35 to-transparent"
+    aria-hidden="true"
+  />
 
   <div class="relative mx-auto w-full max-w-(--content-max) px-4 pb-16 pt-40 sm:px-6 md:pb-20">
     {eyebrow ? (
       <p class="reveal text-xs font-medium uppercase tracking-[0.28em] text-white/75">{eyebrow}</p>
     ) : null}
-    <h1 class="reveal mt-4 max-w-3xl font-display text-4xl font-medium leading-[1.04] tracking-tight text-white sm:text-5xl md:text-6xl" style="--reveal-delay:80ms">
+    <h1
+      class="reveal mt-4 max-w-3xl font-display text-4xl font-medium leading-[1.04] tracking-tight text-white sm:text-5xl md:text-6xl"
+      style="--reveal-delay:80ms"
+    >
       {title}
     </h1>
     {subtitle ? (
-      <p class="reveal mt-5 max-w-xl text-base leading-relaxed text-white/75 sm:text-lg" style="--reveal-delay:160ms">
+      <p
+        class="reveal mt-5 max-w-xl text-base leading-relaxed text-white/75 sm:text-lg"
+        style="--reveal-delay:160ms"
+      >
         {subtitle}
       </p>
     ) : null}

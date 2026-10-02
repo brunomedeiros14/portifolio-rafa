@@ -21,20 +21,18 @@ const shouldRender = !hideOn.some((path) => normalize(path) === current);
 const label = 'Chamar no WhatsApp';
 ---
 
-{
-  shouldRender ? (
-    <a
-      href={SITE.whatsappUrl}
-      target="_blank"
-      rel="noopener"
-      aria-label={`${label} — ${SITE.whatsapp}`}
-      class="group fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-white shadow-lg shadow-ink/20 transition-transform duration-300 hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent motion-reduce:transition-none md:bottom-8 md:right-8"
-    >
-      <Icon
-        name="whatsapp"
-        size={26}
-        class="transition-transform duration-300 group-hover:scale-110 motion-reduce:transition-none"
-      />
-    </a>
-  ) : null
-}
+{shouldRender ? (
+  <a
+    href={SITE.whatsappUrl}
+    target="_blank"
+    rel="noopener"
+    aria-label={`${label} — ${SITE.whatsapp}`}
+    class="group fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-white shadow-lg shadow-ink/20 transition-transform duration-300 hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent motion-reduce:transition-none md:bottom-8 md:right-8"
+  >
+    <Icon
+      name="whatsapp"
+      size={26}
+      class="transition-transform duration-300 group-hover:scale-110 motion-reduce:transition-none"
+    />
+  </a>
+) : null}

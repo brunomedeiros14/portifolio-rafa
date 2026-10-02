@@ -1,0 +1,10 @@
+# Fotos e derivados: o conteúdo é binário e grande (58 MB só em casamentos).
+# Git já detecta binário sozinho, mas declarar tira a dependência de heurística
+# e evita que uma normalização de fim-de-linha estrague um arquivo de imagem.
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.webp binary
+*.avif binary
+*.ico binary
+*.woff2 binary

@@ -10,9 +10,7 @@ const year = new Date().getFullYear();
       <p class="font-display text-2xl tracking-tight">
         Rafael <span class="italic text-accent-soft">Dias</span>
       </p>
-      <p class="mt-3 max-w-sm text-sm leading-relaxed text-white/60">
-        {SITE.description}
-      </p>
+      <p class="mt-3 max-w-sm text-sm leading-relaxed text-white/60">{SITE.description}</p>
       <p class="mt-4 text-sm text-white/70">
         {SITE.city}, {SITE.state}
       </p>
@@ -35,7 +33,12 @@ const year = new Date().getFullYear();
       <p class="text-xs font-medium uppercase tracking-[0.18em] text-white/45">Contato</p>
       <ul class="mt-4 space-y-3 text-sm">
         <li>
-          <a href={SITE.whatsappUrl} class="link-line text-white/80 hover:text-white" target="_blank" rel="noopener">
+          <a
+            href={SITE.whatsappUrl}
+            class="link-line text-white/80 hover:text-white"
+            target="_blank"
+            rel="noopener"
+          >
             WhatsApp — {SITE.whatsapp}
           </a>
         </li>
@@ -45,7 +48,12 @@ const year = new Date().getFullYear();
           </a>
         </li>
         <li>
-          <a href={SITE.instagram} class="link-line text-white/80 hover:text-white" target="_blank" rel="noopener">
+          <a
+            href={SITE.instagram}
+            class="link-line text-white/80 hover:text-white"
+            target="_blank"
+            rel="noopener"
+          >
             {SITE.instagramHandle}
           </a>
         </li>
@@ -55,7 +63,9 @@ const year = new Date().getFullYear();
 
   <div class="border-t border-white/10">
     <div class="mx-auto flex max-w-(--content-max) flex-col items-center justify-between gap-2 px-4 py-6 text-xs text-white/45 sm:flex-row sm:px-6">
-      <p>&copy; {year} {SITE.name}. Todos os direitos reservados.</p>
+      <p>
+        &copy; {year} {SITE.name}. Todos os direitos reservados.
+      </p>
       <p>Fotografia de casamento &middot; {SITE.city} &amp; região</p>
     </div>
   </div>

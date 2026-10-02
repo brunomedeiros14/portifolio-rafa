@@ -77,7 +77,12 @@ const {
     />
     {/* Sem o <link rel=alternate type=application/rss+xml>, leitores de feed só
         descobrem /rss.xml por adivinhação. */}
-    <link rel="alternate" type="application/rss+xml" title="Blog de casamento — Rafael Dias" href={absolute('/rss.xml')} />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="Blog de casamento — Rafael Dias"
+      href={absolute('/rss.xml')}
+    />
 
     <link
       rel="preload"
@@ -95,7 +100,9 @@ const {
       Pular para o conteúdo
     </a>
     <Header transparent={headerTransparent} solidOnLoad={headerSolidOnLoad} />
-    <main id="main"><slot /></main>
+    <main id="main">
+      <slot />
+    </main>
     <Footer />
 
     {/* Em /contato o botão flutuante repetiria o card de WhatsApp logo acima. */}

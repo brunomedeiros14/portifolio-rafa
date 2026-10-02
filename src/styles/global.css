@@ -18,8 +18,7 @@
   /* Famílias */
   --font-display: 'Fraunces', 'Georgia', 'Times New Roman', serif;
   --font-body:
-    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
-    sans-serif;
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 
   /* Elevação branda */
   --shadow-card: 0 1px 2px rgb(22 18 14 / 0.04), 0 8px 24px rgb(22 18 14 / 0.06);
@@ -294,7 +293,9 @@ html.js .reveal.is-visible {
     animation: none;
   }
 
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
