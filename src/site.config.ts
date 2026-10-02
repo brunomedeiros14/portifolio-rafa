@@ -5,7 +5,7 @@ export const SITE = {
   /** URL canônica (troque pela produção real) */
   url: "https://rafaeldiasfotos.com.br",
   description:
-    "Fotografia de casamento em Belo Horizonte, Nova Lima, Ouro Preto, Tiradentes e toda Minas Gerais. Imagens atemporais para histórias reais.",
+    "Fotógrafo de casamento em Belo Horizonte e Minas Gerais. Fotografia natural, elegante e emocional, com estética cinematográfica e sem perder a verdade.",
   language: "pt-BR",
   locale: "pt_BR",
   city: "Belo Horizonte",
