@@ -3,17 +3,31 @@
  *
  * Campos:
  *  - Colunas escalares (title, couple, date, ...) viram célula de texto.
- *  - Colunas estruturais (tags, vendors, gallery, story) são JSON stringified.
+ *  - Colunas estruturais (tags, gallery) são JSON stringified.
  *
  * O campo obrigatório de frontmatter `slug` é também a chave da linha (coluna A).
+ *
+ * O local vive em três colunas: `city` e `state` são obrigatórias, `venue`
+ * (o estabelecimento) é opcional. Como a planilha é posicional, `alignHeaders_`
+ * reescreve uma aba antiga no layout novo — sem ela, cada gravação seguinte
+ * jogaria `state` na coluna `city` e empurraria o resto da linha.
  */
 const Events = {
   HEADERS: [
-    'slug', 'title', 'couple', 'date', 'location', 'city', 'state', 'venue',
-    'description', 'excerpt', 'featured', 'tags', 'vendors',
-    'seoTitle', 'seoDescription', 'historia_html',
-    'cover_id', 'cover_name', 'gallery', 'story', 'status', 'created_at', 'updated_at',
+    'slug', 'title', 'couple', 'date', 'city', 'state', 'venue',
+    'description', 'excerpt', 'featured', 'tags',
+    'seoTitle', 'seoDescription',
+    'cover_id', 'cover_name', 'gallery', 'status', 'created_at', 'updated_at',
   ],
+
+  /**
+   * Colunas removidas ao longo do tempo, na ordem em que saíram.
+   *
+   * `vendors` saiu quando o bloco de fornecedores foi removido do site.
+   * `historia_html`/`story` saíram junto com o texto editorial: sobrou só a
+   * frase de apoio da intro.
+   */
+  DROPPED_HEADERS: ['vendors', 'historia_html', 'story'],
 
   ensureSetup() {
     const props = PropertiesService.getScriptProperties();
@@ -44,7 +58,83 @@ const Events = {
       sheet.appendRow(Events.HEADERS);
       sheet.setFrozenRows(1);
     }
+    Events.alignHeaders_(sheet);
     return sheet;
+  },
+
+  /**
+   * Deixa a linha 1 igual a `HEADERS`, preservando os dados por nome de coluna.
+   *
+   * Roda em toda leitura/escrita. É idempotente: quando o cabeçalho já bate,
+   * não escreve nada. Só reescreve quando falta alguma coluna nova ou sobra
+   * alguma antiga, inclusive desfazendo o `location` único: o texto
+   * "Fazenda X, Nova Lima" volta a virar `venue` + `city`.
+   */
+  alignHeaders_(sheet) {
+    const lastRow = sheet.getLastRow();
+    const lastCol = sheet.getLastColumn();
+    if (lastRow < 1 || lastCol < 1) return false;
+
+    const oldHeader = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(String);
+    const alreadyAligned =
+      oldHeader.length === Events.HEADERS.length &&
+      Events.HEADERS.every((name, i) => oldHeader[i] === name);
+    if (alreadyAligned) return false;
+
+    const values = sheet.getRange(1, 1, lastRow, lastCol).getValues();
+    const oldIdx = {};
+    oldHeader.forEach((name, i) => {
+      if (oldIdx[name] === undefined) oldIdx[name] = i;
+    });
+    const oldValue = (row, name) => {
+      const i = oldIdx[name];
+      return i === undefined ? '' : row[i];
+    };
+
+    // Desfaz o `location` único. A cidade é sempre o último trecho separado por
+    // vírgula ("Fazenda X, Nova Lima" → venue "Fazenda X" + city "Nova Lima");
+    // sem vírgula o texto todo é a cidade e o local fica vazio.
+    const splitLocation = (row) => {
+      const raw = String(oldValue(row, 'location') || '').trim();
+      const legacyCity = String(oldValue(row, 'city') || '').trim();
+      if (legacyCity) {
+        const venue = raw.toLowerCase() === legacyCity.toLowerCase() ? '' : raw;
+        return { city: legacyCity, venue };
+      }
+      if (!raw) return { city: '', venue: '' };
+      const parts = raw.split(',').map((part) => part.trim()).filter(Boolean);
+      if (parts.length < 2) return { city: parts[0] || '', venue: '' };
+      // "Igreja de São Francisco, Tiradentes, MG": a sigla que já está em
+      // `state` não é cidade, então fica fora da quebra.
+      const state = String(oldValue(row, 'state') || '').trim();
+      if (parts.length > 2 && state && parts[parts.length - 1].toLowerCase() === state.toLowerCase()) {
+        parts.pop();
+      }
+      return { city: parts[parts.length - 1], venue: parts.slice(0, -1).join(', ') };
+    };
+
+    const width = Events.HEADERS.length;
+    const rebuilt = [Events.HEADERS.slice()];
+    for (let r = 1; r < values.length; r++) {
+      const row = values[r];
+      rebuilt.push(
+        Events.HEADERS.map((name) => {
+          const place = splitLocation(row);
+          if (name === 'city') return place.city;
+          if (name === 'venue') return place.venue;
+          return oldValue(row, name);
+        }),
+      );
+    }
+
+    sheet.getRange(1, 1, rebuilt.length, width).setValues(rebuilt);
+    // Colunas que sobraram à direita do layout novo ficariam com o valor
+    // antigo visível ao lado dos dados.
+    if (lastCol > width) {
+      sheet.getRange(1, width + 1, lastRow, lastCol - width).clearContent();
+      sheet.deleteColumns(width + 1, lastCol - width);
+    }
+    return true;
   },
 
   columnIndex_(headerRow) {
@@ -99,7 +189,6 @@ const Events = {
       title: (payload && payload.title) || '',
       couple: (payload && payload.couple) || '',
       date: (payload && payload.date) || '',
-      location: (payload && payload.location) || '',
       city: (payload && payload.city) || '',
       state: (payload && payload.state) || '',
       venue: (payload && payload.venue) || '',
@@ -107,14 +196,11 @@ const Events = {
       excerpt: (payload && payload.excerpt) || '',
       featured: !!(payload && payload.featured),
       tags: [],
-      vendors: [],
       seoTitle: (payload && payload.seoTitle) || '',
       seoDescription: (payload && payload.seoDescription) || '',
-      historia_html: '',
       cover_id: '',
       cover_name: '',
       gallery: [],
-      story: [],
       status: 'draft',
       created_at: now,
       updated_at: now,
@@ -132,9 +218,7 @@ const Events = {
     merged.featured = !!merged.featured;
 
     if (!Array.isArray(merged.tags)) merged.tags = [];
-    if (!Array.isArray(merged.vendors)) merged.vendors = [];
     if (!Array.isArray(merged.gallery)) merged.gallery = [];
-    if (!Array.isArray(merged.story)) merged.story = [];
 
     if (merged.slug && merged.slug !== slug) {
       if (Events.get(merged.slug)) {
@@ -176,10 +260,7 @@ const Events = {
   appendPhoto(slug, saved) {
     const current = Events.get(slug);
     const list = Array.isArray(current.gallery) ? current.gallery : [];
-    Events.setRow_(slug, {
-      gallery: list.concat([saved]),
-      story: Events.storyRefs_(current.historia_html),
-    });
+    Events.setRow_(slug, { gallery: list.concat([saved]) });
   },
 
   /** Remove a foto do Drive e da lista; limpa a capa se ela era a capa. */
@@ -193,18 +274,6 @@ const Events = {
       patch.cover_name = '';
     }
     Events.setRow_(slug, patch);
-  },
-
-  /** Nomes de fotos (data-story) referenciados no HTML da história. */
-  storyRefs_(html) {
-    const out = [];
-    const re = /data-story\s*=\s*"([^"]+)"/g;
-    let m;
-    let text = String(html || '');
-    while ((m = re.exec(text)) !== null) {
-      if (out.indexOf(m[1]) === -1) out.push(m[1]);
-    }
-    return out;
   },
 
   listFiles(slug) {
@@ -224,13 +293,12 @@ const Events = {
   /**
    * Checklist de prontidão. Retorna { status: 'ready'|'pending', missed: string[] }.
    * Um evento só vira 'ready' quando todos os campos obrigatórios estão preenchidos,
-   * a capa foi enviada, a galeria atingiu o mínimo e o story tem fotos.
+   * a capa foi enviada e a galeria atingiu o mínimo.
    */
   computeStatus(event) {
     const missed = [];
     const textFields = [
-      'title', 'couple', 'date', 'location', 'city', 'state', 'venue',
-      'description', 'excerpt', 'historia_html',
+      'title', 'couple', 'date', 'city', 'state', 'description', 'excerpt',
     ];
     for (const field of textFields) {
       if (Events.blank_(event[field])) missed.push(field);
@@ -239,12 +307,8 @@ const Events = {
 
     const minGallery = Number(PropertiesService.getScriptProperties().getProperty('MIN_GALLERY') || '8');
     const photos = Array.isArray(event.gallery) ? event.gallery : [];
-    const storyNames = Events.storyRefs_(event.historia_html);
-    const galleryCount = photos.filter(
-      (p) => storyNames.indexOf(p.name) === -1 && p.name !== event.cover_name,
-    ).length;
+    const galleryCount = photos.filter((p) => p.name !== event.cover_name).length;
     if (galleryCount < minGallery) missed.push(`gallery (${galleryCount}/${minGallery})`);
-    if (storyNames.length === 0) missed.push('story');
     return { status: missed.length === 0 ? 'ready' : 'pending', missed };
   },
 
@@ -287,7 +351,6 @@ const Events = {
       slug: String(at('slug') || ''),
       title: String(at('title') || ''),
       couple: String(at('couple') || ''),
-      location: String(at('location') || ''),
       city: String(at('city') || ''),
       state: String(at('state') || ''),
       venue: String(at('venue') || ''),
@@ -296,14 +359,11 @@ const Events = {
       date: Events.normalizeDate_(at('date')),
       featured: Events.truthy_(at('featured')),
       tags: Events.parseJSON_(at('tags'), []),
-      vendors: Events.parseJSON_(at('vendors'), []),
       seoTitle: String(at('seoTitle') || ''),
       seoDescription: String(at('seoDescription') || ''),
-      historia_html: String(at('historia_html') || ''),
       cover_id: String(at('cover_id') || ''),
       cover_name: String(at('cover_name') || ''),
       gallery: Events.parseJSON_(at('gallery'), []),
-      story: Events.parseJSON_(at('story'), []),
       status: String(at('status') || 'draft'),
       created_at: at('created_at'),
       updated_at: at('updated_at'),
@@ -321,9 +381,7 @@ const Events = {
         case 'featured':
           return value ? 'TRUE' : 'FALSE';
         case 'tags':
-        case 'vendors':
         case 'gallery':
-        case 'story':
           return Array.isArray(value) ? JSON.stringify(value) : '[]';
         case 'created_at':
         case 'updated_at':

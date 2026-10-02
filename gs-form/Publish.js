@@ -38,38 +38,29 @@ const Publish = {
         url: Drive.downloadUrl(f.id),
       }));
 
+    // Todas as fotos enviadas vão para a galeria, menos a capa. Não há mais
+    // classificação entre "story" e galeria: a página não tem texto.
     const photos = Array.isArray(event.gallery) ? event.gallery : [];
-    const storyNames = Events.storyRefs_(event.historia_html);
-    const isStory = (p) => storyNames.indexOf(p.name) !== -1;
-    const story = driveLinks(photos.filter(isStory));
-    const gallery = driveLinks(
-      photos.filter((p) => !isStory(p) && p.name !== event.cover_name),
-    );
+    const gallery = driveLinks(photos.filter((p) => p.name !== event.cover_name));
 
     return {
       slug: event.slug,
       title: event.title,
       couple: event.couple,
       date: event.date,
-      location: event.location,
       city: event.city,
       state: event.state,
-      venue: event.venue,
+      venue: event.venue || undefined,
       description: event.description,
       excerpt: event.excerpt,
       featured: !!event.featured,
       tags: Array.isArray(event.tags) ? event.tags : [],
-      vendors: Array.isArray(event.vendors) ? event.vendors : [],
       seoTitle: event.seoTitle || undefined,
       seoDescription: event.seoDescription || undefined,
       cover: event.cover_id
         ? { filename: event.cover_name || 'cover.jpg', url: Drive.downloadUrl(event.cover_id) }
         : null,
       gallery,
-      story: {
-        html: event.historia_html || '',
-        images: story,
-      },
     };
   },
 

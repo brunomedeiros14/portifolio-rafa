@@ -74,7 +74,7 @@ function apiRemovePhoto(slug, name) {
   return Events.listFiles(s);
 }
 
-/** Arquivos do evento ({cover, gallery, story}). */
+/** Arquivos do evento ({cover, gallery}). */
 function apiListFiles(slug) {
   return Events.listFiles(slug);
 }

@@ -16,7 +16,7 @@ POST api.github.com/repos/{owner}/{repo}/dispatches   (event_type: publish-weddi
 workflow .github/workflows/publish-wedding.yml
       │ POST https://script.google.com/macros/s/<url_id>/exec  {action:"publication", token, publicationId}
       ▼
-doPost → {"slug","title","couple","date",..., "cover":{...}, "gallery":[...], "story":{html,images}}
+doPost → {"slug","title","couple","date",..., "cover":{...}, "gallery":[...]}
       │
       ▼
 node scripts/generate-wedding.mjs publication.json
@@ -31,12 +31,12 @@ commit + push → build/deploy → nova URL /casamentos/<slug>
 | ----------------------- | ------------------------------------------------------------ |
 | `Code.js`               | `doGet` (interface) e `doPost` (endpoint do workflow)        |
 | `Ui.js`                 | Entrega o HTML (`HtmlService`)                               |
-| `Slug.js`               | Gera slug sem conflito (caso → caso+cidade → caso-2, 3, …)   |
+| `Slug.js`               | Gera slug sem conflito (caso → caso+local → caso-2, 3, …)    |
 | `Events.js`             | CRUD na planilha "Eventos" + checklist de prontidão          |
 | `Drive.js`              | Upload individual em pasta única do evento (nome UUID + extensão)   |
 | `Publish.js`            | Endpoint `publication` + disparo do repository_dispatch              |
 | `Api.js`                | Funções globais chamadas pela UI (`google.script.run`)       |
-| `index.html`            | Interface (lista, formulário, WYSIWYG, upload, publicar)     |
+| `index.html`            | Interface (lista, formulário, upload, publicar)            |
 | `appsscript.json`       | Manifesto (escopos OAuth)                                    |
 | `.clasp.json`           | Config do clasp (preencha o `scriptId`)                      |
 
@@ -90,12 +90,12 @@ commit + push → build/deploy → nova URL /casamentos/<slug>
 
 1. Abra o Web App (URL `/exec`).
 2. **+ Novo evento** → informe o casal (slug gerado sem conflito).
-3. **Editar** → preencha os dados obrigatórios. Use o **editor WYSIWYG** para a história
-   (o texto vira o corpo do MDX).
+3. **Editar** → preencha os campos: dados do casamento, `Description` (frase da
+   intro), `Excerpt` (legenda curta dos cards) e, se quiser, os campos de SEO.
+   Não há mais corpo de texto nem fotos de story.
 4. **Fotos** → arraste ou selecione quantas quiser: cada foto sobe individualmente em segundo
-   plano para a **mesma pasta** do evento (nome **UUID.ext** no Drive). Tudo entra como **galeria**
-   por padrão; marque **Capa** em uma e use **Story** nas fotos que você inserir no texto
-   (botão do tile ou no toolbar do editor). Enquanto há uploads em andamento, salvar/publicar
+   plano para a **mesma pasta** do evento (nome **UUID.ext** no Drive). Todas entram na
+   **galeria**; marque **Capa** em uma. Enquanto há uploads em andamento, salvar/publicar
    ficam temporariamente bloqueados.
 5. Quando o checklist mostrar "Tudo pronto", clique em **Executar automação**.
 6. O workflow gera `src/content/weddings/<slug>/` com `index.mdx` + imagens, valida
@@ -113,27 +113,21 @@ Resposta (200, sempre — erros vêm no corpo):
 
 ```json
 {
-  "slug": "marina-e-pedro-ouro-preto",
-  "title": "Marina + Pedro",
-  "couple": "Marina e Pedro",
-  "date": "2026-05-30",
-  "location": "Museu da Inconfidência",
+  "slug": "yara-e-ataide-ouro-preto",
+  "title": "Yara + Ataíde",
+  "couple": "Yara e Ataíde",
+  "date": "2026-09-26",
   "city": "Ouro Preto",
   "state": "MG",
-  "venue": "Praça Tiradentes",
+  "venue": "Museu da Inconfidência",
   "description": "...",
   "excerpt": "...",
   "featured": true,
   "tags": ["casamento", "ouro-preto"],
-  "vendors": [{ "role": "Espaço", "name": "Sobrado Imperial", "instagram": "sobradoimperial" }],
   "seoTitle": "...",
   "seoDescription": "...",
   "cover": { "filename": "cover.jpg", "url": "https://drive.google.com/uc?export=download&id=..." },
-  "gallery": [{ "filename": "01.jpg", "url": "..." }],
-  "story": {
-    "html": "<p>...</p><figure><img data-story=\"abertura.jpg\">...</figure>",
-    "images": [{ "filename": "abertura.jpg", "url": "..." }]
-  }
+  "gallery": [{ "filename": "01.jpg", "url": "..." }]
 }
 ```
 
@@ -144,7 +138,20 @@ Resposta (200, sempre — erros vêm no corpo):
 - Upload via UI funciona bem para JPGs otimizados. Cada request do Apps Script tem limite de
   payload (~50 MB); para fotos muito pesadas, otimize/crop antes de enviar.
 - As fotos ficam **públicas com link** no Drive (necessário para o GitHub baixar).
-- A **classificação** é dinâmica na publicação: as fotos citadas no WYSIWYG viram `story`,
-  a marcada como capa vira `cover` e todo o restante vira `gallery`. As fotos ficam todas na
-  mesma pasta do evento com nome UUID + extensão original (evita colisão e preserva o tipo).
+- Na publicação, a foto marcada como capa vira `cover` e **todas** as outras vão para
+  `gallery`. As fotos ficam na mesma pasta do evento com nome UUID + extensão original
+  (evita colisão e preserva o tipo).
 - O slug da pasta no repositório é igual ao slug do evento (URL pública).
+- O local tem três campos: `city` e `state` são obrigatórios, `venue` (o
+  estabelecimento — fazenda, museu, igreja, hotel) é **opcional**. Com `venue`
+  preenchido a página mostra `Fazenda X, Nova Lima, MG`; vazio, mostra só
+  `Nova Lima, MG`. Os cards das listagens mostram sempre apenas `city` + `state`,
+  e o slug usa a cidade (`yara-e-ataide-ouro-preto`), nunca o estabelecimento.
+- **Migração da planilha:** `Events.alignHeaders_()` roda em todo acesso e reordena
+  uma aba antiga para o layout novo, lendo por nome de coluna e desfazendo o
+  `location` único: quebra o texto pela última vírgula, então
+  `Fazenda X, Nova Lima` volta a ser `venue` + `city`. Sem isso a escrita seguinte
+  corromperia a linha, já que `rowToValues_()` posiciona os valores pela ordem de
+  `HEADERS`. É idempotente: com o cabeçalho já correto não escreve nada. Depois da
+  primeira execução, as colunas listadas em `Events.DROPPED_HEADERS` são apagadas
+  da aba.

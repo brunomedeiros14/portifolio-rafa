@@ -1,0 +1,18 @@
+# Cloudflare Pages — redirects
+#
+# Status 301: o destino é permanente e não deve ficar em cache como erro.
+
+# Os quatro casamentos abaixo eram placeholders e foram removidos do
+# portfólio quando entraram os casamentos reais. Os URLs já foram publicados
+# e compartilhados, então não podem simplesmente sumir: mandamos para a
+# listagem, que é onde o visitante encontra os casamentos que existem agora.
+#
+# Redirect para página que não existe seria pior que 404 — gasta um salto e
+# não dá nenhum sinal ao buscador sobre o que aconteceu com aquele conteúdo.
+/casamentos/amanda-e-joao  /casamentos  301
+/casamentos/isabela-e-thiago  /casamentos  301
+/casamentos/laura-e-diego  /casamentos  301
+/casamentos/marina-e-pedro  /casamentos  301
+
+# Entrada de teste removida da collection.
+/casamentos/asdf  /casamentos  301

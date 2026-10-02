@@ -74,16 +74,25 @@ jobs:
         run: |
           node scripts/generate-wedding.mjs publication.json
 
-      - name: Validate
+      - name: Typecheck
         run: |
           pnpm check
+
+      # `astro check` não executa o build, então um frontmatter inválido ou uma
+      # imagem quebrada só apareceria no deploy da Cloudflare. Validar aqui evita
+      # commitar conteúdo que não constrói.
+      - name: Build
+        run: |
+          pnpm build
 
       - name: Commit
         run: |
           git config user.name "Portfolio CMS"
           git config user.email "portfolio-cms@users.noreply.github.com"
 
-          git add .
+          # Lista explícita: `git add .` também entraria no publication.json
+          # baixado acima, que é artefato temporário de uma execução.
+          git add src/content/weddings .gitignore
 
           git diff --cached --quiet || \
             git commit \

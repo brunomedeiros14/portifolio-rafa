@@ -3,7 +3,7 @@
  * com outro evento já salvo na planilha.
  */
 const Slug = {
-  /** "Marina e Pedro" -> "marina-e-pedro" (sem acentos, minúsculas, hífens). */
+  /** "Yara e Ataíde" -> "yara-e-ataide" (sem acentos, minúsculas, hífens). */
   slugify(text) {
     return String(text || '')
       .normalize('NFD')
@@ -16,8 +16,12 @@ const Slug = {
   /**
    * Candidatos em ordem de preferência:
    *   1. base (slug do casal)
-   *   2. base-cidade
+   *   2. base-local
    *   3. base-2, base-3, ...
+   *
+   * O sufixo vem da cidade ("yara-e-ataide-ouro-preto"). `slugify` reduz
+   * qualquer texto ao formato de URL, então cidade com acento ou espaço
+   * ("Ouro Preto") vira "-ouro-preto".
    */
   ensureUnique(base, city, existingSlugs) {
     const taken = new Set(existingSlugs || []);

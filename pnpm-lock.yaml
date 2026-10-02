@@ -188,6 +188,9 @@ importers:
       '@google/clasp':
         specifier: ^3.4.1
         version: 3.4.1(@types/node@24.13.6)(supports-color@7.2.0)
+      bootstrap-icons:
+        specifier: ^1.13.1
+        version: 1.13.1
       sharp:
         specifier: ^0.35.4
         version: 0.35.4(@types/node@24.13.6)
@@ -1385,6 +1388,9 @@ packages:
 
   boolbase@1.0.0:
     resolution: {integrity: sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww==}
+
+  bootstrap-icons@1.13.1:
+    resolution: {integrity: sha512-ijombt4v6bv5CLeXvRWKy7CuM3TRTuPEuGaGKvTV5cz65rQSY8RQ2JcHt6b90cBBAC7s8fsf2EkQDldzCoXUjw==}
 
   brace-expansion@2.1.7:
     resolution: {integrity: sha512-uZbew1NqdmPDTMJ8ah1y+b+9QEJrfkXFk3RcTQw3X0jW/xRUvFKsg1CfQdSYGdTbXZWExtU3J3ccxtnfw1Fi0g==}
@@ -4347,6 +4353,8 @@ snapshots:
       - supports-color
 
   boolbase@1.0.0: {}
+
+  bootstrap-icons@1.13.1: {}
 
   brace-expansion@2.1.7:
     dependencies:

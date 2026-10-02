@@ -8,9 +8,15 @@ import SectionHeading from '../components/SectionHeading.astro';
 import WeddingGrid from '../components/WeddingGrid.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { SITE, absolute } from '../site.config';
+import { ogImageFrom } from '../utils/og';
+
+import portrait from '../assets/profile.png';
+import { ID, node, personRef } from '../utils/schema';
 import { getGalleryItems, getWeddingImages, weddingFolder, type GalleryItem } from '../utils/weddings';
 
-const featured = (await getCollection('weddings', ({ data }) => data.featured)).sort(
+const featured = (
+  await getCollection('weddings', ({ data }) => data.featured && !data.draft)
+).sort(
   (a, b) => b.data.date.getTime() - a.data.date.getTime(),
 );
 
@@ -24,28 +30,74 @@ for (const wedding of featured.slice(0, 3)) {
   selected.push(...getGalleryItems(images, wedding.data.couple));
 }
 
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'ProfessionalService',
-  name: SITE.name,
+// A home não é uma página de casamento: o compartilhamento mostra o retrato,
+// não a capa de um casal específico. O JSON-LD segue a mesma imagem.
+const portraitOg = await ogImageFrom(portrait);
+
+// A Person fica num bloco próprio para que autor, publisher e provider em
+// outras páginas possam apontar para o mesmo @id.
+const person = node({
+  '@type': 'Person',
+  '@id': ID.person,
+  name: personRef().name,
+  jobTitle: SITE.role,
   description: SITE.description,
-  url: absolute('/'),
-  image: heroWedding ? absolute(heroWedding.data.cover.src) : undefined,
-  areaServed: SITE.areas.map((city) => ({ '@type': 'City', name: city })),
+  url: absolute('/sobre'),
+  image: absolute(portraitOg.src),
   address: {
     '@type': 'PostalAddress',
     addressLocality: SITE.city,
     addressRegion: SITE.state,
     addressCountry: 'BR',
   },
-  sameAs: [SITE.instagram, SITE.whatsappUrl],
-};
+  knowsAbout: SITE.areas.filter((area) => !area.startsWith('muito')),
+  sameAs: [SITE.instagram],
+  ...(SITE.email ? { email: SITE.email } : {}),
+  ...(SITE.whatsapp ? { telephone: SITE.whatsapp } : {}),
+});
+
+const jsonLd = [
+  node({
+    '@type': 'ProfessionalService',
+    '@id': ID.business,
+    name: SITE.name,
+    description: SITE.description,
+    url: absolute('/'),
+    image: absolute(portraitOg.src),
+    priceRange: '$$$',
+    founder: { '@id': ID.person },
+    employee: { '@id': ID.person },
+    areaServed: SITE.areas
+      .filter((area) => !area.startsWith('muito'))
+      .map((city) => ({ '@type': 'City', name: city })),
+    serviceType: 'Fotografia de casamento',
+    hasOfferCatalog: {
+      '@type': 'OfferCatalog',
+      name: 'Serviços',
+      itemListElement: [
+        { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Cobertura completa do casamento' } },
+        { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Ensaio pré-wedding' } },
+        { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Álbum e组图 de impressão' } },
+      ],
+    },
+  }),
+  node({
+    '@type': 'WebSite',
+    '@id': ID.website,
+    url: absolute('/'),
+    name: SITE.name,
+    description: SITE.description,
+    publisher: { '@id': ID.person },
+    inLanguage: SITE.language,
+  }),
+  person,
+];
 ---
 
 <BaseLayout
   title={SITE.name}
   description={SITE.description}
-  jsonLd={[jsonLd, { '@context': 'https://schema.org', '@type': 'WebSite', name: SITE.name, url: absolute('/') }]}
+  jsonLd={jsonLd}
 >
   {heroWedding ? (
     <Hero
@@ -61,7 +113,7 @@ const jsonLd = {
     />
   ) : null}
 
-  <main class="bg-background">
+  <div class="bg-background">
     {/* Posicionamento */}
     <section class="mx-auto max-w-3xl px-4 py-20 text-center sm:px-6 md:py-28">
       <p class="reveal text-xs font-medium uppercase tracking-[0.24em] text-accent">
@@ -71,11 +123,10 @@ const jsonLd = {
         Não fotografar o que é "perfeito". Fotografar o que é <em class="italic text-accent">verdadeiro</em>.
       </h2>
       <p class="reveal mx-auto mt-6 max-w-xl text-base leading-relaxed text-muted" style="--reveal-delay:160ms">
-        Sou Rafael Dias, fotógrafo de casamento. As histórias de amor que fotografo parecem
-        acontecer diante da câmera sem esforço, porque é assim que eu trabalho: uma presença
-        silenciosa, a luz certa e o equilíbrio entre direção e espera. Menos produção, mais
-        memória. Cada cerimônia, cada olhar trocado e cada lágrima de alegria entram no registro
-        como aconteceram — sem retoques na emoção.
+        Sou Rafael Dias, fotógrafo de casamento e estudante de Fotografia. Busco uma fotografia
+        natural, elegante e emocional, com uma estética cinematográfica — mas sem perder a verdade
+        das pessoas e dos lugares. Observo gestos, expressões e aquilo que muitas vezes acontece em
+        silêncio.
       </p>
     </section>
 
@@ -115,8 +166,8 @@ const jsonLd = {
               alt={`${aboutImage.data.couple} — ${aboutImage.data.excerpt}`}
               widths={[480, 1280]}
               sizes="(min-width: 1024px) 45vw, 92vw"
-              formats={['avif']}
-              fallbackFormat="avif"
+              formats={['avif', 'webp']}
+              fallbackFormat="webp"
               loading="lazy"
               decoding="async"
               class="h-full w-full object-cover"
@@ -127,6 +178,7 @@ const jsonLd = {
           <SectionHeading
             eyebrow="Sobre"
             title="Uma abordagem editorial e humana"
+            headingId="sobre-heading"
           />
           <div class="reveal mt-6 space-y-5 text-base leading-relaxed text-muted" style="--reveal-delay:120ms">
             <p>
@@ -179,11 +231,12 @@ const jsonLd = {
         eyebrow="Como funciona"
         title="Sua experiência comigo"
         description="Do primeiro café ao álbum na mesa da sala, um processo simples e transparente."
+        headingId="experiencia-heading"
       />
       <div class="mt-12 grid gap-10 md:grid-cols-3">
         {[
           { step: '01', title: 'Conversa', text: 'Café, vídeo ou mensagem. Conte a história de vocês, o lugar, o estilo — e eu mostro como trabalho, sem enrolação. Saímos da conversa com o roteiro do dia, horários e os lugares que importam para vocês.' },
-          { step: '02', title: 'O grande dia', text: 'Presença discreta do início ao fim: preparativos, cerimônia, retratos e festa. Sem cronômetro, acompanhando o ritmo da emoção — desde o vestido sendo abotoado até o último brinde na madrugada.' },
+          { step: '02', title: 'O grande dia', text: 'Presença discreta do início ao fim: preparativos, cerimônia, retratos e festa. Sem cronômetro, acompanhando o ritmo da emoção.' },
           { step: '03', title: 'História entregue', text: 'Curadoria e edição com calma. Em até 60 dias você recebe suas melhores fotografias, prontas para imprimir e eternizar, em alta resolução e com autorização de uso plena.' },
         ].map((item) => (
           <div class="reveal border-t border-line pt-6">
@@ -245,5 +298,5 @@ const jsonLd = {
     </section>
 
     <CTA />
-  </main>
+  </div>
 </BaseLayout>

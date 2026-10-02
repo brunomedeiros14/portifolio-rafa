@@ -1,5 +1,5 @@
 ---
-import { Picture } from 'astro:assets';
+import { Picture, getImage } from 'astro:assets';
 import Lightbox from './Lightbox.astro';
 import type { GalleryItem } from '../utils/weddings';
 
@@ -10,37 +10,56 @@ interface Props {
 }
 
 const { id, items } = Astro.props;
+
+/**
+ * O lightbox abria o arquivo original: `item.image.src` é o JPEG de 2–4 MB
+ * que estava no disco. Como essa URL virava um atributo `data-src` do HTML,
+ * o Astro era obrigado a copiar o original inteiro para `dist/` — 57 MB de
+ * JPEG só para isso, e um clique na miniatura baixava megabytes.
+ *
+ * Geramos uma variante de exibição (1920 px de lado maior, WebP q82), que é o
+ * que o lightbox efetivamente mostra (`max-h-[78vh]`). O original deixa de ser
+ * referenciado e some do build.
+ */
+const LIGHTBOX_WIDTH = 1920;
+const fulls = await Promise.all(
+  items.map((item) =>
+    getImage({ src: item.image, width: LIGHTBOX_WIDTH, format: 'webp', quality: 82 }),
+  ),
+);
 ---
 
 <div id={id} class="columns-2 gap-3 sm:gap-4 lg:columns-3">
   {items.map((item, index) => (
-    <figure class="mb-3 break-inside-avoid sm:mb-4">
+    <div class="mb-3 break-inside-avoid sm:mb-4">
       <button
         type="button"
         class="group relative block w-full cursor-zoom-in overflow-hidden rounded-sm bg-line"
         data-lightbox-item
         data-gallery={id}
         data-index={index}
-        data-src={item.image.src}
-        data-width={item.image.width}
-        data-height={item.image.height}
+        data-src={fulls[index]!.src}
+        data-width={fulls[index]!.attributes.width}
+        data-height={fulls[index]!.attributes.height}
         data-caption={item.caption}
         aria-label={`Ampliar foto: ${item.caption}`}
       >
+        {/* alt="" de propósito: o nome acessível do botão já é
+            "Ampliar foto: <legenda>". Repetir a legenda no alt faria o leitor de
+            tela anunciar a mesma frase duas vezes por miniatura. */}
         <Picture
           src={item.image}
-          alt={item.caption}
+          alt=""
           widths={[480, 1024]}
           sizes="(min-width: 1280px) 384px, (min-width: 1024px) 31vw, (min-width: 640px) 48vw, 96vw"
-          formats={['avif']}
-          fallbackFormat="avif"
+          formats={['avif', 'webp']}
+          fallbackFormat="webp"
           loading="lazy"
           decoding="async"
           class="w-full transition-transform duration-700 ease-out group-hover:scale-[1.03]"
         />
       </button>
-      <figcaption class="sr-only">{item.caption}</figcaption>
-    </figure>
+    </div>
   ))}
 </div>
 

@@ -77,12 +77,21 @@ export function getGalleryItems(
   }));
 }
 
-/** Proporção da imagem: ratio = largura / altura. */
-export function aspectRatioOf(image: ImageMetadata): number {
-  return image.width / image.height;
+/**
+ * Como o local é exibido na página do casamento: "Fazenda X, Nova Lima" quando
+ * existe estabelecimento, "Nova Lima" quando não existe. Os cards usam só a
+ * cidade, então não passam por aqui.
+ */
+export function weddingPlace(data: { venue?: string; city: string }): string {
+  return data.venue ? `${data.venue}, ${data.city}` : data.city;
 }
 
-/** Escore de relevância entre casamentos (cidade + tags + estado). */
+/**
+ * Score de relevância entre casamentos (cidade + tags + estado).
+ *
+ * Compara pela cidade, não pelo estabelecimento: casamentos na mesma cidade
+ * separem em lugares diferentes e ainda assim interessam mais ao mesmo leitor.
+ */
 export function weddingSimilarity(
   a: { data: { city: string; state: string; tags: string[] } },
   b: { data: { city: string; state: string; tags: string[] } },

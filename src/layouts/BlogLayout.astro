@@ -4,7 +4,9 @@ import Breadcrumbs from '../components/Breadcrumbs.astro';
 import CTA from '../components/CTA.astro';
 import { Picture } from 'astro:assets';
 import { render } from 'astro:content';
-import { SITE, absolute, formatDate } from '../site.config';
+import { SITE, absolute, formatDate , canonicalPath } from '../site.config';
+import { ogImageFrom } from '../utils/og';
+import { ID, node, publisherRef } from '../utils/schema';
 import type { CollectionEntry } from 'astro:content';
 
 interface Props {
@@ -15,29 +17,47 @@ const { post } = Astro.props;
 const { data } = post;
 const { Content } = await render(post);
 
-const jsonLd = {
-  '@context': 'https://schema.org',
+const ogImage = data.cover ? await ogImageFrom(data.cover) : undefined;
+
+const jsonLd = node({
   '@type': 'BlogPosting',
+  '@id': `${absolute(canonicalPath(`/blog/${data.slug}`))}#article`,
   headline: data.title,
   description: data.description,
-  ...(data.cover
-    ? { image: [absolute(data.cover.src)] }
+  url: absolute(canonicalPath(`/blog/${data.slug}`)),
+  inLanguage: SITE.language,
+  keywords: data.tags.length ? data.tags.join(', ') : undefined,
+  ...(ogImage
+    ? { image: [absolute(ogImage.src)] }
     : {}),
   datePublished: data.date.toISOString(),
   ...(data.updated ? { dateModified: data.updated.toISOString() } : {}),
-  author: { '@type': 'Person', name: data.author },
-  publisher: { '@type': 'Person', name: SITE.name },
+  author: {
+    '@type': 'Person',
+    '@id': ID.person,
+    name: data.author,
+    url: absolute('/sobre'),
+  },
+  publisher: { '@id': ID.person },
   ...(data.canonical ? { mainEntityOfPage: data.canonical } : {}),
-};
+  isPartOf: { '@id': ID.website },
+});
 ---
 
 <BaseLayout
   title={data.seoTitle ?? data.title}
   description={data.seoDescription ?? data.description}
-  canonical={`/blog/${data.slug}`}
-  ogImage={data.cover?.src}
+  canonical={data.canonical ?? `/blog/${data.slug}`}
+  ogImage={ogImage?.src}
+  ogImageWidth={ogImage?.width}
+  ogImageHeight={ogImage?.height}
+  ogImageAlt={data.title}
   type="article"
-  jsonLd={data.canonical ? undefined : jsonLd}
+  publishedTime={data.date}
+  modifiedTime={data.updated}
+  author={data.author}
+  section={data.tags[0]}
+  jsonLd={[jsonLd, publisherRef()]}
   headerTransparent={Boolean(data.cover)}
 >
   <article>
@@ -48,8 +68,8 @@ const jsonLd = {
           alt={data.description}
           widths={[1280, 1920]}
           sizes="100vw"
-          formats={['avif']}
-          fallbackFormat="avif"
+          formats={['avif', 'webp']}
+          fallbackFormat="webp"
           loading="eager"
           decoding="async"
           fetchpriority="high"

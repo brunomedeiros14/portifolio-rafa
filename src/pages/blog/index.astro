@@ -3,17 +3,54 @@ import { Picture } from 'astro:assets';
 import { getCollection } from 'astro:content';
 import CTA from '../../components/CTA.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { formatDate } from '../../site.config';
+import { SITE, absolute, formatDate, canonicalPath } from '../../site.config';
+import { ID, node } from '../../utils/schema';
 
 const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
   (a, b) => b.data.date.getTime() - a.data.date.getTime(),
 );
+
+const jsonLd = node({
+  '@type': 'CollectionPage',
+  name: 'Blog de casamento',
+  url: absolute(canonicalPath('/blog')),
+  description:
+    'Artigos sobre casamento em Minas Gerais: locais, luz, ensaios pré-wedding e como escolher o fotógrafo.',
+  isPartOf: { '@id': ID.website },
+  provider: { '@id': ID.person },
+  mainEntity: {
+    '@type': 'ItemList',
+    name: 'Artigos do blog',
+    numberOfItems: posts.length,
+    itemListOrder: 'https://schema.org/ItemListOrderDescending',
+    itemListElement: posts.map((post, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      url: absolute(canonicalPath(`/blog/${post.data.slug}`)),
+      item: {
+        '@type': 'BlogPosting',
+        '@id': absolute(`${canonicalPath(`/blog/${post.data.slug}`)}#article`),
+        headline: post.data.title,
+        description: post.data.description,
+        url: absolute(canonicalPath(`/blog/${post.data.slug}`)),
+        datePublished: post.data.date.toISOString().slice(0, 10),
+        ...(post.data.updated
+          ? { dateModified: post.data.updated.toISOString().slice(0, 10) }
+          : {}),
+        author: { '@id': ID.person },
+        publisher: { '@id': ID.person },
+        inLanguage: SITE.language,
+      },
+    })),
+  },
+});
 ---
 
 <BaseLayout
   title="Blog"
   description="Artigos úteis sobre casamento em Minas Gerais: locais, luz, ensaios pré-wedding e como escolher o fotógrafo perfeito."
   headerTransparent={false}
+  jsonLd={jsonLd}
 >
   <header class="border-b border-line bg-background">
     <div class="mx-auto max-w-(--content-max) px-4 pb-16 pt-[calc(var(--header-h)+2rem)] sm:px-6 md:pb-20">
@@ -41,8 +78,8 @@ const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
                     alt={post.data.description}
                     widths={[480, 1024]}
                     sizes="(min-width: 1024px) 544px, 92vw"
-                    formats={['avif']}
-                    fallbackFormat="avif"
+                    formats={['avif', 'webp']}
+                    fallbackFormat="webp"
                     loading={index === 0 ? 'eager' : 'lazy'}
                     decoding="async"
                     fetchpriority={index === 0 ? 'high' : undefined}

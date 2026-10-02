@@ -13,24 +13,28 @@ const weddings = defineCollection({
       slug: z.string(),
       couple: z.string(),
       date: z.coerce.date(),
-      location: z.string(),
+      /** Cidade — obrigatória. É o que aparece sozinho nos cards e no slug. */
       city: z.string(),
+      /** Sigla do estado: "MG". */
       state: z.string(),
-      venue: z.string(),
+      /**
+       * Estabelecimento (fazenda, museu, igreja, hotel). **Opcional**: com ele
+       * preenchido a página mostra "Fazenda X, Nova Lima, MG"; vazio, mostra só
+       * "Nova Lima, MG". Nos cards nunca aparece.
+       */
+      venue: z.string().optional(),
+      /** Frase de apoio exibida na intro, entre a capa e a galeria. */
       description: z.string(),
       excerpt: z.string().max(220),
       cover: image(),
       featured: z.boolean().default(false),
+      /**
+       * Rascunho: a página é gerada mas fica `noindex` e fora do sitemap, para
+       * revisar antes de o link ser distribuído. Sem isso, publicar no CMS
+       * deixava a página pública e indexável no mesmo instante do commit.
+       */
+      draft: z.boolean().default(false),
       tags: z.array(z.string()).default([]),
-      vendors: z
-        .array(
-          z.object({
-            role: z.string(),
-            name: z.string(),
-            instagram: z.string().optional(),
-          }),
-        )
-        .default([]),
       seoTitle: z.string().optional(),
       seoDescription: z.string().max(160).optional(),
     }),

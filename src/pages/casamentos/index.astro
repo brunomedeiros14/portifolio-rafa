@@ -4,23 +4,53 @@ import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import CTA from '../../components/CTA.astro';
 import WeddingGrid from '../../components/WeddingGrid.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { SITE, absolute } from '../../site.config';
+import { absolute, canonicalPath } from '../../site.config';
+import { ID, node } from '../../utils/schema';
+import { ogImageFrom } from '../../utils/og';
 
-const weddings = await getCollection('weddings');
+const weddings = await getCollection('weddings', ({ data }) => !data.draft);
 
-const jsonLd = {
-  '@context': 'https://schema.org',
+const ogBySlug = Object.fromEntries(
+  await Promise.all(
+    weddings.map(async ({ data }) => [data.slug, (await ogImageFrom(data.cover)).src]),
+  ),
+);
+
+/**
+ * `hasPart` com `Article` não descreve uma lista navegável. `ItemList` é o tipo
+ * que o Google usa para gerar o rich result de " carousel"/lista, e cada item
+ * precisa de `position` para ordenar.
+ */
+const jsonLd = node({
   '@type': 'CollectionPage',
   name: 'Casamentos',
-  url: absolute('/casamentos'),
-  provider: { '@type': 'Person', name: SITE.name },
-  hasPart: weddings.map(({ data }) => ({
-    '@type': 'Article',
-    headline: `${data.couple} — casamento`,
-    url: absolute(`/casamentos/${data.slug}`),
-    image: absolute(data.cover.src),
-  })),
-};
+  description:
+    'Casamentos fotografados por Rafael Dias em Belo Horizonte, Nova Lima, Ouro Preto, Tiradentes e por todo Minas Gerais.',
+  url: absolute(canonicalPath('/casamentos')),
+  isPartOf: { '@id': ID.website },
+  provider: { '@id': ID.person },
+  mainEntity: {
+    '@type': 'ItemList',
+    name: 'Casamentos fotografados',
+    numberOfItems: weddings.length,
+    itemListOrder: 'https://schema.org/ItemListOrderDescending',
+    itemListElement: weddings.map(({ data }, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      url: absolute(`/casamentos/${data.slug}`),
+      item: {
+        '@type': 'Article',
+        '@id': absolute(`/casamentos/${data.slug}#article`),
+        headline: `${data.couple} — casamento em ${data.city}`,
+        description: data.excerpt,
+        url: absolute(`/casamentos/${data.slug}`),
+        datePublished: data.date.toISOString().slice(0, 10),
+        thumbnailUrl: absolute(ogBySlug[data.slug]!),
+        author: { '@id': ID.person },
+      },
+    })),
+  },
+});
 ---
 
 <BaseLayout
@@ -42,6 +72,11 @@ const jsonLd = {
         Uma curadoria das cerimônias que tive o privilégio de fotografar. {weddings.length} histórias
         completas — e cada uma com galeria, bastidores e lugares reais de Minas Gerais.
       </p>
+      {/* Os cartões são <h3> (nome do casal). Sem um <h2> intermediário a
+          hierarquia saltava de h1 para h3, e o outline do leitor de tela
+          apresentava os casamentos como se fossem subseções do <h1> — o que
+          eles não são. */}
+      <h2 class="sr-only">Casamentos fotografados</h2>
     </div>
   </header>
 

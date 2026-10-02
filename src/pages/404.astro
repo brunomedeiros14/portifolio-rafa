@@ -5,10 +5,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 <BaseLayout
   title="Página não encontrada"
   description="Essa página não existe ou foi movida. Volte para a home e descubra os casamentos fotografados por Rafael Dias."
+  canonical={false}
   noindex={true}
   headerTransparent={false}
 >
-  <main class="flex min-h-[70svh] flex-col items-center justify-center bg-background px-4 py-24 text-center">
+  <div class="flex min-h-[70svh] flex-col items-center justify-center bg-background px-4 py-24 text-center">
     <p class="font-display text-lg italic text-accent">404</p>
     <h1 class="mt-4 max-w-xl font-display text-4xl font-medium tracking-tight sm:text-5xl">
       Essa página não existe — mas a fotografia é bem real.
@@ -37,5 +38,5 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         Falar comigo
       </a>
     </div>
-  </main>
+  </div>
 </BaseLayout>
