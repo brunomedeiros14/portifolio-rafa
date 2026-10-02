@@ -51,7 +51,24 @@ const resolvedCanonical = absolute(canonical);
 const resolvedOgImage = absolute(ogImage);
 
 const DEFAULT_OG_TITLE = `${SITE.name} — ${SITE.role}`;
-const FULL_TITLE = title === SITE.name || title === DEFAULT_OG_TITLE ? SITE.name : `${title} | ${SITE.name}`;
+
+/**
+ * Vários `seoTitle` do conteúdo já terminam em `| Fotografia`, `| Rafael
+ * Dias`, etc. Acrescentar `| Rafael Dias - Fotos` depois disso gerava títulos
+ * com duas marcas — "Casamento de Amanda e João na Fazenda X, Nova Lima |
+ * Fotografia | Rafael Dias - Fotos" —, e o Google truncava no meio da segunda.
+ *
+ * Corta qualquer sufixo que já identifique a marca antes de anexar o nome do
+ * site, para o resultado final ter um sufixo só.
+ */
+const BRAND_SUFFIX = /(\s*\|\s*[^|]*(?:fotografia|fotos?|dias|composi[cç][aã]o)[^|]*)+$/i;
+
+const stripped = title.replace(BRAND_SUFFIX, '').trim() || title;
+
+const FULL_TITLE =
+  stripped === SITE.name || title === DEFAULT_OG_TITLE
+    ? SITE.name
+    : `${stripped} | ${SITE.name}`;
 
 /**
  * Sem isso, todas as páginas não-article compartilhavam o mesmo og:title e o
