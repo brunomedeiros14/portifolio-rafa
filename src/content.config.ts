@@ -21,6 +21,12 @@ const weddings = defineCollection({
       excerpt: z.string().max(220),
       cover: image(),
       featured: z.boolean().default(false),
+      /**
+       * Rascunho: a página é gerada mas fica `noindex` e fora do sitemap, para
+       * revisar antes de o link ser distribuído. Sem isso, publicar no CMS
+       * deixava a página pública e indexável no mesmo instante do commit.
+       */
+      draft: z.boolean().default(false),
       tags: z.array(z.string()).default([]),
       vendors: z
         .array(

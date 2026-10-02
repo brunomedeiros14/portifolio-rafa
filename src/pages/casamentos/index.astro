@@ -8,7 +8,7 @@ import { absolute } from '../../site.config';
 import { ID, node } from '../../utils/schema';
 import { ogImageFrom } from '../../utils/og';
 
-const weddings = await getCollection('weddings');
+const weddings = await getCollection('weddings', ({ data }) => !data.draft);
 
 const ogBySlug = Object.fromEntries(
   await Promise.all(

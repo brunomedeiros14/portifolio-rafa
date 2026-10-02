@@ -24,6 +24,8 @@ import { SITE } from './src/site.config.ts';
 function buildLastmodMap() {
   /** @type {Map<string, Date>} */
   const map = new Map();
+  /** Slugs de rascunho — não entram no sitemap. @type {Set<string>} */
+  const drafts = new Set();
 
   /** @param {string} file @param {string} urlPath */
   const register = (file, urlPath) => {
@@ -57,12 +59,14 @@ function buildLastmodMap() {
     const slugMatch = head.match(/^slug:\s*["']?([^"'\n]+)/m);
     const slug = slugMatch ? slugMatch[1].trim() : dir;
     register(full, `/casamentos/${slug}`);
+
+    if (/^draft:\s*true/m.test(head)) drafts.add(`/casamentos/${slug}`);
   }
 
-  return map;
+  return { map, drafts };
 }
 
-const lastmodByPath = buildLastmodMap();
+const { map: lastmodByPath, drafts: draftPaths } = buildLastmodMap();
 
 // Páginas sem data própria não recebem `lastmod`: omitir o campo é honesto,
 // enquanto `new Date()` seria uma afirmação falsa de modificação.
@@ -80,7 +84,10 @@ export default defineConfig({
       // Só páginas públicas navegáveis chegam ao sitemap por padrão. O
       // `/rss.xml` gerado também é um `.xml` e ficaria listado como página.
       filter: (page) =>
-        !page.endsWith('/404') && !page.includes('/_astro') && !page.endsWith('.xml'),
+        !page.endsWith('/404') &&
+        !page.includes('/_astro') &&
+        !page.endsWith('.xml') &&
+        !draftPaths.has(new URL(page).pathname.replace(/\/$/, '')),
       serialize(item) {
         const url = new URL(item.url);
         const date = lastmodByPath.get(url.pathname.replace(/\/$/, ''));

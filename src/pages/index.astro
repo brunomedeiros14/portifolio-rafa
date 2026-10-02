@@ -12,7 +12,9 @@ import { getGalleryItems, getWeddingImages, weddingFolder, type GalleryItem } fr
 import { ID, node, personRef } from '../utils/schema';
 import { ogImageFrom } from '../utils/og';
 
-const featured = (await getCollection('weddings', ({ data }) => data.featured)).sort(
+const featured = (
+  await getCollection('weddings', ({ data }) => data.featured && !data.draft)
+).sort(
   (a, b) => b.data.date.getTime() - a.data.date.getTime(),
 );
 

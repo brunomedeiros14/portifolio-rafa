@@ -204,6 +204,7 @@ async function main() {
     `excerpt: ${yaml(pub.excerpt)}`,
     `cover: "./images/${coverName}"`,
     `featured: ${pub.featured ? 'true' : 'false'}`,
+    `draft: ${pub.draft ? 'true' : 'false'}`,
     pub.tags && pub.tags.length ? `tags:\n${yamlList(pub.tags)}` : 'tags: []',
     pub.vendors && pub.vendors.length ? `vendors:\n${yamlVendors(pub.vendors)}` : 'vendors: []',
   ].concat(pub.seoTitle ? `seoTitle: ${yaml(pub.seoTitle)}` : []);
