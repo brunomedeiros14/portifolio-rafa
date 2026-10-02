@@ -34,9 +34,14 @@ const jsonLd = {
 <BaseLayout
   title={data.seoTitle ?? data.title}
   description={data.seoDescription ?? data.description}
-  canonical={`/blog/${data.slug}`}
+  canonical={data.canonical ?? `/blog/${data.slug}`}
   ogImage={data.cover?.src}
+  ogImageAlt={data.title}
   type="article"
+  publishedTime={data.date}
+  modifiedTime={data.updated}
+  author={data.author}
+  section={data.tags[0]}
   jsonLd={data.canonical ? undefined : jsonLd}
   headerTransparent={Boolean(data.cover)}
 >

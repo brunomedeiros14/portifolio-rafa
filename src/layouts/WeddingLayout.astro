@@ -50,7 +50,10 @@ const jsonLd = [
   description={data.seoDescription ?? data.excerpt}
   canonical={`/casamentos/${data.slug}`}
   ogImage={data.cover.src}
+  ogImageAlt={`${data.couple} — casamento em ${data.city}`}
   type="article"
+  publishedTime={data.date}
+  author={SITE.name}
   jsonLd={jsonLd}
 >
   <article>

@@ -10,7 +10,14 @@ interface Props {
   description: string;
   canonical?: string;
   ogImage?: string;
+  ogImageWidth?: number;
+  ogImageHeight?: number;
+  ogImageAlt?: string;
   type?: 'website' | 'article';
+  publishedTime?: Date;
+  modifiedTime?: Date;
+  author?: string;
+  section?: string;
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
   noindex?: boolean;
   /** Header transparente sobre hero (default true) */
@@ -23,7 +30,14 @@ const {
   description,
   canonical,
   ogImage,
+  ogImageWidth,
+  ogImageHeight,
+  ogImageAlt,
   type,
+  publishedTime,
+  modifiedTime,
+  author,
+  section,
   jsonLd,
   noindex,
   headerTransparent = true,
@@ -47,7 +61,14 @@ const {
       description={description}
       canonical={canonical}
       ogImage={ogImage}
+      ogImageWidth={ogImageWidth}
+      ogImageHeight={ogImageHeight}
+      ogImageAlt={ogImageAlt}
       type={type}
+      publishedTime={publishedTime}
+      modifiedTime={modifiedTime}
+      author={author}
+      section={section}
       jsonLd={jsonLd}
       noindex={noindex}
     />
