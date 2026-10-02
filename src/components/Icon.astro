@@ -1,0 +1,28 @@
+---
+import { icon, type IconName } from '../utils/icons';
+
+interface Props {
+  /** Nome do ícone em bootstrap-icons */
+  name: IconName;
+  /** Lado do quadrado em pixels. Os ícones são desenhados em viewBox 16. */
+  size?: number | string;
+  /** Class(es) extras no <svg> */
+  class?: string;
+  /** Quando preenchido, o ícone vira um nó com nome acessível. */
+  label?: string;
+}
+
+const { name, size = 16, class: className, label } = Astro.props;
+---
+
+<svg
+  width={size}
+  height={size}
+  viewBox="0 0 16 16"
+  fill="currentColor"
+  class={className}
+  aria-hidden={label ? undefined : 'true'}
+  role={label ? 'img' : undefined}
+  aria-label={label}
+  set:html={icon(name)}
+/>
