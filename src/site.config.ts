@@ -92,7 +92,7 @@ export function canonicalPath(href: string): string {
  * Define qual item do menu representa a página atual, para o `aria-current`.
  *
  * Igualdade exata deixava o menu sem nenhum item marcado em toda página
- * interna — em `/casamentos/amanda-e-joao-fazenda-x` nada correspondia a
+ * interna — em `/casamentos/yara-e-ataide-ouro-preto` nada correspondia a
  * `/casamentos`. A comparação por prefixo respeita a fronteira de segmento
  * para que `/casamentos` não case com `/casamentos-fazenda-x`.
  */

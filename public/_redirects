@@ -1,16 +1,18 @@
 # Cloudflare Pages — redirects
 #
-# As pastas em src/content/weddings/ usam o nome curto do casal
-# (ex.: amanda-e-joao) enquanto o campo `slug` publicado inclui a cidade
-# (ex.: amanda-e-joao-fazenda-x). URLs antigas publicadas com o nome curto
-# precisam continuar resolvendo depois da troca.
-#
 # Status 301: o destino é permanente e não deve ficar em cache como erro.
 
-/casamentos/amanda-e-joao  /casamentos/amanda-e-joao-fazenda-x  301
-/casamentos/isabela-e-thiago  /casamentos/isabela-e-thiago-tiradentes  301
-/casamentos/laura-e-diego  /casamentos/laura-e-diego-belo-horizonte  301
-/casamentos/marina-e-pedro  /casamentos/marina-e-pedro-ouro-preto  301
+# Os quatro casamentos abaixo eram placeholders e foram removidos do
+# portfólio quando entraram os casamentos reais. Os URLs já foram publicados
+# e compartilhados, então não podem simplesmente sumir: mandamos para a
+# listagem, que é onde o visitante encontra os casamentos que existem agora.
+#
+# Redirect para página que não existe seria pior que 404 — gasta um salto e
+# não dá nenhum sinal ao buscador sobre o que aconteceu com aquele conteúdo.
+/casamentos/amanda-e-joao  /casamentos  301
+/casamentos/isabela-e-thiago  /casamentos  301
+/casamentos/laura-e-diego  /casamentos  301
+/casamentos/marina-e-pedro  /casamentos  301
 
 # Entrada de teste removida da collection.
 /casamentos/asdf  /casamentos  301

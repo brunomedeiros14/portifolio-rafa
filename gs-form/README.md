@@ -113,10 +113,10 @@ Resposta (200, sempre — erros vêm no corpo):
 
 ```json
 {
-  "slug": "marina-e-pedro-ouro-preto",
-  "title": "Marina + Pedro",
-  "couple": "Marina e Pedro",
-  "date": "2026-05-30",
+  "slug": "yara-e-ataide-ouro-preto",
+  "title": "Yara + Ataíde",
+  "couple": "Yara e Ataíde",
+  "date": "2026-09-26",
   "city": "Ouro Preto",
   "state": "MG",
   "venue": "Museu da Inconfidência",
@@ -146,7 +146,7 @@ Resposta (200, sempre — erros vêm no corpo):
   estabelecimento — fazenda, museu, igreja, hotel) é **opcional**. Com `venue`
   preenchido a página mostra `Fazenda X, Nova Lima, MG`; vazio, mostra só
   `Nova Lima, MG`. Os cards das listagens mostram sempre apenas `city` + `state`,
-  e o slug usa a cidade (`amanda-e-joao-nova-lima`), nunca o estabelecimento.
+  e o slug usa a cidade (`yara-e-ataide-ouro-preto`), nunca o estabelecimento.
 - **Migração da planilha:** `Events.alignHeaders_()` roda em todo acesso e reordena
   uma aba antiga para o layout novo, lendo por nome de coluna e desfazendo o
   `location` único: quebra o texto pela última vírgula, então
