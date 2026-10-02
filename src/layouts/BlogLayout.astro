@@ -5,6 +5,7 @@ import CTA from '../components/CTA.astro';
 import { Picture } from 'astro:assets';
 import { render } from 'astro:content';
 import { SITE, absolute, formatDate } from '../site.config';
+import { ogImageFrom } from '../utils/og';
 import type { CollectionEntry } from 'astro:content';
 
 interface Props {
@@ -15,13 +16,15 @@ const { post } = Astro.props;
 const { data } = post;
 const { Content } = await render(post);
 
+const ogImage = data.cover ? await ogImageFrom(data.cover) : undefined;
+
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'BlogPosting',
   headline: data.title,
   description: data.description,
-  ...(data.cover
-    ? { image: [absolute(data.cover.src)] }
+  ...(ogImage
+    ? { image: [absolute(ogImage.src)] }
     : {}),
   datePublished: data.date.toISOString(),
   ...(data.updated ? { dateModified: data.updated.toISOString() } : {}),
@@ -35,7 +38,9 @@ const jsonLd = {
   title={data.seoTitle ?? data.title}
   description={data.seoDescription ?? data.description}
   canonical={data.canonical ?? `/blog/${data.slug}`}
-  ogImage={data.cover?.src}
+  ogImage={ogImage?.src}
+  ogImageWidth={ogImage?.width}
+  ogImageHeight={ogImage?.height}
   ogImageAlt={data.title}
   type="article"
   publishedTime={data.date}

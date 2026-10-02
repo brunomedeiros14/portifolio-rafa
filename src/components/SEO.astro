@@ -1,5 +1,6 @@
 ---
 import { SITE, absolute } from '../site.config';
+import { OG_HEIGHT, OG_WIDTH } from '../utils/og';
 
 interface Props {
   /** <title> da página — sem o nome do site */
@@ -34,8 +35,8 @@ const {
   description,
   canonical = Astro.url.pathname,
   ogImage = '/og-default.jpg',
-  ogImageWidth,
-  ogImageHeight,
+  ogImageWidth = OG_WIDTH,
+  ogImageHeight = OG_HEIGHT,
   ogImageAlt,
   type = 'website',
   publishedTime,
