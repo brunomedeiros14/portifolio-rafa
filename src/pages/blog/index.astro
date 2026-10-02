@@ -41,8 +41,8 @@ const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
                     alt={post.data.description}
                     widths={[480, 1024]}
                     sizes="(min-width: 1024px) 544px, 92vw"
-                    formats={['avif']}
-                    fallbackFormat="avif"
+                    formats={['avif', 'webp']}
+                    fallbackFormat="webp"
                     loading={index === 0 ? 'eager' : 'lazy'}
                     decoding="async"
                     fetchpriority={index === 0 ? 'high' : undefined}
