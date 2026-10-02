@@ -32,15 +32,15 @@ try {
 
 if (!pub || pub.error) fail(`Erro retornado pelo endpoint do gs-form: ${pub && pub.error}`);
 
-const REQUIRED = [
-  'slug', 'couple', 'date', 'city', 'state', 'description', 'excerpt', 'cover',
-];
+const REQUIRED = ['slug', 'couple', 'date', 'city', 'state', 'description', 'excerpt', 'cover'];
 for (const field of REQUIRED) {
   if (String(pub[field] ?? '').trim() === '') fail(`Campo obrigatório ausente: ${field}`);
 }
 
-if (!/^\d{4}-\d{2}-\d{2}$/.test(pub.date)) fail(`Data inválida ("${pub.date}"), esperado YYYY-MM-DD.`);
-if (pub.excerpt.length > 220) fail(`excerpt deve ter no máximo 220 caracteres (tem ${pub.excerpt.length}).`);
+if (!/^\d{4}-\d{2}-\d{2}$/.test(pub.date))
+  fail(`Data inválida ("${pub.date}"), esperado YYYY-MM-DD.`);
+if (pub.excerpt.length > 220)
+  fail(`excerpt deve ter no máximo 220 caracteres (tem ${pub.excerpt.length}).`);
 
 const slug = pub.slug.trim();
 const base = resolve('src/content/weddings', slug);
@@ -70,7 +70,10 @@ async function download(url, dest) {
 }
 
 function yaml(value) {
-  const s = String(value ?? '').replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, ' ');
+  const s = String(value ?? '')
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/\n/g, ' ');
   return `"${s}"`;
 }
 

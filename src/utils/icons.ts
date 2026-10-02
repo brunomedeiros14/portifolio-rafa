@@ -16,13 +16,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 
 export type IconName =
-  | 'chevron-left'
-  | 'chevron-right'
-  | 'envelope'
-  | 'instagram'
-  | 'list'
-  | 'whatsapp'
-  | 'x-lg';
+  'chevron-left' | 'chevron-right' | 'envelope' | 'instagram' | 'list' | 'whatsapp' | 'x-lg';
 
 const cache = new Map<IconName, string>();
 

@@ -32,7 +32,10 @@ export function weddingFolder(entry: { filePath?: string; data: { slug: string }
  * Lista as imagens da pasta do casamento, ordenadas naturalmente,
  * com opção de excluir a imagem de capa (que já aparece no hero da página).
  */
-export function getWeddingImages(slugOrFolder: string, excludeCover?: ImageMetadata): ImageMetadata[] {
+export function getWeddingImages(
+  slugOrFolder: string,
+  excludeCover?: ImageMetadata,
+): ImageMetadata[] {
   const prefix = `../content/weddings/${slugOrFolder}/images/`;
   const excluded = excludeCover ? imageKey(excludeCover) : null;
 
@@ -71,9 +74,7 @@ export function getGalleryItems(
 ): GalleryItem[] {
   return images.map((image, index) => ({
     image,
-    caption:
-      custom?.[index] ??
-      `${DEFAULT_CAPTIONS[index % DEFAULT_CAPTIONS.length]} — ${couple}`,
+    caption: custom?.[index] ?? `${DEFAULT_CAPTIONS[index % DEFAULT_CAPTIONS.length]} — ${couple}`,
   }));
 }
 

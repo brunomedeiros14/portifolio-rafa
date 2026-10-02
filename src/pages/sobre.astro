@@ -42,7 +42,10 @@ const jsonLd = node({
     <header class="border-b border-line">
       <div class="mx-auto max-w-(--content-max) px-4 pb-14 pt-[calc(var(--header-h)+2rem)] sm:px-6 md:pb-18">
         <p class="reveal text-xs font-medium uppercase tracking-[0.24em] text-accent">Sobre</p>
-        <h1 class="reveal mt-3 max-w-3xl font-display text-4xl font-medium tracking-tight sm:text-5xl" style="--reveal-delay:80ms">
+        <h1
+          class="reveal mt-3 max-w-3xl font-display text-4xl font-medium tracking-tight sm:text-5xl"
+          style="--reveal-delay:80ms"
+        >
           Fotografia, para mim, é <em class="italic text-accent">memória</em>, verdade e olhar.
         </h1>
       </div>
@@ -74,25 +77,24 @@ const jsonLd = node({
               que tenham significado.
             </p>
             <p>
-              Meu trabalho nasceu do desejo de enxergar além do registro: observar gestos, expressões,
-              detalhes e aquilo que muitas vezes acontece em silêncio. Busco uma fotografia natural,
-              elegante e emocional, com uma estética cinematográfica, mas sem perder a verdade das
-              pessoas e dos lugares.
+              Meu trabalho nasceu do desejo de enxergar além do registro: observar gestos,
+              expressões, detalhes e aquilo que muitas vezes acontece em silêncio. Busco uma
+              fotografia natural, elegante e emocional, com uma estética cinematográfica, mas sem
+              perder a verdade das pessoas e dos lugares.
             </p>
             <p>
-              Tenho uma conexão especial com casamentos, celebrações, igrejas e histórias que carregam
-              significado. É nesses momentos que encontro aquilo que mais gosto na fotografia:
-              registrar pessoas sendo elas mesmas, sem transformar a realidade em algo artificial.
+              Tenho uma conexão especial com casamentos, celebrações, igrejas e histórias que
+              carregam significado. É nesses momentos que encontro aquilo que mais gosto na
+              fotografia: registrar pessoas sendo elas mesmas, sem transformar a realidade em algo
+              artificial.
             </p>
             <p>
-              Minha fé cristã também faz parte da forma como enxergo a fotografia. Acredito que existe
-              beleza nos detalhes e propósito nas histórias que Deus permite que vivamos. Por isso,
-              mais do que entregar fotografias bonitas, quero criar imagens que, mesmo anos depois,
-              sejam capazes de fazer você voltar àquele momento.
+              Minha fé cristã também faz parte da forma como enxergo a fotografia. Acredito que
+              existe beleza nos detalhes e propósito nas histórias que Deus permite que vivamos. Por
+              isso, mais do que entregar fotografias bonitas, quero criar imagens que, mesmo anos
+              depois, sejam capazes de fazer você voltar àquele momento.
             </p>
-            <p>
-              E é através desse olhar que quero contar a sua história.
-            </p>
+            <p>E é através desse olhar que quero contar a sua história.</p>
           </div>
         </div>
       </div>
@@ -102,10 +104,7 @@ const jsonLd = node({
       <div class="mx-auto max-w-(--content-max) px-4 sm:px-6">
         <div class="grid items-center gap-12 md:grid-cols-2 md:gap-16">
           <div class="order-2 md:order-1">
-            <SectionHeading
-              eyebrow="Filosofia"
-              title="Menos pose. Mais presença."
-            />
+            <SectionHeading eyebrow="Filosofia" title="Menos pose. Mais presença." />
             <div class="mt-6 space-y-5 text-base leading-relaxed text-muted">
               <p>
                 Minha direção de casais é mínima. Guio o essencial e espero o resto — porque o
@@ -120,7 +119,9 @@ const jsonLd = node({
                   'Autorização de uso plena, sem taxas escondidas',
                 ].map((item) => (
                   <li class="flex items-start gap-3 text-sm">
-                    <span class="mt-0.5 text-accent" aria-hidden="true">✦</span>
+                    <span class="mt-0.5 text-accent" aria-hidden="true">
+                      ✦
+                    </span>
                     {item}
                   </li>
                 ))}

@@ -58,7 +58,10 @@ const jsonLd = node({
       <h1 class="reveal mt-3 max-w-3xl font-display text-4xl font-medium tracking-tight sm:text-5xl">
         Blog de casamento
       </h1>
-      <p class="reveal mt-5 max-w-2xl text-base leading-relaxed text-muted" style="--reveal-delay:120ms">
+      <p
+        class="reveal mt-5 max-w-2xl text-base leading-relaxed text-muted"
+        style="--reveal-delay:120ms"
+      >
         Textos úteis para noivas e noivos de verdade — sobre lugares, luz, ensaios e a escolha de
         quem vai registrar o seu dia.
       </p>
@@ -94,7 +97,9 @@ const jsonLd = node({
                 <h2 class="mt-2 font-display text-2xl font-medium tracking-tight transition-colors group-hover:text-accent">
                   {post.data.title}
                 </h2>
-                <p class="mt-2 line-clamp-3 text-sm leading-relaxed text-muted">{post.data.description}</p>
+                <p class="mt-2 line-clamp-3 text-sm leading-relaxed text-muted">
+                  {post.data.description}
+                </p>
               </div>
             </a>
           </article>

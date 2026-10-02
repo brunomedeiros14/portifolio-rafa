@@ -34,7 +34,9 @@ function bindDialog(dialog: HTMLDialogElement): void {
 
   const gallery = dialog.dataset.galleryTarget ?? '';
   const items = Array.from(
-    document.querySelectorAll<HTMLElement>(`[data-lightbox-item][data-gallery="${CSS.escape(gallery)}"]`),
+    document.querySelectorAll<HTMLElement>(
+      `[data-lightbox-item][data-gallery="${CSS.escape(gallery)}"]`,
+    ),
   ).map(readItem);
   if (items.length === 0) return;
 
@@ -83,55 +85,90 @@ function bindDialog(dialog: HTMLDialogElement): void {
   };
 
   for (const item of items) {
-    item.el.addEventListener('click', () => {
-      trigger = item.el;
-      index = items.indexOf(item);
-      render();
-      if (!dialog.open) {
-        dialog.showModal();
-        document.body.classList.add('overflow-hidden');
-      }
-    }, { signal });
+    item.el.addEventListener(
+      'click',
+      () => {
+        trigger = item.el;
+        index = items.indexOf(item);
+        render();
+        if (!dialog.open) {
+          dialog.showModal();
+          document.body.classList.add('overflow-hidden');
+        }
+      },
+      { signal },
+    );
   }
 
   closeEl.addEventListener('click', close, { signal });
 
   // Clique no backdrop (o proprio <dialog>) fecha.
-  dialog.addEventListener('click', (event) => {
-    if (event.target === dialog) close();
-  }, { signal });
+  dialog.addEventListener(
+    'click',
+    (event) => {
+      if (event.target === dialog) close();
+    },
+    { signal },
+  );
 
   // `close` dispara tanto pelo botao, pelo Esc nativo e pelo swipe; centralizar
   // aqui evita listener duplicado e devolve o foco a quem abriu.
-  dialog.addEventListener('close', () => {
-    document.body.classList.remove('overflow-hidden');
-    trigger?.focus();
-    trigger = null;
-  }, { signal });
+  dialog.addEventListener(
+    'close',
+    () => {
+      document.body.classList.remove('overflow-hidden');
+      trigger?.focus();
+      trigger = null;
+    },
+    { signal },
+  );
 
   prevEl.addEventListener('click', () => go(index - 1), { signal });
   nextEl.addEventListener('click', () => go(index + 1), { signal });
 
-  dialog.addEventListener('keydown', (event) => {
-    if (event.key === 'ArrowRight') { event.preventDefault(); go(index + 1); }
-    else if (event.key === 'ArrowLeft') { event.preventDefault(); go(index - 1); }
-    else if (event.key === 'Home') { event.preventDefault(); go(0); }
-    else if (event.key === 'End') { event.preventDefault(); go(items.length - 1); }
-  }, { signal });
+  dialog.addEventListener(
+    'keydown',
+    (event) => {
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        go(index + 1);
+      } else if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        go(index - 1);
+      } else if (event.key === 'Home') {
+        event.preventDefault();
+        go(0);
+      } else if (event.key === 'End') {
+        event.preventDefault();
+        go(items.length - 1);
+      }
+    },
+    { signal },
+  );
 
   let touchX = 0;
-  dialog.addEventListener('touchstart', (event) => {
-    touchX = event.changedTouches[0]!.clientX;
-  }, { passive: true, signal });
+  dialog.addEventListener(
+    'touchstart',
+    (event) => {
+      touchX = event.changedTouches[0]!.clientX;
+    },
+    { passive: true, signal },
+  );
 
-  dialog.addEventListener('touchend', (event) => {
-    const delta = event.changedTouches[0]!.clientX - touchX;
-    if (Math.abs(delta) > 48) go(index + (delta < 0 ? 1 : -1));
-  }, { passive: true, signal });
+  dialog.addEventListener(
+    'touchend',
+    (event) => {
+      const delta = event.changedTouches[0]!.clientX - touchX;
+      if (Math.abs(delta) > 48) go(index + (delta < 0 ? 1 : -1));
+    },
+    { passive: true, signal },
+  );
 }
 
 export function initLightbox(): void {
-  for (const dialog of document.querySelectorAll<HTMLDialogElement>('dialog[data-gallery-target]')) {
+  for (const dialog of document.querySelectorAll<HTMLDialogElement>(
+    'dialog[data-gallery-target]',
+  )) {
     bindDialog(dialog);
   }
 }

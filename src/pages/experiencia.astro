@@ -4,12 +4,36 @@ import SectionHeading from '../components/SectionHeading.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 
 const steps = [
-  { num: '01', title: 'Primeiro contato', text: 'Vocês me chamam pelo WhatsApp ou e-mail e me contam o sonho: data, lugar, tamanho da festa, o que mais importa. Respondo pessoalmente — sem robô.' },
-  { num: '02', title: 'Encontro', text: 'Marcamos uma conversa (presencial ou online) e eu mostro histórias completas de casamentos reais, com tudo que correu bem e o que eu teria feito diferente.' },
-  { num: '03', title: 'Proposta', text: 'Vocês recebem uma proposta clara com cobertura, número de fotos, prazo, autorização de uso e valor. Sem letra miúda — e dou tempo para decidirem.' },
-  { num: '04', title: 'Preparação', text: 'Conversamos sobre cronograma, ensaio pré-wedding opcional e o mapa de lugares do dia. Eu chego sempre antes, com plano A, B e C para luz e chuva.' },
-  { num: '05', title: 'O grande dia', text: 'Cobertura discreta e completa. O objetivo é que vocês vivam o dia por inteiro — enquanto eu guardo cada parte dele.' },
-  { num: '06', title: 'Entrega', text: 'Curadoria e edição em até 60 dias. Álbum digital completo + seleção para impressão, em alta resolução, com liberação de uso total.' },
+  {
+    num: '01',
+    title: 'Primeiro contato',
+    text: 'Vocês me chamam pelo WhatsApp ou e-mail e me contam o sonho: data, lugar, tamanho da festa, o que mais importa. Respondo pessoalmente — sem robô.',
+  },
+  {
+    num: '02',
+    title: 'Encontro',
+    text: 'Marcamos uma conversa (presencial ou online) e eu mostro histórias completas de casamentos reais, com tudo que correu bem e o que eu teria feito diferente.',
+  },
+  {
+    num: '03',
+    title: 'Proposta',
+    text: 'Vocês recebem uma proposta clara com cobertura, número de fotos, prazo, autorização de uso e valor. Sem letra miúda — e dou tempo para decidirem.',
+  },
+  {
+    num: '04',
+    title: 'Preparação',
+    text: 'Conversamos sobre cronograma, ensaio pré-wedding opcional e o mapa de lugares do dia. Eu chego sempre antes, com plano A, B e C para luz e chuva.',
+  },
+  {
+    num: '05',
+    title: 'O grande dia',
+    text: 'Cobertura discreta e completa. O objetivo é que vocês vivam o dia por inteiro — enquanto eu guardo cada parte dele.',
+  },
+  {
+    num: '06',
+    title: 'Entrega',
+    text: 'Curadoria e edição em até 60 dias. Álbum digital completo + seleção para impressão, em alta resolução, com liberação de uso total.',
+  },
 ];
 ---
 
@@ -21,11 +45,19 @@ const steps = [
   <div class="bg-background">
     <header class="border-b border-line">
       <div class="mx-auto max-w-(--content-max) px-4 pb-14 pt-[calc(var(--header-h)+2rem)] sm:px-6 md:pb-18">
-        <p class="reveal text-xs font-medium uppercase tracking-[0.24em] text-accent">Experiência</p>
-        <h1 class="reveal mt-3 max-w-3xl font-display text-4xl font-medium tracking-tight sm:text-5xl" style="--reveal-delay:80ms">
+        <p class="reveal text-xs font-medium uppercase tracking-[0.24em] text-accent">
+          Experiência
+        </p>
+        <h1
+          class="reveal mt-3 max-w-3xl font-display text-4xl font-medium tracking-tight sm:text-5xl"
+          style="--reveal-delay:80ms"
+        >
           Um processo simples, de mãos dadas
         </h1>
-        <p class="reveal mt-5 max-w-2xl text-base leading-relaxed text-muted" style="--reveal-delay:160ms">
+        <p
+          class="reveal mt-5 max-w-2xl text-base leading-relaxed text-muted"
+          style="--reveal-delay:160ms"
+        >
           Desde o primeiro contato até a noite em que vocês abrirem o álbum em casa, vocês sabem
           exatamente o que esperar.
         </p>
@@ -48,11 +80,7 @@ const steps = [
 
     <section class="bg-surface py-20">
       <div class="mx-auto max-w-(--content-max) px-4 sm:px-6">
-        <SectionHeading
-          eyebrow="Entregáveis"
-          title="O que você recebe"
-          align="center"
-        />
+        <SectionHeading eyebrow="Entregáveis" title="O que você recebe" align="center" />
         <div class="mt-10 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           {[
             { k: '50+', v: 'fotografias por hora de cobertura, o quanto a história pedir' },

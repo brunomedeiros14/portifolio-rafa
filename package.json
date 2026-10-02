@@ -13,7 +13,9 @@
     "preview": "astro preview",
     "astro": "astro",
     "sync": "astro sync",
-    "check": "astro check"
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "astro check && tsc -p gs-form/tsconfig.json && prettier --check ."
   },
   "dependencies": {
     "@astrojs/mdx": "^8.0.2",
@@ -25,14 +27,11 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
     "@google/clasp": "^3.4.1",
+    "@types/google-apps-script": "^2.0.13",
     "bootstrap-icons": "^1.13.1",
+    "prettier": "^3.9.9",
+    "prettier-plugin-astro": "^1.1.0",
     "sharp": "^0.35.4",
     "typescript": "^6.0.3"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "sharp"
-    ]
   }
 }
