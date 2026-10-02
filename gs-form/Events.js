@@ -16,7 +16,6 @@ const Events = {
   HEADERS: [
     'slug', 'title', 'couple', 'date', 'city', 'state', 'venue',
     'description', 'excerpt', 'featured', 'tags',
-    'seoTitle', 'seoDescription',
     'cover_id', 'cover_name', 'gallery', 'status', 'created_at', 'updated_at',
   ],
 
@@ -26,8 +25,12 @@ const Events = {
    * `vendors` saiu quando o bloco de fornecedores foi removido do site.
    * `historia_html`/`story` saíram junto com o texto editorial: sobrou só a
    * frase de apoio da intro.
+   * `seoTitle`/`seoDescription` saíram porque o título e a descrição da
+   * página passam a vir de `excerpt` e `description` — manter os quatro
+   * campos obrigava a escrever a mesma frase duas vezes, e as cópias
+   * divergiam.
    */
-  DROPPED_HEADERS: ['vendors', 'historia_html', 'story'],
+  DROPPED_HEADERS: ['vendors', 'historia_html', 'story', 'seoTitle', 'seoDescription'],
 
   ensureSetup() {
     const props = PropertiesService.getScriptProperties();
@@ -196,8 +199,6 @@ const Events = {
       excerpt: (payload && payload.excerpt) || '',
       featured: !!(payload && payload.featured),
       tags: [],
-      seoTitle: (payload && payload.seoTitle) || '',
-      seoDescription: (payload && payload.seoDescription) || '',
       cover_id: '',
       cover_name: '',
       gallery: [],
@@ -359,8 +360,6 @@ const Events = {
       date: Events.normalizeDate_(at('date')),
       featured: Events.truthy_(at('featured')),
       tags: Events.parseJSON_(at('tags'), []),
-      seoTitle: String(at('seoTitle') || ''),
-      seoDescription: String(at('seoDescription') || ''),
       cover_id: String(at('cover_id') || ''),
       cover_name: String(at('cover_name') || ''),
       gallery: Events.parseJSON_(at('gallery'), []),

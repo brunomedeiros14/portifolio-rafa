@@ -74,10 +74,11 @@ const resolvedOgHeight = ogImageHeight ?? defaultOg?.height ?? OG_HEIGHT;
 const DEFAULT_OG_TITLE = `${SITE.name} — ${SITE.role}`;
 
 /**
- * Vários `seoTitle` do conteúdo já terminam em `| Fotografia`, `| Rafael
- * Dias`, etc. Acrescentar `| Rafael Dias - Fotos` depois disso gerava títulos
- * com duas marcas — "Yara e Ataíde em Ouro Preto, MG |
- * Fotografia | Rafael Dias - Fotos" —, e o Google truncava no meio da segunda.
+ * O título do conteúdo é o `excerpt` (nos casamentos) ou o `title` (no blog),
+ * não um `seoTitle` separado. Nenhum dos dois traz marca hoje, mas o
+ * aparelho de paginação reaproveita `title` em strings onde o autor pode
+ * ter escrito `| Fotografia`: anexar `| Rafael Dias - Fotos` depois disso
+ * geraria duas marcas e o Google truncaria no meio da segunda.
  *
  * Corta qualquer sufixo que já identifique a marca antes de anexar o nome do
  * site, para o resultado final ter um sufixo só.

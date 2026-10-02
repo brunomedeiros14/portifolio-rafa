@@ -124,8 +124,6 @@ Resposta (200, sempre — erros vêm no corpo):
   "excerpt": "...",
   "featured": true,
   "tags": ["casamento", "ouro-preto"],
-  "seoTitle": "...",
-  "seoDescription": "...",
   "cover": { "filename": "cover.jpg", "url": "https://drive.google.com/uc?export=download&id=..." },
   "gallery": [{ "filename": "01.jpg", "url": "..." }]
 }

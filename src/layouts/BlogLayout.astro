@@ -45,8 +45,8 @@ const jsonLd = node({
 ---
 
 <BaseLayout
-  title={data.seoTitle ?? data.title}
-  description={data.seoDescription ?? data.description}
+  title={data.title}
+  description={data.description}
   canonical={data.canonical ?? `/blog/${data.slug}`}
   ogImage={ogImage?.src}
   ogImageWidth={ogImage?.width}
