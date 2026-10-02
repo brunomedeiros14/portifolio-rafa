@@ -1,0 +1,16 @@
+# Cloudflare Pages — redirects
+#
+# As pastas em src/content/weddings/ usam o nome curto do casal
+# (ex.: amanda-e-joao) enquanto o campo `slug` publicado inclui a cidade
+# (ex.: amanda-e-joao-fazenda-x). URLs antigas publicadas com o nome curto
+# precisam continuar resolvendo depois da troca.
+#
+# Status 301: o destino é permanente e não deve ficar em cache como erro.
+
+/casamentos/amanda-e-joao  /casamentos/amanda-e-joao-fazenda-x  301
+/casamentos/isabela-e-thiago  /casamentos/isabela-e-thiago-tiradentes  301
+/casamentos/laura-e-diego  /casamentos/laura-e-diego-belo-horizonte  301
+/casamentos/marina-e-pedro  /casamentos/marina-e-pedro-ouro-preto  301
+
+# Entrada de teste removida da collection.
+/casamentos/asdf  /casamentos  301
