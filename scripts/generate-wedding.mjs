@@ -33,7 +33,7 @@ try {
 if (!pub || pub.error) fail(`Erro retornado pelo endpoint do gs-form: ${pub && pub.error}`);
 
 const REQUIRED = [
-  'slug', 'title', 'couple', 'date', 'city', 'state', 'description', 'excerpt', 'cover',
+  'slug', 'couple', 'date', 'city', 'state', 'description', 'excerpt', 'cover',
 ];
 for (const field of REQUIRED) {
   if (String(pub[field] ?? '').trim() === '') fail(`Campo obrigatório ausente: ${field}`);
@@ -108,7 +108,6 @@ async function main() {
 
   const frontmatter = [
     '---',
-    `title: ${yaml(pub.title)}`,
     `slug: ${yaml(slug)}`,
     `couple: ${yaml(pub.couple)}`,
     `date: ${pub.date}`,
