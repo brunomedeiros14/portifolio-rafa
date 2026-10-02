@@ -43,7 +43,7 @@ const jsonLd = [
     about: {
       '@type': 'Event',
       name: `Casamento de ${data.couple}`,
-      location: `${data.location}, ${data.city} - ${data.state}`,
+      location: `${data.location} - ${data.state}`,
       startDate: data.date.toISOString().slice(0, 10),
       eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
       image: absolute(ogImage.src),
@@ -62,13 +62,13 @@ const jsonLd = [
 ---
 
 <BaseLayout
-  title={data.seoTitle ?? `${data.couple} — casamento em ${data.city} (${data.state})`}
+  title={data.seoTitle ?? `${data.couple} — casamento em ${data.location} (${data.state})`}
   description={data.seoDescription ?? data.excerpt}
   canonical={`/casamentos/${data.slug}`}
   ogImage={ogImage.src}
   ogImageWidth={ogImage.width}
   ogImageHeight={ogImage.height}
-  ogImageAlt={`${data.couple} — casamento em ${data.city}`}
+  ogImageAlt={`${data.couple} — casamento em ${data.location}`}
   type="article"
   publishedTime={data.date}
   noindex={data.draft}
@@ -79,7 +79,7 @@ const jsonLd = [
     <Hero
       image={data.cover}
       alt={`${data.couple} — ${data.excerpt}`}
-      eyebrow={data.venue ? `${data.venue} · ${data.city}/${data.state}` : `${data.city}/${data.state}`}
+      eyebrow={`${data.location} · ${data.state}`}
       title={data.couple}
       ctas={[{ label: 'Ver a galeria', href: '#galeria', primary: true }, { label: 'Conheça o fotógrafo', href: '/sobre' }]}
     />
@@ -100,7 +100,7 @@ const jsonLd = [
           {data.description}
         </p>
         <p class="mt-6 text-sm text-muted">
-          {data.location}, {data.city} — {data.state}
+          {data.location} · {data.state}
         </p>
       </div>
     </section>
@@ -125,32 +125,6 @@ const jsonLd = [
         <Content />
       </div>
     </section>
-
-    {/* Fornecedores */}
-    {data.vendors.length > 0 ? (
-      <section class="mx-auto max-w-(--content-max) px-4 pb-20 sm:px-6" aria-label="Fornecedores">
-        <h2 class="reveal font-display text-2xl font-medium tracking-tight">Fornecedores</h2>
-        <ul class="reveal mt-6 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-line pt-6 sm:grid-cols-3">
-          {data.vendors.map((vendor) => (
-            <li class="text-sm">
-              <span class="block text-xs font-medium uppercase tracking-[0.18em] text-muted">{vendor.role}</span>
-              {vendor.instagram ? (
-                <a
-                  href={`https://www.instagram.com/${vendor.instagram}`}
-                  target="_blank"
-                  rel="noopener"
-                  class="link-line mt-1 inline-block text-text"
-                >
-                  {vendor.name}
-                </a>
-              ) : (
-                <span class="mt-1 block text-text">{vendor.name}</span>
-              )}
-            </li>
-          ))}
-        </ul>
-      </section>
-    ) : null}
 
     <CTA title={`E agora, será o dia de ${data.couple === 'Laura e Diego' ? 'vocês como eles' : 'vocês'}?`} />
   </article>

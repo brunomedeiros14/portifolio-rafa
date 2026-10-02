@@ -359,7 +359,7 @@
         return '<tr>' +
           '<td><strong>' + esc(e.couple) + '</strong>' + (e.featured ? ' ★' : '') +
           '<div class="hint">' + esc(e.slug) + '</div>' + missed + '</td>' +
-          '<td>' + esc(e.city) + (e.state ? '/' + esc(e.state) : '') + '</td>' +
+          '<td>' + esc(e.location) + (e.state ? ' · ' + esc(e.state) : '') + '</td>' +
           '<td>' + fmtDate(e.date) + '</td>' +
           '<td>' + badge + '</td>' +
           '<td class="row" style="justify-content:flex-end">' +
@@ -391,10 +391,8 @@
         '<div class="field"><label>Nome do casal *</label><input type="text" name="couple" required autofocus placeholder="Marina e Pedro"></div>' +
         '<div class="field"><label>Título</label><input type="text" name="title" placeholder="Marina + Pedro"></div>' +
         '<div class="field"><label>Data</label><input type="date" name="date"></div>' +
-        '<div class="field"><label>Cidade</label><input type="text" name="city" placeholder="Ouro Preto"></div>' +
+        '<div class="field"><label>Local (cidade ou estabelecimento)</label><input type="text" name="location" placeholder="Museu da Inconfidência, Ouro Preto"></div>' +
         '<div class="field"><label>Estado</label><input type="text" name="state" placeholder="MG"></div>' +
-        '<div class="field"><label>Local</label><input type="text" name="location" placeholder="Museu da Inconfidência"></div>' +
-        '<div class="field"><label>Espaço / Venue</label><input type="text" name="venue"></div>' +
         '</div>' +
         '<div class="actions"><button class="primary" type="submit">Criar evento</button>' +
         '<button type="button" class="ghost" data-action="home">Cancelar</button></div>' +
@@ -407,10 +405,8 @@
         couple: fd.get('couple').trim(),
         title: (fd.get('title') || '').trim(),
         date: (fd.get('date') || '').trim(),
-        city: (fd.get('city') || '').trim(),
         state: (fd.get('state') || '').trim(),
         location: (fd.get('location') || '').trim(),
-        venue: (fd.get('venue') || '').trim(),
       };
       var submit = form.querySelector('[type=submit]');
       submit.disabled = true; submit.textContent = 'Criando…';
@@ -434,7 +430,6 @@
       state.files = await run('apiListFiles', slug);
 
       var e = state.event;
-      var vendors = (e.vendors || []).map(function (v, i) { return vendorRow(i, v); }).join('');
 
       byId('view').innerHTML =
         '<div class="row" style="margin-bottom:14px">' +
@@ -452,10 +447,8 @@
         '<div class="field"><label>Título</label><input type="text" id="f-title" value="' + esc(e.title) + '"></div>' +
         '<div class="field"><label>Nome do casal</label><input type="text" id="f-couple" value="' + esc(e.couple) + '"></div>' +
         '<div class="field"><label>Data</label><input type="date" id="f-date" value="' + esc(e.date) + '"></div>' +
-        '<div class="field"><label>Local</label><input type="text" id="f-location" value="' + esc(e.location) + '"></div>' +
-        '<div class="field"><label>Cidade</label><input type="text" id="f-city" value="' + esc(e.city) + '"></div>' +
+        '<div class="field"><label>Local (cidade ou estabelecimento)</label><input type="text" id="f-location" value="' + esc(e.location) + '"></div>' +
         '<div class="field"><label>Estado</label><input type="text" id="f-state" value="' + esc(e.state) + '"></div>' +
-        '<div class="field"><label>Espaço / Venue</label><input type="text" id="f-venue" value="' + esc(e.venue) + '"></div>' +
         '</div>' +
         '<div class="field"><label>Description — teaser da página</label><textarea id="f-description" rows="3">' + esc(e.description) + '</textarea></div>' +
         '<div class="field"><label>Excerpt — legenda curta (máx. 220)</label><textarea id="f-excerpt" rows="2" maxlength="220">' + esc(e.excerpt) + '</textarea></div>' +
@@ -482,11 +475,6 @@
         '</div>' +
         '<div contenteditable="true" class="editor" id="story-ed"></div>' +
         '<div class="hint" style="margin-top:6px">Fotos aparecem como blocos de imagem aqui e viram imagens no markdown do site. Clique na legenda abaixo de cada foto para escrever o texto dela.</div>' +
-        '</div>' +
-
-        '<div class="card"><h2>Fornecedores</h2>' +
-        '<div id="vendors">' + (vendors || '<p class="muted">Nenhum fornecedor ainda.</p>') + '</div>' +
-        '<button type="button" class="small" id="btn-add-vendor">+ Adicionar fornecedor</button>' +
         '</div>' +
 
         '<div class="card"><h2>Fotos</h2>' +
@@ -523,16 +511,6 @@
       refreshPublishPane();
     }
 
-    function vendorRow(i, v) {
-      v = v || {};
-      return '<div class="row vendor-row" style="margin-bottom:8px; align-items:flex-end">' +
-        '<div style="flex:1"><input type="text" data-vendor="role" placeholder="Espaço / Decoração ..." value="' + esc(v.role || '') + '"></div>' +
-        '<div style="flex:1"><input type="text" data-vendor="name" placeholder="Nome" value="' + esc(v.name || '') + '"></div>' +
-        '<div style="flex:1"><input type="text" data-vendor="instagram" placeholder="@instagram" value="' + esc(v.instagram || '') + '"></div>' +
-        '<button type="button" class="small danger" data-remove-vendor>Remover</button>' +
-        '</div>';
-    }
-
     function bindEditListeners() {
       var ed = byId('story-ed');
 
@@ -551,20 +529,16 @@
       });
 
       byId('btn-insert-story').addEventListener('click', function () { openStoryPicker(); });
-      byId('btn-add-vendor').addEventListener('click', function () {
-        byId('vendors').insertAdjacentHTML('beforeend', vendorRow(Date.now(), {}));
-      });
-      byId('vendors').addEventListener('click', function (ev) {
-        if (ev.target.closest('[data-remove-vendor]')) ev.target.closest('.vendor-row').remove();
-      });
-
       byId('btn-regenerate-slug').addEventListener('click', function () {
         var couple = byId('f-couple').value.trim();
-        var city = byId('f-city').value.trim();
+        // O slug usava a cidade; agora usa o local, que pode ser cidade ou
+        // estabelecimento. Sem ele o slug fica só com o nome do casal.
+        var location = byId('f-location').value.trim();
         if (!couple) { toast('Preencha o nome do casal primeiro.', true); return; }
-        var base = couple.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+        var slugify = function (t) { return t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); };
+        var base = slugify(couple);
         var slug = base;
-        if (city) slug = base + '-' + city.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+        if (location) slug = base + '-' + slugify(location);
         byId('slug-field').value = slug;
       });
 
@@ -887,26 +861,17 @@
     /* ------------------------------------------------------------------ */
     function collectEdit() {
       var tags = byId('f-tags').value.split(',').map(function (t) { return t.trim(); }).filter(Boolean);
-      var vendors = $$('#vendors .vendor-row').map(function (row) {
-        var get = function (n) { var el = row.querySelector('[data-vendor="' + n + '"]'); return el ? el.value.trim() : ''; };
-        var name = get('name');
-        if (!name) return null;
-        return { role: get('role'), name: name, instagram: get('instagram') };
-      }).filter(Boolean);
 
       return {
         title: byId('f-title').value.trim(),
         couple: byId('f-couple').value.trim(),
         date: byId('f-date').value,
         location: byId('f-location').value.trim(),
-        city: byId('f-city').value.trim(),
         state: byId('f-state').value.trim(),
-        venue: byId('f-venue').value.trim(),
         description: byId('f-description').value.trim(),
         excerpt: byId('f-excerpt').value.trim(),
         featured: byId('f-featured').checked,
         tags: tags,
-        vendors: vendors,
         seoTitle: byId('f-seoTitle').value.trim(),
         seoDescription: byId('f-seoDescription').value.trim(),
         historia_html: storyHtml(),
@@ -942,14 +907,14 @@
       }).length;
       var probe = {
         title: e.title, couple: e.couple, date: e.date,
-        location: e.location, city: e.city, state: e.state, venue: e.venue,
+        location: e.location, state: e.state,
         description: e.description, excerpt: e.excerpt, historia_html: e.historia_html,
         cover_id: files.cover ? files.cover.id : '',
         galleryCount: galleryCount,
         storyCount: storyNames.length,
       };
       var missed = [];
-      ['title', 'couple', 'date', 'location', 'city', 'state', 'venue', 'description', 'excerpt', 'historia_html'].forEach(function (f) {
+      ['title', 'couple', 'date', 'location', 'state', 'description', 'excerpt', 'historia_html'].forEach(function (f) {
         if (String(probe[f] || '').trim() === '') missed.push(f);
       });
       if (!files.cover) missed.push('cover');
@@ -964,7 +929,7 @@
       var items = [
         ['Título e casal', !!state.event.title && !!state.event.couple],
         ['Data', !!state.event.date],
-        ['Local · cidade · estado · venue', !!state.event.location && !!state.event.city && !!state.event.state && !!state.event.venue],
+        ['Local · estado', !!state.event.location && !!state.event.state],
         ['Description', !!state.event.description],
         ['Excerpt', !!state.event.excerpt],
         ['História (texto)', !!(state.event.historia_html || '').replace(/<[^>]+>/g, '').trim()],

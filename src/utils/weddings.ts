@@ -77,13 +77,23 @@ export function getGalleryItems(
   }));
 }
 
-/** Escore de relevância entre casamentos (cidade + tags + estado). */
+/**
+ * Score de relevância entre casamentos (local + tags + estado).
+ *
+ * Compara `location` em vez da antiga `city`. Como `location` passou a aceitar
+ * tanto cidade ("Ouro Preto") quanto estabelecimento ("Fazenda X, Nova Lima"),
+ * dois casamentos na mesma cidade raramente têm o texto idêntico — daí o
+ * `includes`, que também pega o caso de um citar o nome do outro.
+ */
 export function weddingSimilarity(
-  a: { data: { city: string; state: string; tags: string[] } },
-  b: { data: { city: string; state: string; tags: string[] } },
+  a: { data: { location: string; state: string; tags: string[] } },
+  b: { data: { location: string; state: string; tags: string[] } },
 ): number {
   let score = 0;
-  if (a.data.city === b.data.city) score += 3;
+  if (a.data.location === b.data.location) score += 3;
+  else if (a.data.location.includes(b.data.location) || b.data.location.includes(a.data.location)) {
+    score += 2;
+  }
   if (a.data.state === b.data.state) score += 2;
   score += a.data.tags.filter((tag) => b.data.tags.includes(tag)).length;
   return score;

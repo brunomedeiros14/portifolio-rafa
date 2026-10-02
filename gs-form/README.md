@@ -31,7 +31,7 @@ commit + push → build/deploy → nova URL /casamentos/<slug>
 | ----------------------- | ------------------------------------------------------------ |
 | `Code.js`               | `doGet` (interface) e `doPost` (endpoint do workflow)        |
 | `Ui.js`                 | Entrega o HTML (`HtmlService`)                               |
-| `Slug.js`               | Gera slug sem conflito (caso → caso+cidade → caso-2, 3, …)   |
+| `Slug.js`               | Gera slug sem conflito (caso → caso+local → caso-2, 3, …)    |
 | `Events.js`             | CRUD na planilha "Eventos" + checklist de prontidão          |
 | `Drive.js`              | Upload individual em pasta única do evento (nome UUID + extensão)   |
 | `Publish.js`            | Endpoint `publication` + disparo do repository_dispatch              |
@@ -117,15 +117,12 @@ Resposta (200, sempre — erros vêm no corpo):
   "title": "Marina + Pedro",
   "couple": "Marina e Pedro",
   "date": "2026-05-30",
-  "location": "Museu da Inconfidência",
-  "city": "Ouro Preto",
+  "location": "Museu da Inconfidência, Ouro Preto",
   "state": "MG",
-  "venue": "Praça Tiradentes",
   "description": "...",
   "excerpt": "...",
   "featured": true,
   "tags": ["casamento", "ouro-preto"],
-  "vendors": [{ "role": "Espaço", "name": "Sobrado Imperial", "instagram": "sobradoimperial" }],
   "seoTitle": "...",
   "seoDescription": "...",
   "cover": { "filename": "cover.jpg", "url": "https://drive.google.com/uc?export=download&id=..." },
@@ -148,3 +145,12 @@ Resposta (200, sempre — erros vêm no corpo):
   a marcada como capa vira `cover` e todo o restante vira `gallery`. As fotos ficam todas na
   mesma pasta do evento com nome UUID + extensão original (evita colisão e preserva o tipo).
 - O slug da pasta no repositório é igual ao slug do evento (URL pública).
+- `location` é o único campo de local: escreve do jeito que vai ser lido, seja
+  cidade (`Ouro Preto`) ou estabelecimento (`Fazenda X, Nova Lima`). Não existe
+  mais `city`/`venue`, e o bloco de Fornecedores saiu do site.
+- **Migração da planilha:** `Events.alignHeaders_()` roda em todo acesso e reordena
+  uma aba antiga para o layout novo, lendo por nome de coluna e juntando o antigo
+  `city` dentro de `location`. Sem isso a escrita seguinte corromperia a linha, já
+  que `rowToValues_()` posiciona os valores pela ordem de `HEADERS`. É idempotente:
+  com o cabeçalho já correto não escreve nada. Depois da primeira execução as colunas
+  `city`, `venue` e `vendors` são apagadas da aba.

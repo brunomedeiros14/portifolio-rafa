@@ -3,17 +3,25 @@
  *
  * Campos:
  *  - Colunas escalares (title, couple, date, ...) viram célula de texto.
- *  - Colunas estruturais (tags, vendors, gallery, story) são JSON stringified.
+ *  - Colunas estruturais (tags, gallery, story) são JSON stringified.
  *
  * O campo obrigatório de frontmatter `slug` é também a chave da linha (coluna A).
+ *
+ * `city`, `venue` e `vendors` foram removidos: `location` passou a aceitar
+ * cidade ou estabelecimento. Como a planilha é posicional, `alignHeaders_`
+ * reescreve uma aba antiga no layout novo — sem ela, cada gravação seguinte
+ * jogaria `state` na coluna `city` e empurraria o resto da linha.
  */
 const Events = {
   HEADERS: [
-    'slug', 'title', 'couple', 'date', 'location', 'city', 'state', 'venue',
-    'description', 'excerpt', 'featured', 'tags', 'vendors',
+    'slug', 'title', 'couple', 'date', 'location', 'state',
+    'description', 'excerpt', 'featured', 'tags',
     'seoTitle', 'seoDescription', 'historia_html',
     'cover_id', 'cover_name', 'gallery', 'story', 'status', 'created_at', 'updated_at',
   ],
+
+  /** Colunas que existiam antes de `location` virar o único campo de local. */
+  DROPPED_HEADERS: ['city', 'venue', 'vendors'],
 
   ensureSetup() {
     const props = PropertiesService.getScriptProperties();
@@ -44,7 +52,68 @@ const Events = {
       sheet.appendRow(Events.HEADERS);
       sheet.setFrozenRows(1);
     }
+    Events.alignHeaders_(sheet);
     return sheet;
+  },
+
+  /**
+   * Deixa a linha 1 igual a `HEADERS`, preservando os dados por nome de coluna.
+   *
+   * Roda em toda leitura/escrita. É idempotente: quando o cabeçalho já bate,
+   * não escreve nada. Só reescreve quando falta alguma coluna nova ou sobra
+   * alguma antiga, migrando `city` para dentro de `location` quando ela ainda
+   * não aparece no texto.
+   */
+  alignHeaders_(sheet) {
+    const lastRow = sheet.getLastRow();
+    const lastCol = sheet.getLastColumn();
+    if (lastRow < 1 || lastCol < 1) return false;
+
+    const oldHeader = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(String);
+    const alreadyAligned =
+      oldHeader.length === Events.HEADERS.length &&
+      Events.HEADERS.every((name, i) => oldHeader[i] === name);
+    if (alreadyAligned) return false;
+
+    const values = sheet.getRange(1, 1, lastRow, lastCol).getValues();
+    const oldIdx = {};
+    oldHeader.forEach((name, i) => {
+      if (oldIdx[name] === undefined) oldIdx[name] = i;
+    });
+    const oldValue = (row, name) => {
+      const i = oldIdx[name];
+      return i === undefined ? '' : row[i];
+    };
+
+    // `location` passa a carregar cidade ou estabelecimento. Se a linha antiga
+    // tinha `city` separado, junta no texto em vez de perder a informação.
+    const joinLocation = (row) => {
+      const location = String(oldValue(row, 'location') || '').trim();
+      const city = String(oldValue(row, 'city') || '').trim();
+      if (!city || location.toLowerCase().includes(city.toLowerCase())) return location;
+      return location ? `${location}, ${city}` : city;
+    };
+
+    const width = Events.HEADERS.length;
+    const rebuilt = [Events.HEADERS.slice()];
+    for (let r = 1; r < values.length; r++) {
+      const row = values[r];
+      rebuilt.push(
+        Events.HEADERS.map((name) => {
+          if (name === 'location') return joinLocation(row);
+          return oldValue(row, name);
+        }),
+      );
+    }
+
+    sheet.getRange(1, 1, rebuilt.length, width).setValues(rebuilt);
+    // Colunas que sobraram à direita do layout novo ficariam com o valor
+    // antigo visível ao lado dos dados.
+    if (lastCol > width) {
+      sheet.getRange(1, width + 1, lastRow, lastCol - width).clearContent();
+      sheet.deleteColumns(width + 1, lastCol - width);
+    }
+    return true;
   },
 
   columnIndex_(headerRow) {
@@ -90,7 +159,7 @@ const Events = {
   create(payload) {
     const slug = Slug.ensureUnique(
       Slug.slugify(payload && payload.couple),
-      payload && payload.city,
+      payload && payload.location,
       Events.slugs_(),
     );
     const now = new Date().toISOString();
@@ -100,14 +169,11 @@ const Events = {
       couple: (payload && payload.couple) || '',
       date: (payload && payload.date) || '',
       location: (payload && payload.location) || '',
-      city: (payload && payload.city) || '',
       state: (payload && payload.state) || '',
-      venue: (payload && payload.venue) || '',
       description: (payload && payload.description) || '',
       excerpt: (payload && payload.excerpt) || '',
       featured: !!(payload && payload.featured),
       tags: [],
-      vendors: [],
       seoTitle: (payload && payload.seoTitle) || '',
       seoDescription: (payload && payload.seoDescription) || '',
       historia_html: '',
@@ -132,7 +198,6 @@ const Events = {
     merged.featured = !!merged.featured;
 
     if (!Array.isArray(merged.tags)) merged.tags = [];
-    if (!Array.isArray(merged.vendors)) merged.vendors = [];
     if (!Array.isArray(merged.gallery)) merged.gallery = [];
     if (!Array.isArray(merged.story)) merged.story = [];
 
@@ -229,7 +294,7 @@ const Events = {
   computeStatus(event) {
     const missed = [];
     const textFields = [
-      'title', 'couple', 'date', 'location', 'city', 'state', 'venue',
+      'title', 'couple', 'date', 'location', 'state',
       'description', 'excerpt', 'historia_html',
     ];
     for (const field of textFields) {
@@ -288,15 +353,12 @@ const Events = {
       title: String(at('title') || ''),
       couple: String(at('couple') || ''),
       location: String(at('location') || ''),
-      city: String(at('city') || ''),
       state: String(at('state') || ''),
-      venue: String(at('venue') || ''),
       description: String(at('description') || ''),
       excerpt: String(at('excerpt') || ''),
       date: Events.normalizeDate_(at('date')),
       featured: Events.truthy_(at('featured')),
       tags: Events.parseJSON_(at('tags'), []),
-      vendors: Events.parseJSON_(at('vendors'), []),
       seoTitle: String(at('seoTitle') || ''),
       seoDescription: String(at('seoDescription') || ''),
       historia_html: String(at('historia_html') || ''),
@@ -321,7 +383,6 @@ const Events = {
         case 'featured':
           return value ? 'TRUE' : 'FALSE';
         case 'tags':
-        case 'vendors':
         case 'gallery':
         case 'story':
           return Array.isArray(value) ? JSON.stringify(value) : '[]';

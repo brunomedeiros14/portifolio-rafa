@@ -13,10 +13,14 @@ const weddings = defineCollection({
       slug: z.string(),
       couple: z.string(),
       date: z.coerce.date(),
+      /**
+       * Cidade **ou** estabelecimento, do jeito que vai ser lido: "Ouro Preto"
+       * ou "Fazenda X, Nova Lima". Antes havia `city` e `venue` separados, o
+       * que obrigava o autor a escolher um dos dois e ainda repetia o mesmo
+       * dado até três vezes na página. `state` continua à parte.
+       */
       location: z.string(),
-      city: z.string(),
       state: z.string(),
-      venue: z.string(),
       description: z.string(),
       excerpt: z.string().max(220),
       cover: image(),
@@ -28,15 +32,6 @@ const weddings = defineCollection({
        */
       draft: z.boolean().default(false),
       tags: z.array(z.string()).default([]),
-      vendors: z
-        .array(
-          z.object({
-            role: z.string(),
-            name: z.string(),
-            instagram: z.string().optional(),
-          }),
-        )
-        .default([]),
       seoTitle: z.string().optional(),
       seoDescription: z.string().max(160).optional(),
     }),

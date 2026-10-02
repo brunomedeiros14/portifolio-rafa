@@ -30,7 +30,7 @@ try {
 if (!pub || pub.error) fail(`Erro retornado pelo endpoint do gs-form: ${pub && pub.error}`);
 
 const REQUIRED = [
-  'slug', 'title', 'couple', 'date', 'location', 'city', 'state', 'venue',
+  'slug', 'title', 'couple', 'date', 'location', 'state',
   'description', 'excerpt', 'cover',
 ];
 for (const field of REQUIRED) {
@@ -146,20 +146,6 @@ function yamlList(items) {
   return (items || []).map((item) => `  - ${yaml(item)}`).join('\n');
 }
 
-function yamlVendors(items) {
-  return (items || [])
-    .map((v) =>
-      [
-        '  - role: ' + yaml(v.role),
-        '    name: ' + yaml(v.name),
-        v.instagram ? '    instagram: ' + yaml(v.instagram) : null,
-      ]
-        .filter(Boolean)
-        .join('\n'),
-    )
-    .join('\n');
-}
-
 async function downloadCoverAndGallery() {
   const coverName = safeName(pub.cover.filename || 'cover.jpg');
   await download(pub.cover.url, resolve(imagesDir, coverName));
@@ -197,16 +183,13 @@ async function main() {
     `couple: ${yaml(pub.couple)}`,
     `date: ${pub.date}`,
     `location: ${yaml(pub.location)}`,
-    `city: ${yaml(pub.city)}`,
     `state: ${yaml(pub.state)}`,
-    `venue: ${yaml(pub.venue)}`,
     `description: ${yaml(pub.description)}`,
     `excerpt: ${yaml(pub.excerpt)}`,
     `cover: "./images/${coverName}"`,
     `featured: ${pub.featured ? 'true' : 'false'}`,
     `draft: ${pub.draft ? 'true' : 'false'}`,
     pub.tags && pub.tags.length ? `tags:\n${yamlList(pub.tags)}` : 'tags: []',
-    pub.vendors && pub.vendors.length ? `vendors:\n${yamlVendors(pub.vendors)}` : 'vendors: []',
   ].concat(pub.seoTitle ? `seoTitle: ${yaml(pub.seoTitle)}` : []);
   if (pub.seoDescription) frontmatter.push(`seoDescription: ${yaml(pub.seoDescription)}`);
   frontmatter.push('---');
