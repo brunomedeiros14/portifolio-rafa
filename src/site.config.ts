@@ -49,6 +49,28 @@ export function absolute(href: string): string {
 }
 
 /**
+ * Normaliza um caminho interno para a URL que o servidor realmente serve.
+ *
+ * O build usa `build.format: 'directory'` (padrão), então `/blog/ensaio` vira
+ * `dist/blog/ensaio/index.html` e é servido em `/blog/ensaio/`. O sitemap
+ * emite essa forma com barra final, mas `absolute('/blog/ensaio')` produzia a
+ * versão sem — e o canonical apontava para uma URL que redireciona, o que faz o
+ * Google enxergar duas URLs para o mesmo conteúdo.
+ *
+ * Arquivos com extensão (`/rss.xml`, `/og-default.jpg`) ficam como estão.
+ */
+export function canonicalPath(href: string): string {
+  if (href.startsWith("http")) return href;
+
+  const [path, suffix] = href.split(/([?#].*)$/);
+  if (!path.endsWith("/") && !/[^/]+\.[a-z0-9]+$/i.test(path)) {
+    return `${path}/${suffix ?? ""}`;
+  }
+
+  return href;
+}
+
+/**
  * Define qual item do menu representa a página atual, para o `aria-current`.
  *
  * Igualdade exata deixava o menu sem nenhum item marcado em toda página

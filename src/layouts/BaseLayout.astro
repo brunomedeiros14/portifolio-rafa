@@ -10,7 +10,8 @@ import { absolute } from '../site.config';
 interface Props {
   title: string;
   description: string;
-  canonical?: string;
+  /** `false` omite a tag canonical — usado na 404, que não tem URL própria. */
+  canonical?: string | false;
   ogImage?: string;
   ogImageWidth?: number;
   ogImageHeight?: number;

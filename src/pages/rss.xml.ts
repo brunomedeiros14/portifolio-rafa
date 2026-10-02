@@ -1,6 +1,6 @@
 import { getCollection } from 'astro:content';
 import type { APIRoute } from 'astro';
-import { SITE, absolute } from '../site.config';
+import { SITE, absolute, canonicalPath } from '../site.config';
 
 /**
  * Feed RSS do blog.
@@ -32,7 +32,7 @@ export const GET: APIRoute = async () => {
 
   const items = posts
     .map((post) => {
-      const url = absolute(`/blog/${post.data.slug}`);
+      const url = absolute(canonicalPath(`/blog/${post.data.slug}`));
       const category = post.data.tags[0];
 
       return `    <item>
@@ -50,7 +50,7 @@ export const GET: APIRoute = async () => {
   <channel>
     <title>${escapeXml(channelTitle)}</title>
     <description>${escapeXml(channelDescription)}</description>
-    <link>${absolute('/blog')}</link>
+    <link>${absolute(canonicalPath('/blog'))}</link>
     <atom:link href="${absolute('/rss.xml')}" rel="self" type="application/rss+xml" />
     <language>${SITE.language}</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>

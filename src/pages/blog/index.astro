@@ -3,7 +3,7 @@ import { Picture } from 'astro:assets';
 import { getCollection } from 'astro:content';
 import CTA from '../../components/CTA.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { SITE, absolute, formatDate } from '../../site.config';
+import { SITE, absolute, formatDate, canonicalPath } from '../../site.config';
 import { ID, node } from '../../utils/schema';
 
 const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
@@ -13,7 +13,7 @@ const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
 const jsonLd = node({
   '@type': 'CollectionPage',
   name: 'Blog de casamento',
-  url: absolute('/blog'),
+  url: absolute(canonicalPath('/blog')),
   description:
     'Artigos sobre casamento em Minas Gerais: locais, luz, ensaios pré-wedding e como escolher o fotógrafo.',
   isPartOf: { '@id': ID.website },
@@ -26,13 +26,13 @@ const jsonLd = node({
     itemListElement: posts.map((post, index) => ({
       '@type': 'ListItem',
       position: index + 1,
-      url: absolute(`/blog/${post.data.slug}`),
+      url: absolute(canonicalPath(`/blog/${post.data.slug}`)),
       item: {
         '@type': 'BlogPosting',
-        '@id': absolute(`/blog/${post.data.slug}#article`),
+        '@id': absolute(`${canonicalPath(`/blog/${post.data.slug}`)}#article`),
         headline: post.data.title,
         description: post.data.description,
-        url: absolute(`/blog/${post.data.slug}`),
+        url: absolute(canonicalPath(`/blog/${post.data.slug}`)),
         datePublished: post.data.date.toISOString().slice(0, 10),
         ...(post.data.updated
           ? { dateModified: post.data.updated.toISOString().slice(0, 10) }

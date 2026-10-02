@@ -1,13 +1,13 @@
 ---
 import SocialLinks from '../components/SocialLinks.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { SITE, absolute } from '../site.config';
+import { SITE, absolute, canonicalPath } from '../site.config';
 
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'ContactPage',
   name: 'Contato',
-  url: absolute('/contato'),
+  url: absolute(canonicalPath('/contato')),
   provider: { '@type': 'Person', name: SITE.name, email: SITE.email, telephone: SITE.whatsapp },
 };
 ---

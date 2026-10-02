@@ -4,7 +4,7 @@ import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import CTA from '../../components/CTA.astro';
 import WeddingGrid from '../../components/WeddingGrid.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { absolute } from '../../site.config';
+import { absolute, canonicalPath } from '../../site.config';
 import { ID, node } from '../../utils/schema';
 import { ogImageFrom } from '../../utils/og';
 
@@ -26,7 +26,7 @@ const jsonLd = node({
   name: 'Casamentos',
   description:
     'Casamentos fotografados por Rafael Dias em Belo Horizonte, Nova Lima, Ouro Preto, Tiradentes e por todo Minas Gerais.',
-  url: absolute('/casamentos'),
+  url: absolute(canonicalPath('/casamentos')),
   isPartOf: { '@id': ID.website },
   provider: { '@id': ID.person },
   mainEntity: {

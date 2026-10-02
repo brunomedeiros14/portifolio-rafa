@@ -4,7 +4,7 @@ import Breadcrumbs from '../components/Breadcrumbs.astro';
 import CTA from '../components/CTA.astro';
 import { Picture } from 'astro:assets';
 import { render } from 'astro:content';
-import { SITE, absolute, formatDate } from '../site.config';
+import { SITE, absolute, formatDate , canonicalPath } from '../site.config';
 import { ogImageFrom } from '../utils/og';
 import { ID, node, publisherRef } from '../utils/schema';
 import type { CollectionEntry } from 'astro:content';
@@ -21,10 +21,10 @@ const ogImage = data.cover ? await ogImageFrom(data.cover) : undefined;
 
 const jsonLd = node({
   '@type': 'BlogPosting',
-  '@id': `${absolute(`/blog/${data.slug}`)}#article`,
+  '@id': `${absolute(canonicalPath(`/blog/${data.slug}`))}#article`,
   headline: data.title,
   description: data.description,
-  url: absolute(`/blog/${data.slug}`),
+  url: absolute(canonicalPath(`/blog/${data.slug}`)),
   inLanguage: SITE.language,
   keywords: data.tags.length ? data.tags.join(', ') : undefined,
   ...(ogImage

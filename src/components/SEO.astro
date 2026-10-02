@@ -1,5 +1,5 @@
 ---
-import { SITE, absolute } from '../site.config';
+import { SITE, absolute, canonicalPath } from '../site.config';
 import { OG_HEIGHT, OG_WIDTH } from '../utils/og';
 
 interface Props {
@@ -7,8 +7,12 @@ interface Props {
   title: string;
   /** Meta description (120–160 chars) */
   description: string;
-  /** Caminho (ou URL absoluta). Default: página atual */
-  canonical?: string;
+  /**
+   * Caminho (ou URL absoluta). Default: página atual.
+   * `false` omite a tag — a página 404 é servida pelo Cloudflare em qualquer
+   * URL ausente, então não existe um endereço canônico para ela.
+   */
+  canonical?: string | false;
   /** Imagem para Open Graph (caminho ou URL) */
   ogImage?: string;
   /** Dimensões da og:image. Redes só reservam o card se forem explícitas. */
@@ -47,7 +51,7 @@ const {
   noindex = false,
 } = Astro.props;
 
-const resolvedCanonical = absolute(canonical);
+const resolvedCanonical = canonical === false ? null : absolute(canonicalPath(canonical));
 const resolvedOgImage = absolute(ogImage);
 
 const DEFAULT_OG_TITLE = `${SITE.name} — ${SITE.role}`;
@@ -84,7 +88,7 @@ const isArticle = type === 'article';
 
 <title>{FULL_TITLE}</title>
 <meta name="description" content={description} />
-<link rel="canonical" href={resolvedCanonical} />
+{resolvedCanonical && <link rel="canonical" href={resolvedCanonical} />}
 
 <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large'} />
 <meta name="generator" content={Astro.generator} />
@@ -98,7 +102,7 @@ const isArticle = type === 'article';
 <meta property="og:site_name" content={SITE.name} />
 <meta property="og:title" content={OG_TITLE} />
 <meta property="og:description" content={description} />
-<meta property="og:url" content={resolvedCanonical} />
+{resolvedCanonical && <meta property="og:url" content={resolvedCanonical} />}
 <meta property="og:image" content={resolvedOgImage} />
 <meta property="og:image:alt" content={imageAlt} />
 <meta property="og:locale" content={SITE.locale} />
