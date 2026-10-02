@@ -41,9 +41,6 @@ for (const field of REQUIRED) {
 
 if (!/^\d{4}-\d{2}-\d{2}$/.test(pub.date)) fail(`Data inválida ("${pub.date}"), esperado YYYY-MM-DD.`);
 if (pub.excerpt.length > 220) fail(`excerpt deve ter no máximo 220 caracteres (tem ${pub.excerpt.length}).`);
-if (pub.seoDescription && pub.seoDescription.length > 160) {
-  fail(`seoDescription deve ter no máximo 160 caracteres (tem ${pub.seoDescription.length}).`);
-}
 
 const slug = pub.slug.trim();
 const base = resolve('src/content/weddings', slug);
@@ -124,8 +121,7 @@ async function main() {
     `featured: ${pub.featured ? 'true' : 'false'}`,
     `draft: ${pub.draft ? 'true' : 'false'}`,
     pub.tags && pub.tags.length ? `tags:\n${yamlList(pub.tags)}` : 'tags: []',
-  ].filter((line) => line !== null).concat(pub.seoTitle ? `seoTitle: ${yaml(pub.seoTitle)}` : []);
-  if (pub.seoDescription) frontmatter.push(`seoDescription: ${yaml(pub.seoDescription)}`);
+  ].filter((line) => line !== null);
   frontmatter.push('---');
 
   const mdx = frontmatter.join('\n') + '\n';

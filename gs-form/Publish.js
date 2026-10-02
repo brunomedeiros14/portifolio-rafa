@@ -55,8 +55,6 @@ const Publish = {
       excerpt: event.excerpt,
       featured: !!event.featured,
       tags: Array.isArray(event.tags) ? event.tags : [],
-      seoTitle: event.seoTitle || undefined,
-      seoDescription: event.seoDescription || undefined,
       cover: event.cover_id
         ? { filename: event.cover_name || 'cover.jpg', url: Drive.downloadUrl(event.cover_id) }
         : null,
