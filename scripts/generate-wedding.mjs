@@ -3,9 +3,11 @@
 //
 // O JSON é retornado pelo endpoint do gs-form ({ action: "publication" }). Este script:
 //  1. valida os campos obrigatórios (mesmo schema de src/content.config.ts);
-//  2. baixa as fotos do Google Drive (links públicos) para images/ e story/;
-//  3. converte o HTML da história (WYSIWYG) para markdown com as imagens do story;
-//  4. escreve src/content/weddings/<slug>/index.mdx.
+//  2. baixa as fotos do Google Drive (links públicos) para images/;
+//  3. escreve src/content/weddings/<slug>/index.mdx.
+//
+// O MDX sai só com frontmatter: a página do casamento é capa, data, local e
+// galeria. Não há texto editorial nem pasta story/.
 //
 // A geração é atômica: tudo é escrevido em um diretório temporário (.staging-<slug>)
 // e só movido para o destino final se TODOS os passos tiverem sucesso.
@@ -30,8 +32,7 @@ try {
 if (!pub || pub.error) fail(`Erro retornado pelo endpoint do gs-form: ${pub && pub.error}`);
 
 const REQUIRED = [
-  'slug', 'title', 'couple', 'date', 'location', 'state',
-  'description', 'excerpt', 'cover',
+  'slug', 'title', 'couple', 'date', 'location', 'state', 'excerpt', 'cover',
 ];
 for (const field of REQUIRED) {
   if (String(pub[field] ?? '').trim() === '') fail(`Campo obrigatório ausente: ${field}`);
@@ -47,7 +48,6 @@ const slug = pub.slug.trim();
 const base = resolve('src/content/weddings', slug);
 const staging = resolve('src/content/weddings', `.staging-${slug}`);
 const imagesDir = resolve(staging, 'images');
-const storyDir = resolve(staging, 'story');
 
 /** Sanitiza nome de arquivo (mantém acentos, remove separadores de path e truques tipo ".."). */
 function safeName(name) {
@@ -69,72 +69,6 @@ async function download(url, dest) {
   const buf = Buffer.from(await res.arrayBuffer());
   await writeFile(dest, buf);
   downloadCache.set(url, dest);
-}
-
-async function imageMarkdown(ref) {
-  const file = (pub.story.images || []).find((entry) => safeName(entry.filename) === ref.name);
-  if (!file) {
-    throw new Error(`Foto do story "${ref.name}" não está na lista de uploads.`);
-  }
-  await download(file.url, resolve(storyDir, ref.name));
-  return `![${ref.alt.replace(/\n/g, ' ')}](./story/${ref.name})`;
-}
-
-/** Converte o HTML do WYSIWYG para markdown, baixando as fotos do story referenciadas. */
-async function storyHtmlToMarkdown(html) {
-  const references = [];
-
-  const withTokens = html
-    .replace(/<figcaption\b[^>]*>[\s\S]*?<\/figcaption>/gi, '')
-    .replace(/<img\b([^>]*?)\/?>/gi, (tag, attrs) => {
-      const nameMatch = attrs.match(/data-story\s*=\s*"([^"]*)"/i);
-      if (!nameMatch) return tag;
-      const name = safeName(nameMatch[1]);
-      const altMatch = attrs.match(/alt\s*=\s*"([^"]*)"/i);
-      const alt = altMatch ? altMatch[1].trim() : '';
-      references.push({ name, alt });
-      return `\u0000IMG${references.length - 1}\u0000`;
-    })
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/(p|div|section)>/gi, '\n\n')
-    .replace(/<\/?(p|div|section)\b[^>]*>/gi, '')
-    .replace(/<h([1-6])\b[^>]*>/gi, (_, lvl) => `${'#'.repeat(lvl)} `)
-    .replace(/<\/h[1-6]>/gi, '\n\n')
-    .replace(/<blockquote\b[^>]*>/gi, '\n> ')
-    .replace(/<\/blockquote>/gi, '\n\n')
-    .replace(/<li\b[^>]*>/gi, '- ')
-    .replace(/<\/li>/gi, '\n')
-    .replace(/<\/?ul\b[^>]*>|<\/?ol\b[^>]*>/gi, '\n')
-    .replace(/<\/?figure\b[^>]*>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'");
-
-  const lines = withTokens
-    .split('\n')
-    .map((line) => line.replace(/[ \t]+/g, ' ').trim())
-    .filter(Boolean);
-
-  const md = [];
-  for (const line of lines) {
-    const match = line.match(/^\u0000IMG(\d+)\u0000$/);
-    if (match) {
-      const img = await imageMarkdown(references[Number(match[1])]);
-      md.push('', img, '');
-      continue;
-    }
-    md.push(
-      line.replace(/\u0000IMG(\d+)\u0000/g, (_, i) =>
-        `![${references[Number(i)]?.alt ?? ''}](./story/${references[Number(i)]?.name ?? ''})`,
-      ),
-    );
-  }
-
-  return md.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
 }
 
 function yaml(value) {
@@ -171,9 +105,7 @@ async function main() {
   console.log(`Gerando evento "${slug}"...`);
 
   await mkdir(imagesDir, { recursive: true });
-  await mkdir(storyDir, { recursive: true });
 
-  const storyBody = await storyHtmlToMarkdown(pub.story?.html ?? '');
   const { coverName, galleryNames } = await downloadCoverAndGallery();
 
   const frontmatter = [
@@ -184,7 +116,6 @@ async function main() {
     `date: ${pub.date}`,
     `location: ${yaml(pub.location)}`,
     `state: ${yaml(pub.state)}`,
-    `description: ${yaml(pub.description)}`,
     `excerpt: ${yaml(pub.excerpt)}`,
     `cover: "./images/${coverName}"`,
     `featured: ${pub.featured ? 'true' : 'false'}`,
@@ -194,7 +125,7 @@ async function main() {
   if (pub.seoDescription) frontmatter.push(`seoDescription: ${yaml(pub.seoDescription)}`);
   frontmatter.push('---');
 
-  const mdx = frontmatter.join('\n') + '\n\n' + (storyBody ? storyBody + '\n' : '');
+  const mdx = frontmatter.join('\n') + '\n';
   await writeFile(resolve(staging, 'index.mdx'), mdx);
 
   // Comita a mudança de forma atômica: remover destino anterior e mover o staging.

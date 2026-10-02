@@ -16,7 +16,7 @@ POST api.github.com/repos/{owner}/{repo}/dispatches   (event_type: publish-weddi
 workflow .github/workflows/publish-wedding.yml
       │ POST https://script.google.com/macros/s/<url_id>/exec  {action:"publication", token, publicationId}
       ▼
-doPost → {"slug","title","couple","date",..., "cover":{...}, "gallery":[...], "story":{html,images}}
+doPost → {"slug","title","couple","date",..., "cover":{...}, "gallery":[...]}
       │
       ▼
 node scripts/generate-wedding.mjs publication.json
@@ -36,7 +36,7 @@ commit + push → build/deploy → nova URL /casamentos/<slug>
 | `Drive.js`              | Upload individual em pasta única do evento (nome UUID + extensão)   |
 | `Publish.js`            | Endpoint `publication` + disparo do repository_dispatch              |
 | `Api.js`                | Funções globais chamadas pela UI (`google.script.run`)       |
-| `index.html`            | Interface (lista, formulário, WYSIWYG, upload, publicar)     |
+| `index.html`            | Interface (lista, formulário, upload, publicar)            |
 | `appsscript.json`       | Manifesto (escopos OAuth)                                    |
 | `.clasp.json`           | Config do clasp (preencha o `scriptId`)                      |
 
@@ -90,12 +90,11 @@ commit + push → build/deploy → nova URL /casamentos/<slug>
 
 1. Abra o Web App (URL `/exec`).
 2. **+ Novo evento** → informe o casal (slug gerado sem conflito).
-3. **Editar** → preencha os dados obrigatórios. Use o **editor WYSIWYG** para a história
-   (o texto vira o corpo do MDX).
+3. **Editar** → preencha os campos: dados do casamento, `Excerpt` (legenda curta dos
+   cards) e, se quiser, os campos de SEO. Não há mais texto editorial.
 4. **Fotos** → arraste ou selecione quantas quiser: cada foto sobe individualmente em segundo
-   plano para a **mesma pasta** do evento (nome **UUID.ext** no Drive). Tudo entra como **galeria**
-   por padrão; marque **Capa** em uma e use **Story** nas fotos que você inserir no texto
-   (botão do tile ou no toolbar do editor). Enquanto há uploads em andamento, salvar/publicar
+   plano para a **mesma pasta** do evento (nome **UUID.ext** no Drive). Todas entram na
+   **galeria**; marque **Capa** em uma. Enquanto há uploads em andamento, salvar/publicar
    ficam temporariamente bloqueados.
 5. Quando o checklist mostrar "Tudo pronto", clique em **Executar automação**.
 6. O workflow gera `src/content/weddings/<slug>/` com `index.mdx` + imagens, valida
@@ -119,18 +118,13 @@ Resposta (200, sempre — erros vêm no corpo):
   "date": "2026-05-30",
   "location": "Museu da Inconfidência, Ouro Preto",
   "state": "MG",
-  "description": "...",
   "excerpt": "...",
   "featured": true,
   "tags": ["casamento", "ouro-preto"],
   "seoTitle": "...",
   "seoDescription": "...",
   "cover": { "filename": "cover.jpg", "url": "https://drive.google.com/uc?export=download&id=..." },
-  "gallery": [{ "filename": "01.jpg", "url": "..." }],
-  "story": {
-    "html": "<p>...</p><figure><img data-story=\"abertura.jpg\">...</figure>",
-    "images": [{ "filename": "abertura.jpg", "url": "..." }]
-  }
+  "gallery": [{ "filename": "01.jpg", "url": "..." }]
 }
 ```
 
@@ -141,9 +135,9 @@ Resposta (200, sempre — erros vêm no corpo):
 - Upload via UI funciona bem para JPGs otimizados. Cada request do Apps Script tem limite de
   payload (~50 MB); para fotos muito pesadas, otimize/crop antes de enviar.
 - As fotos ficam **públicas com link** no Drive (necessário para o GitHub baixar).
-- A **classificação** é dinâmica na publicação: as fotos citadas no WYSIWYG viram `story`,
-  a marcada como capa vira `cover` e todo o restante vira `gallery`. As fotos ficam todas na
-  mesma pasta do evento com nome UUID + extensão original (evita colisão e preserva o tipo).
+- Na publicação, a foto marcada como capa vira `cover` e **todas** as outras vão para
+  `gallery`. As fotos ficam na mesma pasta do evento com nome UUID + extensão original
+  (evita colisão e preserva o tipo).
 - O slug da pasta no repositório é igual ao slug do evento (URL pública).
 - `location` é o único campo de local: escreve do jeito que vai ser lido, seja
   cidade (`Ouro Preto`) ou estabelecimento (`Fazenda X, Nova Lima`). Não existe
@@ -152,5 +146,5 @@ Resposta (200, sempre — erros vêm no corpo):
   uma aba antiga para o layout novo, lendo por nome de coluna e juntando o antigo
   `city` dentro de `location`. Sem isso a escrita seguinte corromperia a linha, já
   que `rowToValues_()` posiciona os valores pela ordem de `HEADERS`. É idempotente:
-  com o cabeçalho já correto não escreve nada. Depois da primeira execução as colunas
-  `city`, `venue` e `vendors` são apagadas da aba.
+  com o cabeçalho já correto não escreve nada. Depois da primeira execução, as colunas
+  listadas em `Events.DROPPED_HEADERS` são apagadas da aba.

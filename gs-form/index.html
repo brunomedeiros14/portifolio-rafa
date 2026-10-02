@@ -50,22 +50,6 @@
     button.danger { color: var(--danger); border-color: var(--line); }
     button:disabled { opacity: .45; cursor: not-allowed; }
     button.small { padding: 4px 9px; font-size: 13px; border-radius: 6px; }
-    .toolbar { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; border: 1px solid var(--line); border-bottom: 0; border-radius: var(--radius) var(--radius) 0 0; background: #f4eee5; }
-    .toolbar button { padding: 5px 9px; font-size: 13px; border-radius: 6px; }
-    .toolbar button.b { font-weight: 700; } .toolbar button.i { font-style: italic; } .toolbar button.u { text-decoration: underline; }
-    .toolbar button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
-    [contenteditable].editor {
-      border: 1px solid var(--line); border-radius: 0 0 var(--radius) var(--radius);
-      background: var(--surface); min-height: 220px; padding: 14px 16px;
-      outline: none;
-    }
-    [contenteditable].editor:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(156,111,77,.15); }
-    [contenteditable].editor p { margin: 0 0 12px; }
-    [contenteditable].editor figure { margin: 14px 0; }
-    [contenteditable].editor figure img { max-width: 100%; border-radius: 8px; }
-    [contenteditable].editor figure figcaption { font-size: 13px; color: var(--muted); margin-top: 6px; min-height: 1.1em; }
-    [contenteditable].editor figure figcaption:empty::before { content: attr(data-ph); font-style: italic; opacity: .75; }
-    [contenteditable].editor blockquote { margin: 12px 0; padding-left: 14px; border-left: 3px solid var(--accent); color: var(--muted); font-style: italic; }
     .card {
       background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
       padding: 18px 20px; box-shadow: var(--shadow); margin-bottom: 18px;
@@ -141,14 +125,12 @@
       background: rgba(22, 18, 14, .6); color: #fff; cursor: pointer; z-index: 2;
     }
     .photo-tile .tile-mark.mark-cover { left: 3px; }
-    .photo-tile .tile-mark.mark-story { right: 3px; }
     .photo-tile .tile-mark.on { background: var(--accent); border-color: var(--accent); color: #fff; }
     .badge-chip {
       position: absolute; top: 2px; left: 2px; z-index: 2; font-size: 9px; font-weight: 700;
       background: rgba(22, 18, 14, .7); color: #fff; padding: 3px 6px; border-radius: 999px;
       text-transform: uppercase; letter-spacing: .04em;
     }
-    .badge-chip.badge-story { top: 21px; background: rgba(156, 111, 77, .95); }
     .photo-tile.uploading img { filter: saturate(.6) brightness(.9); }
     .photo-tile .tile-overlay {
       position: absolute; inset: 0; z-index: 1;
@@ -295,54 +277,6 @@
       if (form.id === 'f-edit') { ev.preventDefault(); onSave(); return; }
     });
 
-    document.addEventListener('selectionchange', function () {
-      updateToolbarStates();
-      captureStoryRange();
-    });
-
-    var savedStoryRange = null;
-    function captureStoryRange() {
-      var ed = byId('story-ed');
-      if (!ed) { savedStoryRange = null; return; }
-      var sel = document.getSelection();
-      if (!sel || !sel.rangeCount) return;
-      var r = sel.getRangeAt(0);
-      if (r && ed.contains(r.startContainer)) savedStoryRange = r;
-    }
-
-    function placeCaretForInsert(ed) {
-      var sel = document.getSelection();
-      if (!sel) return;
-      var inEditor = savedStoryRange && ed.contains(savedStoryRange.startContainer);
-      var r = inEditor ? savedStoryRange : document.createRange();
-      if (!inEditor) { r.selectNodeContents(ed); r.collapse(false); }
-      sel.removeAllRanges();
-      sel.addRange(r);
-    }
-
-    function blockState() {
-      var v = '';
-      try { v = String(document.queryCommandValue('formatBlock') || '').toLowerCase(); } catch (e) { v = ''; }
-      v = v.replace(/[<>]/g, '');
-      if (!v || v === 'div') return 'p';
-      return v;
-    }
-
-    function updateToolbarStates() {
-      var block = blockState();
-      var ul = false, ol = false;
-      try { ul = document.queryCommandState('insertUnorderedList'); } catch (e) {}
-      try { ol = document.queryCommandState('insertOrderedList'); } catch (e) {}
-      $$('.toolbar [data-cmd]').forEach(function (b) {
-        var on = false;
-        var cmd = b.getAttribute('data-cmd');
-        if (cmd === 'formatBlock') on = block === (b.getAttribute('data-val') || '').toLowerCase();
-        else if (cmd === 'insertUnorderedList') on = ul;
-        else if (cmd === 'insertOrderedList') on = ol;
-        b.classList.toggle('on', on);
-      });
-    }
-
     /* ------------------------------------------------------------------ */
     /* Lista                                                               */
     /* ------------------------------------------------------------------ */
@@ -450,7 +384,6 @@
         '<div class="field"><label>Local (cidade ou estabelecimento)</label><input type="text" id="f-location" value="' + esc(e.location) + '"></div>' +
         '<div class="field"><label>Estado</label><input type="text" id="f-state" value="' + esc(e.state) + '"></div>' +
         '</div>' +
-        '<div class="field"><label>Description — teaser da página</label><textarea id="f-description" rows="3">' + esc(e.description) + '</textarea></div>' +
         '<div class="field"><label>Excerpt — legenda curta (máx. 220)</label><textarea id="f-excerpt" rows="2" maxlength="220">' + esc(e.excerpt) + '</textarea></div>' +
         '<label class="check"><input type="checkbox" id="f-featured"' + (e.featured ? ' checked' : '') + '> Destacar na home</label>' +
         '<div class="field"><label>Tags (separadas por vírgula)</label><input type="text" id="f-tags" value="' + esc((e.tags || []).join(', ')) + '" placeholder="casamento, ouro-preto, casal"></div>' +
@@ -458,27 +391,8 @@
         '<div class="field"><label>SEO description (máx. 160)</label><textarea id="f-seoDescription" rows="2" maxlength="160">' + esc(e.seoDescription || '') + '</textarea></div>' +
         '</div>' +
 
-        '<div class="card"><h2>A história</h2>' +
-        '<p class="muted">Texto principal da página. Use o editor, intercale as fotos do story com "Inserir foto".</p>' +
-        '<div class="toolbar">' +
-        '<button type="button" class="b" data-cmd="bold">B</button>' +
-        '<button type="button" class="i" data-cmd="italic">I</button>' +
-        '<button type="button" class="u" data-cmd="underline">U</button>' +
-        '<button type="button" data-cmd="formatBlock" data-val="p">P</button>' +
-        '<button type="button" data-cmd="formatBlock" data-val="h2">H2</button>' +
-        '<button type="button" data-cmd="formatBlock" data-val="h3">H3</button>' +
-        '<button type="button" data-cmd="formatBlock" data-val="blockquote">Citação</button>' +
-        '<button type="button" data-cmd="insertUnorderedList">• Lista</button>' +
-        '<button type="button" data-cmd="insertOrderedList">1. Lista</button>' +
-        '<span class="grow"></span>' +
-        '<button type="button" class="primary" id="btn-insert-story">Inserir foto do story</button>' +
-        '</div>' +
-        '<div contenteditable="true" class="editor" id="story-ed"></div>' +
-        '<div class="hint" style="margin-top:6px">Fotos aparecem como blocos de imagem aqui e viram imagens no markdown do site. Clique na legenda abaixo de cada foto para escrever o texto dela.</div>' +
-        '</div>' +
-
         '<div class="card"><h2>Fotos</h2>' +
-        '<p class="muted">Arraste ou selecione as fotos: cada uma é enviada em segundo plano (uma por vez) para a pasta do evento. Tudo entra como <strong>galeria</strong>; as que você inserir no <strong>Story</strong> entram no texto e uma pode virar a <strong>Capa</strong>.</p>' +
+        '<p class="muted">Arraste ou selecione as fotos: cada uma é enviada em segundo plano (uma por vez) para a pasta do evento. Todas entram na <strong>galeria</strong> e uma pode virar a <strong>Capa</strong>.</p>' +
         '<div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Enviar fotos">' +
         '<span class="dz-main">Arraste as fotos para cá</span>' +
         '<small>ou clique para selecionar — envio em segundo plano</small>' +
@@ -504,31 +418,12 @@
         '</div>' +
         '</form>';
 
-      byId('story-ed').innerHTML = e.historia_html || '';
-      fixupStoryEditor();
       bindEditListeners();
       renderPhotos();
       refreshPublishPane();
     }
 
     function bindEditListeners() {
-      var ed = byId('story-ed');
-
-      $$('.toolbar [data-cmd]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          ed.focus();
-          var cmd = btn.getAttribute('data-cmd');
-          var val = btn.getAttribute('data-val') || null;
-          if (cmd === 'formatBlock') {
-            document.execCommand('formatBlock', false, blockState() === (val || '').toLowerCase() ? 'p' : val);
-          } else {
-            document.execCommand(cmd, false, val);
-          }
-          updateToolbarStates();
-        });
-      });
-
-      byId('btn-insert-story').addEventListener('click', function () { openStoryPicker(); });
       byId('btn-regenerate-slug').addEventListener('click', function () {
         var couple = byId('f-couple').value.trim();
         // O slug usava a cidade; agora usa o local, que pode ser cidade ou
@@ -578,14 +473,11 @@
           onSetCover(state.files && state.files.cover && state.files.cover.name === name ? '' : name);
           return;
         }
-        var ins = ev.target.closest('[data-insertstory]');
-        if (ins) { insertStoryImage(ins.getAttribute('data-name')); return; }
         var retry = ev.target.closest('[data-retry]');
         if (retry) { retryUpload(retry.getAttribute('data-id')); return; }
         var cancel = ev.target.closest('[data-cancel-upload]');
         if (cancel) { cancelUpload(cancel.getAttribute('data-id')); return; }
       });
-      ed.addEventListener('input', renderPhotos);
     }
 
     /* ------------------------------------------------------------------ */
@@ -678,29 +570,17 @@
       updateUploadBar();
     }
 
-    function storyPhotoNames() {
-      var names = [];
-      $$('#story-ed img[data-story]').forEach(function (im) {
-        var n = im.getAttribute('data-story');
-        if (n && names.indexOf(n) === -1) names.push(n);
-      });
-      return names;
-    }
-
     function tileImgUrl(p) {
       return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(p.id) + '&sz=w200';
     }
 
     function uploadedTile(p) {
       var isCover = state.files && state.files.cover && state.files.cover.name === p.name;
-      var inStory = storyPhotoNames().indexOf(p.name) !== -1;
       return '<div class="photo-tile' + (isCover ? ' is-cover' : '') + '" title="' + esc(p.label || p.name) + '">' +
         '<img src="' + tileImgUrl(p) + '" alt="">' +
         (isCover ? '<span class="badge-chip">capa</span>' : '') +
-        (inStory ? '<span class="badge-chip badge-story">story</span>' : '') +
         '<button type="button" class="tile-x" data-remove-photo data-name="' + esc(p.name) + '" title="Remover">\u00d7</button>' +
         '<button type="button" class="tile-mark mark-cover' + (isCover ? ' on' : '') + '" data-setcover data-name="' + esc(p.name) + '" title="Usar como capa">Capa</button>' +
-        '<button type="button" class="tile-mark mark-story' + (inStory ? ' on' : '') + '" data-insertstory data-name="' + esc(p.name) + '" title="Inserir no story">Story</button>' +
         '</div>';
     }
 
@@ -779,84 +659,6 @@
     }
 
     /* ------------------------------------------------------------------ */
-    /* Inserir foto do story no editor                                     */
-    /* ------------------------------------------------------------------ */
-    function storyImageUrl(id) {
-      return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(id) + '&sz=w800';
-    }
-
-    function storyFile(name) {
-      return (state.files && state.files.photos || []).filter(function (x) { return x.name === name; })[0];
-    }
-
-    function openStoryPicker() {
-      var photos = state.files ? state.files.photos || [] : [];
-      if (!photos.length) { toast('Envie fotos primeiro.', true); return; }
-      var list = photos.map(function (x) {
-        return '<button type="button" class="small" data-story-name="' + esc(x.name) + '" style="text-align:left; flex:1">' +
-          esc(x.label || x.name) + (x.name === x.label ? '' : ' <span class="muted">(' + esc(x.name) + ')</span>') + '</button>';
-      }).join('');
-      var overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(22,18,14,.5);display:flex;align-items:center;justify-content:center;z-index:60';
-      overlay.innerHTML = '<div class="card" style="width:min(90vw,480px)"><h2>Inserir foto no texto</h2>' +
-        '<p class="muted">A foto entra no <strong>story</strong> e a legenda é editada clicando nela, abaixo da imagem, dentro do editor.</p>' +
-        '<div class="row" style="flex-direction:column;align-items:stretch;gap:6px;margin-bottom:12px">' + list + '</div>' +
-        '<button class="ghost" id="close-picker">Cancelar</button></div>';
-      overlay.addEventListener('click', function (ev) {
-        var btn = ev.target.closest('[data-story-name]');
-        if (btn) {
-          insertStoryImage(btn.getAttribute('data-story-name'));
-          overlay.remove();
-        } else if (ev.target.id === 'close-picker' || ev.target === overlay) {
-          overlay.remove();
-        }
-      });
-      document.body.appendChild(overlay);
-    }
-
-    function insertStoryImage(name) {
-      var ed = byId('story-ed');
-      var file = storyFile(name);
-      var img = '<img data-story="' + esc(name) + '" src="' + (file ? storyImageUrl(file.id) : '') + '" alt="">';
-      var fig = '<figure class="story-img">' + img +
-        '<figcaption data-ph="Clique para adicionar legenda"></figcaption></figure>';
-      placeCaretForInsert(ed);
-      ed.focus();
-      document.execCommand('insertHTML', false, '<p>' + fig + '</p>');
-      updateToolbarStates();
-    }
-
-    function fixupStoryEditor() {
-      var ed = byId('story-ed');
-      if (!ed) return;
-      $$('figure.story-img img[data-story]', ed).forEach(function (im) {
-        var file = storyFile(im.getAttribute('data-story'));
-        if (file) im.setAttribute('src', storyImageUrl(file.id));
-        var fig = im.closest('figure');
-        if (fig) {
-          var cap = fig.querySelector('figcaption');
-          if (cap) {
-            var t = cap.textContent.replace(/\s+/g, ' ').trim();
-            var ph = cap.getAttribute('data-ph') || '';
-            im.setAttribute('alt', t === ph ? '' : t);
-          }
-        }
-      });
-    }
-
-    function storyHtml() {
-      var ed = byId('story-ed');
-      $$('figure.story-img img[data-story]', ed).forEach(function (im) {
-        var fig = im.closest('figure');
-        var cap = fig ? fig.querySelector('figcaption') : null;
-        var t = cap ? cap.textContent.replace(/\s+/g, ' ').trim() : '';
-        var ph = cap ? (cap.getAttribute('data-ph') || '') : '';
-        im.setAttribute('alt', t === ph ? '' : t);
-      });
-      return ed.innerHTML;
-    }
-
-    /* ------------------------------------------------------------------ */
     /* Salvar                                                              */
     /* ------------------------------------------------------------------ */
     function collectEdit() {
@@ -868,13 +670,11 @@
         date: byId('f-date').value,
         location: byId('f-location').value.trim(),
         state: byId('f-state').value.trim(),
-        description: byId('f-description').value.trim(),
         excerpt: byId('f-excerpt').value.trim(),
         featured: byId('f-featured').checked,
         tags: tags,
         seoTitle: byId('f-seoTitle').value.trim(),
         seoDescription: byId('f-seoDescription').value.trim(),
-        historia_html: storyHtml(),
       };
     }
 
@@ -901,26 +701,23 @@
       var files = state.files || { cover: null, photos: [] };
       var min = state.config ? state.config.minGallery : 8;
       var photos = files.photos || [];
-      var storyNames = storyPhotoNames();
       var galleryCount = photos.filter(function (p) {
-        return storyNames.indexOf(p.name) === -1 && (!files.cover || files.cover.name !== p.name);
+        return !files.cover || files.cover.name !== p.name;
       }).length;
       var probe = {
         title: e.title, couple: e.couple, date: e.date,
         location: e.location, state: e.state,
-        description: e.description, excerpt: e.excerpt, historia_html: e.historia_html,
+        excerpt: e.excerpt,
         cover_id: files.cover ? files.cover.id : '',
         galleryCount: galleryCount,
-        storyCount: storyNames.length,
       };
       var missed = [];
-      ['title', 'couple', 'date', 'location', 'state', 'description', 'excerpt', 'historia_html'].forEach(function (f) {
+      ['title', 'couple', 'date', 'location', 'state', 'excerpt'].forEach(function (f) {
         if (String(probe[f] || '').trim() === '') missed.push(f);
       });
       if (!files.cover) missed.push('cover');
       if (galleryCount < min) missed.push('gallery (' + galleryCount + '/' + min + ')');
-      if (storyNames.length === 0) missed.push('story');
-      return { missed: missed, galleryCount: galleryCount, storyCount: storyNames.length };
+      return { missed: missed, galleryCount: galleryCount };
     }
 
     function refreshPublishPane() {
@@ -932,10 +729,8 @@
         ['Local · estado', !!state.event.location && !!state.event.state],
         ['Description', !!state.event.description],
         ['Excerpt', !!state.event.excerpt],
-        ['História (texto)', !!(state.event.historia_html || '').replace(/<[^>]+>/g, '').trim()],
         ['Capa enviada', !!(state.files && state.files.cover)],
         ['Galeria (mín. ' + min + ')', probe.galleryCount >= min],
-        ['Fotos do story', probe.storyCount > 0],
       ];
       byId('checklist').innerHTML = items.map(function (it) {
         return '<li>' + (it[1] ? '<span class="ok">✓</span>' : '<span class="warn">✗</span>') + '<span class="muted">' + esc(it[0]) + '</span></li>';

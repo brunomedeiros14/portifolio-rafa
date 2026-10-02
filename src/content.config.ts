@@ -21,7 +21,6 @@ const weddings = defineCollection({
        */
       location: z.string(),
       state: z.string(),
-      description: z.string(),
       excerpt: z.string().max(220),
       cover: image(),
       featured: z.boolean().default(false),

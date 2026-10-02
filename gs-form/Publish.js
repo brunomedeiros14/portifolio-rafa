@@ -38,13 +38,10 @@ const Publish = {
         url: Drive.downloadUrl(f.id),
       }));
 
+    // Todas as fotos enviadas vão para a galeria, menos a capa. Não há mais
+    // classificação entre "story" e galeria: a página não tem texto.
     const photos = Array.isArray(event.gallery) ? event.gallery : [];
-    const storyNames = Events.storyRefs_(event.historia_html);
-    const isStory = (p) => storyNames.indexOf(p.name) !== -1;
-    const story = driveLinks(photos.filter(isStory));
-    const gallery = driveLinks(
-      photos.filter((p) => !isStory(p) && p.name !== event.cover_name),
-    );
+    const gallery = driveLinks(photos.filter((p) => p.name !== event.cover_name));
 
     return {
       slug: event.slug,
@@ -53,7 +50,6 @@ const Publish = {
       date: event.date,
       location: event.location,
       state: event.state,
-      description: event.description,
       excerpt: event.excerpt,
       featured: !!event.featured,
       tags: Array.isArray(event.tags) ? event.tags : [],
@@ -63,10 +59,6 @@ const Publish = {
         ? { filename: event.cover_name || 'cover.jpg', url: Drive.downloadUrl(event.cover_id) }
         : null,
       gallery,
-      story: {
-        html: event.historia_html || '',
-        images: story,
-      },
     };
   },
 

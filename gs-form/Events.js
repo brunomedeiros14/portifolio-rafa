@@ -3,7 +3,7 @@
  *
  * Campos:
  *  - Colunas escalares (title, couple, date, ...) viram célula de texto.
- *  - Colunas estruturais (tags, gallery, story) são JSON stringified.
+ *  - Colunas estruturais (tags, gallery) são JSON stringified.
  *
  * O campo obrigatório de frontmatter `slug` é também a chave da linha (coluna A).
  *
@@ -15,13 +15,19 @@
 const Events = {
   HEADERS: [
     'slug', 'title', 'couple', 'date', 'location', 'state',
-    'description', 'excerpt', 'featured', 'tags',
-    'seoTitle', 'seoDescription', 'historia_html',
-    'cover_id', 'cover_name', 'gallery', 'story', 'status', 'created_at', 'updated_at',
+    'excerpt', 'featured', 'tags',
+    'seoTitle', 'seoDescription',
+    'cover_id', 'cover_name', 'gallery', 'status', 'created_at', 'updated_at',
   ],
 
-  /** Colunas que existiam antes de `location` virar o único campo de local. */
-  DROPPED_HEADERS: ['city', 'venue', 'vendors'],
+  /**
+   * Colunas removidas ao longo do tempo, na ordem em que saíram.
+   *
+   * `city`/`venue`/`vendors` foram absorvidas por `location`.
+   * `description`/`historia_html`/`story` saíram junto com o texto editorial:
+   * a página do casamento é capa, data, local e galeria.
+   */
+  DROPPED_HEADERS: ['city', 'venue', 'vendors', 'description', 'historia_html', 'story'],
 
   ensureSetup() {
     const props = PropertiesService.getScriptProperties();
@@ -170,17 +176,14 @@ const Events = {
       date: (payload && payload.date) || '',
       location: (payload && payload.location) || '',
       state: (payload && payload.state) || '',
-      description: (payload && payload.description) || '',
       excerpt: (payload && payload.excerpt) || '',
       featured: !!(payload && payload.featured),
       tags: [],
       seoTitle: (payload && payload.seoTitle) || '',
       seoDescription: (payload && payload.seoDescription) || '',
-      historia_html: '',
       cover_id: '',
       cover_name: '',
       gallery: [],
-      story: [],
       status: 'draft',
       created_at: now,
       updated_at: now,
@@ -199,7 +202,6 @@ const Events = {
 
     if (!Array.isArray(merged.tags)) merged.tags = [];
     if (!Array.isArray(merged.gallery)) merged.gallery = [];
-    if (!Array.isArray(merged.story)) merged.story = [];
 
     if (merged.slug && merged.slug !== slug) {
       if (Events.get(merged.slug)) {
@@ -241,10 +243,7 @@ const Events = {
   appendPhoto(slug, saved) {
     const current = Events.get(slug);
     const list = Array.isArray(current.gallery) ? current.gallery : [];
-    Events.setRow_(slug, {
-      gallery: list.concat([saved]),
-      story: Events.storyRefs_(current.historia_html),
-    });
+    Events.setRow_(slug, { gallery: list.concat([saved]) });
   },
 
   /** Remove a foto do Drive e da lista; limpa a capa se ela era a capa. */
@@ -258,18 +257,6 @@ const Events = {
       patch.cover_name = '';
     }
     Events.setRow_(slug, patch);
-  },
-
-  /** Nomes de fotos (data-story) referenciados no HTML da história. */
-  storyRefs_(html) {
-    const out = [];
-    const re = /data-story\s*=\s*"([^"]+)"/g;
-    let m;
-    let text = String(html || '');
-    while ((m = re.exec(text)) !== null) {
-      if (out.indexOf(m[1]) === -1) out.push(m[1]);
-    }
-    return out;
   },
 
   listFiles(slug) {
@@ -289,14 +276,11 @@ const Events = {
   /**
    * Checklist de prontidão. Retorna { status: 'ready'|'pending', missed: string[] }.
    * Um evento só vira 'ready' quando todos os campos obrigatórios estão preenchidos,
-   * a capa foi enviada, a galeria atingiu o mínimo e o story tem fotos.
+   * a capa foi enviada e a galeria atingiu o mínimo.
    */
   computeStatus(event) {
     const missed = [];
-    const textFields = [
-      'title', 'couple', 'date', 'location', 'state',
-      'description', 'excerpt', 'historia_html',
-    ];
+    const textFields = ['title', 'couple', 'date', 'location', 'state', 'excerpt'];
     for (const field of textFields) {
       if (Events.blank_(event[field])) missed.push(field);
     }
@@ -304,12 +288,8 @@ const Events = {
 
     const minGallery = Number(PropertiesService.getScriptProperties().getProperty('MIN_GALLERY') || '8');
     const photos = Array.isArray(event.gallery) ? event.gallery : [];
-    const storyNames = Events.storyRefs_(event.historia_html);
-    const galleryCount = photos.filter(
-      (p) => storyNames.indexOf(p.name) === -1 && p.name !== event.cover_name,
-    ).length;
+    const galleryCount = photos.filter((p) => p.name !== event.cover_name).length;
     if (galleryCount < minGallery) missed.push(`gallery (${galleryCount}/${minGallery})`);
-    if (storyNames.length === 0) missed.push('story');
     return { status: missed.length === 0 ? 'ready' : 'pending', missed };
   },
 
@@ -354,18 +334,15 @@ const Events = {
       couple: String(at('couple') || ''),
       location: String(at('location') || ''),
       state: String(at('state') || ''),
-      description: String(at('description') || ''),
       excerpt: String(at('excerpt') || ''),
       date: Events.normalizeDate_(at('date')),
       featured: Events.truthy_(at('featured')),
       tags: Events.parseJSON_(at('tags'), []),
       seoTitle: String(at('seoTitle') || ''),
       seoDescription: String(at('seoDescription') || ''),
-      historia_html: String(at('historia_html') || ''),
       cover_id: String(at('cover_id') || ''),
       cover_name: String(at('cover_name') || ''),
       gallery: Events.parseJSON_(at('gallery'), []),
-      story: Events.parseJSON_(at('story'), []),
       status: String(at('status') || 'draft'),
       created_at: at('created_at'),
       updated_at: at('updated_at'),
@@ -384,7 +361,6 @@ const Events = {
           return value ? 'TRUE' : 'FALSE';
         case 'tags':
         case 'gallery':
-        case 'story':
           return Array.isArray(value) ? JSON.stringify(value) : '[]';
         case 'created_at':
         case 'updated_at':
