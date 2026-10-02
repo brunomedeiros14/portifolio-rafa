@@ -54,6 +54,10 @@ export function formatDate(date: Date): string {
     day: "numeric",
     month: "long",
     year: "numeric",
+    // O frontmatter traz a data como `2026-09-26`, que o Astro lê como meia-noite
+    // UTC. Formatando no fuso local (UTC-3), o casamento do dia 26 aparecia como
+    // 25 de setembro — no dia errado, na página que oumbnail do casal vai ler.
+    timeZone: "UTC",
   }).format(date);
 }
 
