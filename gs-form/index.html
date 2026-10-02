@@ -384,7 +384,8 @@
         '<div class="field"><label>Local (cidade ou estabelecimento)</label><input type="text" id="f-location" value="' + esc(e.location) + '"></div>' +
         '<div class="field"><label>Estado</label><input type="text" id="f-state" value="' + esc(e.state) + '"></div>' +
         '</div>' +
-        '<div class="field"><label>Excerpt — legenda curta (máx. 220)</label><textarea id="f-excerpt" rows="2" maxlength="220">' + esc(e.excerpt) + '</textarea></div>' +
+        '<div class="field"><label>Description — frase da intro</label><textarea id="f-description" rows="3">' + esc(e.description) + '</textarea></div>' +
+        '<div class="field"><label>Excerpt — legenda curta dos cards (máx. 220)</label><textarea id="f-excerpt" rows="2" maxlength="220">' + esc(e.excerpt) + '</textarea></div>' +
         '<label class="check"><input type="checkbox" id="f-featured"' + (e.featured ? ' checked' : '') + '> Destacar na home</label>' +
         '<div class="field"><label>Tags (separadas por vírgula)</label><input type="text" id="f-tags" value="' + esc((e.tags || []).join(', ')) + '" placeholder="casamento, ouro-preto, casal"></div>' +
         '<div class="field"><label>SEO title</label><input type="text" id="f-seoTitle" value="' + esc(e.seoTitle || '') + '"></div>' +
@@ -670,6 +671,7 @@
         date: byId('f-date').value,
         location: byId('f-location').value.trim(),
         state: byId('f-state').value.trim(),
+        description: byId('f-description').value.trim(),
         excerpt: byId('f-excerpt').value.trim(),
         featured: byId('f-featured').checked,
         tags: tags,
@@ -707,12 +709,12 @@
       var probe = {
         title: e.title, couple: e.couple, date: e.date,
         location: e.location, state: e.state,
-        excerpt: e.excerpt,
+        description: e.description, excerpt: e.excerpt,
         cover_id: files.cover ? files.cover.id : '',
         galleryCount: galleryCount,
       };
       var missed = [];
-      ['title', 'couple', 'date', 'location', 'state', 'excerpt'].forEach(function (f) {
+      ['title', 'couple', 'date', 'location', 'state', 'description', 'excerpt'].forEach(function (f) {
         if (String(probe[f] || '').trim() === '') missed.push(f);
       });
       if (!files.cover) missed.push('cover');
@@ -727,6 +729,7 @@
         ['Título e casal', !!state.event.title && !!state.event.couple],
         ['Data', !!state.event.date],
         ['Local · estado', !!state.event.location && !!state.event.state],
+        ['Description (intro)', !!state.event.description],
         ['Description', !!state.event.description],
         ['Excerpt', !!state.event.excerpt],
         ['Capa enviada', !!(state.files && state.files.cover)],

@@ -15,7 +15,7 @@
 const Events = {
   HEADERS: [
     'slug', 'title', 'couple', 'date', 'location', 'state',
-    'excerpt', 'featured', 'tags',
+    'description', 'excerpt', 'featured', 'tags',
     'seoTitle', 'seoDescription',
     'cover_id', 'cover_name', 'gallery', 'status', 'created_at', 'updated_at',
   ],
@@ -24,10 +24,10 @@ const Events = {
    * Colunas removidas ao longo do tempo, na ordem em que saíram.
    *
    * `city`/`venue`/`vendors` foram absorvidas por `location`.
-   * `description`/`historia_html`/`story` saíram junto com o texto editorial:
-   * a página do casamento é capa, data, local e galeria.
+   * `historia_html`/`story` saíram junto com o texto editorial: sobrou só a
+   * frase de apoio da intro.
    */
-  DROPPED_HEADERS: ['city', 'venue', 'vendors', 'description', 'historia_html', 'story'],
+  DROPPED_HEADERS: ['city', 'venue', 'vendors', 'historia_html', 'story'],
 
   ensureSetup() {
     const props = PropertiesService.getScriptProperties();
@@ -176,6 +176,7 @@ const Events = {
       date: (payload && payload.date) || '',
       location: (payload && payload.location) || '',
       state: (payload && payload.state) || '',
+      description: (payload && payload.description) || '',
       excerpt: (payload && payload.excerpt) || '',
       featured: !!(payload && payload.featured),
       tags: [],
@@ -280,7 +281,9 @@ const Events = {
    */
   computeStatus(event) {
     const missed = [];
-    const textFields = ['title', 'couple', 'date', 'location', 'state', 'excerpt'];
+    const textFields = [
+      'title', 'couple', 'date', 'location', 'state', 'description', 'excerpt',
+    ];
     for (const field of textFields) {
       if (Events.blank_(event[field])) missed.push(field);
     }
@@ -334,6 +337,7 @@ const Events = {
       couple: String(at('couple') || ''),
       location: String(at('location') || ''),
       state: String(at('state') || ''),
+      description: String(at('description') || ''),
       excerpt: String(at('excerpt') || ''),
       date: Events.normalizeDate_(at('date')),
       featured: Events.truthy_(at('featured')),

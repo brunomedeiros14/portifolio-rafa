@@ -50,6 +50,7 @@ const Publish = {
       date: event.date,
       location: event.location,
       state: event.state,
+      description: event.description,
       excerpt: event.excerpt,
       featured: !!event.featured,
       tags: Array.isArray(event.tags) ? event.tags : [],

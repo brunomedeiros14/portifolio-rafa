@@ -90,8 +90,9 @@ commit + push → build/deploy → nova URL /casamentos/<slug>
 
 1. Abra o Web App (URL `/exec`).
 2. **+ Novo evento** → informe o casal (slug gerado sem conflito).
-3. **Editar** → preencha os campos: dados do casamento, `Excerpt` (legenda curta dos
-   cards) e, se quiser, os campos de SEO. Não há mais texto editorial.
+3. **Editar** → preencha os campos: dados do casamento, `Description` (frase da
+   intro), `Excerpt` (legenda curta dos cards) e, se quiser, os campos de SEO.
+   Não há mais corpo de texto nem fotos de story.
 4. **Fotos** → arraste ou selecione quantas quiser: cada foto sobe individualmente em segundo
    plano para a **mesma pasta** do evento (nome **UUID.ext** no Drive). Todas entram na
    **galeria**; marque **Capa** em uma. Enquanto há uploads em andamento, salvar/publicar
@@ -118,6 +119,7 @@ Resposta (200, sempre — erros vêm no corpo):
   "date": "2026-05-30",
   "location": "Museu da Inconfidência, Ouro Preto",
   "state": "MG",
+  "description": "...",
   "excerpt": "...",
   "featured": true,
   "tags": ["casamento", "ouro-preto"],

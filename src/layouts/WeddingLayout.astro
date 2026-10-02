@@ -79,7 +79,6 @@ const jsonLd = [
       alt={`${data.couple} — ${data.excerpt}`}
       eyebrow={`${data.location} · ${data.state}`}
       title={data.couple}
-      subtitle={formatDate(data.date)}
       ctas={[{ label: 'Ver a galeria', href: '#galeria', primary: true }, { label: 'Conheça o fotógrafo', href: '/sobre' }]}
     />
 
@@ -88,6 +87,18 @@ const jsonLd = [
         <Breadcrumbs items={[{ label: 'Casamentos', href: '/casamentos' }, { label: data.couple }]} />
       </div>
     </div>
+
+    {/* Intro */}
+    <section class="mx-auto max-w-3xl px-4 sm:px-6" aria-label="Sobre o casamento">
+      <div class="reveal border-y border-line py-12 text-center sm:py-16">
+        <p class="text-xs font-medium uppercase tracking-[0.24em] text-accent">
+          {formatDate(data.date)}
+        </p>
+        <p class="mx-auto mt-6 max-w-xl font-display text-2xl font-normal leading-snug text-text sm:text-3xl">
+          {data.description}
+        </p>
+      </div>
+    </section>
 
     {/* Galeria editorial */}
     <section id="galeria" class="mx-auto max-w-(--content-max) px-4 pt-16 sm:px-6 sm:pt-20" aria-label="Galeria de fotos">

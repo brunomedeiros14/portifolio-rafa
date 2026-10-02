@@ -6,8 +6,8 @@
 //  2. baixa as fotos do Google Drive (links públicos) para images/;
 //  3. escreve src/content/weddings/<slug>/index.mdx.
 //
-// O MDX sai só com frontmatter: a página do casamento é capa, data, local e
-// galeria. Não há texto editorial nem pasta story/.
+// O MDX sai só com frontmatter: a página do casamento é capa, data, local,
+// uma frase de apoio na intro e galeria. Não há corpo de texto nem pasta story/.
 //
 // A geração é atômica: tudo é escrevido em um diretório temporário (.staging-<slug>)
 // e só movido para o destino final se TODOS os passos tiverem sucesso.
@@ -32,7 +32,7 @@ try {
 if (!pub || pub.error) fail(`Erro retornado pelo endpoint do gs-form: ${pub && pub.error}`);
 
 const REQUIRED = [
-  'slug', 'title', 'couple', 'date', 'location', 'state', 'excerpt', 'cover',
+  'slug', 'title', 'couple', 'date', 'location', 'state', 'description', 'excerpt', 'cover',
 ];
 for (const field of REQUIRED) {
   if (String(pub[field] ?? '').trim() === '') fail(`Campo obrigatório ausente: ${field}`);
@@ -116,6 +116,7 @@ async function main() {
     `date: ${pub.date}`,
     `location: ${yaml(pub.location)}`,
     `state: ${yaml(pub.state)}`,
+    `description: ${yaml(pub.description)}`,
     `excerpt: ${yaml(pub.excerpt)}`,
     `cover: "./images/${coverName}"`,
     `featured: ${pub.featured ? 'true' : 'false'}`,
