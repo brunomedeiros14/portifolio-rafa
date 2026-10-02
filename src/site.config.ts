@@ -27,13 +27,27 @@ export const SITE = {
   instagramHandle: "@rafaeldias.foto",
 } as const;
 
-export const NAV_LINKS = [
+/**
+ * O blog está pausado. As páginas continuam publicadas e acessíveis por URL,
+ * mas saem do menu e do rodapé: linkar uma seção que não recebe posts novos
+ * só empurra o visitante para um beco sem saída.
+ *
+ * Nenhuma outra página do site aponta para `/blog`, então estes dois menus
+ * eram a única entrada. Para voltar, é só trocar por `true`.
+ */
+export const BLOG_PUBLIC = false;
+
+const ALL_NAV_LINKS = [
   { label: "Casamentos", href: "/casamentos" },
   { label: "Sobre", href: "/sobre" },
   { label: "Experiência", href: "/experiencia" },
   { label: "Blog", href: "/blog" },
   { label: "Contato", href: "/contato" },
 ] as const;
+
+export const NAV_LINKS = BLOG_PUBLIC
+  ? ALL_NAV_LINKS
+  : ALL_NAV_LINKS.filter((link) => link.href !== "/blog");
 
 export function formatDate(date: Date): string {
   return new Intl.DateTimeFormat(SITE.language, {
