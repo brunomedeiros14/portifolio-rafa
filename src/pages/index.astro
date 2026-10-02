@@ -61,7 +61,7 @@ const jsonLd = {
     />
   ) : null}
 
-  <main class="bg-background">
+  <div class="bg-background">
     {/* Posicionamento */}
     <section class="mx-auto max-w-3xl px-4 py-20 text-center sm:px-6 md:py-28">
       <p class="reveal text-xs font-medium uppercase tracking-[0.24em] text-accent">
@@ -127,6 +127,7 @@ const jsonLd = {
           <SectionHeading
             eyebrow="Sobre"
             title="Uma abordagem editorial e humana"
+            headingId="sobre-heading"
           />
           <div class="reveal mt-6 space-y-5 text-base leading-relaxed text-muted" style="--reveal-delay:120ms">
             <p>
@@ -179,6 +180,7 @@ const jsonLd = {
         eyebrow="Como funciona"
         title="Sua experiência comigo"
         description="Do primeiro café ao álbum na mesa da sala, um processo simples e transparente."
+        headingId="experiencia-heading"
       />
       <div class="mt-12 grid gap-10 md:grid-cols-3">
         {[
@@ -245,5 +247,5 @@ const jsonLd = {
     </section>
 
     <CTA />
-  </main>
+  </div>
 </BaseLayout>

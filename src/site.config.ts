@@ -47,3 +47,23 @@ export function absolute(href: string): string {
   if (href.startsWith("http")) return href;
   return new URL(href, SITE.url).toString();
 }
+
+/**
+ * Define qual item do menu representa a página atual, para o `aria-current`.
+ *
+ * Igualdade exata deixava o menu sem nenhum item marcado em toda página
+ * interna — em `/casamentos/amanda-e-joao-fazenda-x` nada correspondia a
+ * `/casamentos`. A comparação por prefixo respeita a fronteira de segmento
+ * para que `/casamentos` não case com `/casamentos-fazenda-x`.
+ */
+export function isCurrentPath(pathname: string, href: string): boolean {
+  const normalize = (path: string) => (path.length > 1 ? path.replace(/\/+$/, "") : path);
+
+  const current = normalize(pathname);
+  const target = normalize(href);
+
+  if (current === target) return true;
+  if (target === "/") return false;
+
+  return current.startsWith(`${target}/`);
+}

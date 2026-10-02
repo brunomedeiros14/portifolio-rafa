@@ -1,5 +1,5 @@
 ---
-import { NAV_LINKS } from '../site.config';
+import { NAV_LINKS, isCurrentPath } from '../site.config';
 ---
 
 <nav aria-label="Navegação principal">
@@ -11,7 +11,7 @@ import { NAV_LINKS } from '../site.config';
           class:list={[
             'link-line relative block py-2 text-sm font-medium tracking-[0.02em] text-current lg:py-1',
           ]}
-          aria-current={Astro.url.pathname === link.href ? 'page' : undefined}
+          aria-current={isCurrentPath(Astro.url.pathname, link.href) ? 'page' : undefined}
         >
           {link.label}
         </a>
