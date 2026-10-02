@@ -6,6 +6,7 @@ import { Picture } from 'astro:assets';
 import { render } from 'astro:content';
 import { SITE, absolute, formatDate } from '../site.config';
 import { ogImageFrom } from '../utils/og';
+import { ID, node, publisherRef } from '../utils/schema';
 import type { CollectionEntry } from 'astro:content';
 
 interface Props {
@@ -18,20 +19,29 @@ const { Content } = await render(post);
 
 const ogImage = data.cover ? await ogImageFrom(data.cover) : undefined;
 
-const jsonLd = {
-  '@context': 'https://schema.org',
+const jsonLd = node({
   '@type': 'BlogPosting',
+  '@id': `${absolute(`/blog/${data.slug}`)}#article`,
   headline: data.title,
   description: data.description,
+  url: absolute(`/blog/${data.slug}`),
+  inLanguage: SITE.language,
+  keywords: data.tags.length ? data.tags.join(', ') : undefined,
   ...(ogImage
     ? { image: [absolute(ogImage.src)] }
     : {}),
   datePublished: data.date.toISOString(),
   ...(data.updated ? { dateModified: data.updated.toISOString() } : {}),
-  author: { '@type': 'Person', name: data.author },
-  publisher: { '@type': 'Person', name: SITE.name },
+  author: {
+    '@type': 'Person',
+    '@id': ID.person,
+    name: data.author,
+    url: absolute('/sobre'),
+  },
+  publisher: { '@id': ID.person },
   ...(data.canonical ? { mainEntityOfPage: data.canonical } : {}),
-};
+  isPartOf: { '@id': ID.website },
+});
 ---
 
 <BaseLayout
@@ -47,7 +57,7 @@ const jsonLd = {
   modifiedTime={data.updated}
   author={data.author}
   section={data.tags[0]}
-  jsonLd={data.canonical ? undefined : jsonLd}
+  jsonLd={[jsonLd, publisherRef()]}
   headerTransparent={Boolean(data.cover)}
 >
   <article>

@@ -2,6 +2,7 @@
 import BaseLayout from './BaseLayout.astro';
 import Breadcrumbs from '../components/Breadcrumbs.astro';
 import { ogImageFrom } from '../utils/og';
+import { ID, node, publisherRef } from '../utils/schema';
 import Hero from '../components/Hero.astro';
 import Gallery from '../components/Gallery.astro';
 import CTA from '../components/CTA.astro';
@@ -24,26 +25,39 @@ const galleryImages = getWeddingImages(weddingFolder(wedding), data.cover);
 const galleryItems = getGalleryItems(galleryImages, data.couple);
 const ogImage = await ogImageFrom(data.cover);
 
+const articleUrl = absolute(`/casamentos/${data.slug}`);
+
 const jsonLd = [
-  {
-    '@context': 'https://schema.org',
+  node({
     '@type': 'Article',
+    '@id': `${articleUrl}#article`,
     headline: data.seoTitle ?? `${data.couple} — casamento`,
-    image: [absolute(data.cover.src)],
+    description: data.excerpt,
+    url: articleUrl,
+    image: [absolute(ogImage.src)],
     datePublished: data.date.toISOString(),
-    author: { '@type': 'Person', name: SITE.name },
-    publisher: { '@type': 'Person', name: SITE.name },
-    about: { '@type': 'Event', name: `Casamento de ${data.couple}`, location: `${data.location}, ${data.city} - ${data.state}`, startDate: data.date.toISOString().slice(0, 10), eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode' },
-  },
-  {
-    '@context': 'https://schema.org',
+    author: { '@id': ID.person },
+    publisher: { '@id': ID.person },
+    isPartOf: { '@id': ID.website },
+    keywords: data.tags.length ? data.tags.join(', ') : undefined,
+    about: {
+      '@type': 'Event',
+      name: `Casamento de ${data.couple}`,
+      location: `${data.location}, ${data.city} - ${data.state}`,
+      startDate: data.date.toISOString().slice(0, 10),
+      eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+      image: absolute(ogImage.src),
+    },
+  }),
+  node({
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Início', item: absolute('/') },
       { '@type': 'ListItem', position: 2, name: 'Casamentos', item: absolute('/casamentos') },
-      { '@type': 'ListItem', position: 3, name: data.couple, item: absolute(`/casamentos/${data.slug}`) },
+      { '@type': 'ListItem', position: 3, name: data.couple, item: articleUrl },
     ],
-  },
+  }),
+  publisherRef(),
 ];
 ---
 

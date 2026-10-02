@@ -4,20 +4,32 @@ import CTA from '../components/CTA.astro';
 import SectionHeading from '../components/SectionHeading.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { SITE, absolute } from '../site.config';
+import { ID, node, personRef } from '../utils/schema';
+import { ogImageFrom } from '../utils/og';
 
 import portrait from '../assets/profile.png';
 import portraitSecondary from '../assets/secondary_profile.png';
 
-const jsonLd = {
-  '@context': 'https://schema.org',
+const ogImage = await ogImageFrom(portrait);
+
+const jsonLd = node({
   '@type': 'Person',
-  name: SITE.name,
+  '@id': ID.person,
+  name: personRef().name,
   jobTitle: SITE.role,
+  description: SITE.description,
   url: absolute('/sobre'),
-  image: absolute(portrait.src),
-  address: { '@type': 'PostalAddress', addressLocality: SITE.city, addressRegion: SITE.state, addressCountry: 'BR' },
-  sameAs: [SITE.instagram, SITE.whatsappUrl],
-};
+  image: absolute(ogImage.src),
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: SITE.city,
+    addressRegion: SITE.state,
+    addressCountry: 'BR',
+  },
+  sameAs: [SITE.instagram],
+  ...(SITE.email ? { email: SITE.email } : {}),
+  ...(SITE.whatsapp ? { telephone: SITE.whatsapp } : {}),
+});
 ---
 
 <BaseLayout

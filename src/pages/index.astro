@@ -9,6 +9,8 @@ import WeddingGrid from '../components/WeddingGrid.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { SITE, absolute } from '../site.config';
 import { getGalleryItems, getWeddingImages, weddingFolder, type GalleryItem } from '../utils/weddings';
+import { ID, node, personRef } from '../utils/schema';
+import { ogImageFrom } from '../utils/og';
 
 const featured = (await getCollection('weddings', ({ data }) => data.featured)).sort(
   (a, b) => b.data.date.getTime() - a.data.date.getTime(),
@@ -24,28 +26,72 @@ for (const wedding of featured.slice(0, 3)) {
   selected.push(...getGalleryItems(images, wedding.data.couple));
 }
 
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'ProfessionalService',
-  name: SITE.name,
+const heroOg = heroWedding ? await ogImageFrom(heroWedding.data.cover) : undefined;
+
+// A Person fica num bloco próprio para que autor, publisher e provider em
+// outras páginas possam apontar para o mesmo @id.
+const person = node({
+  '@type': 'Person',
+  '@id': ID.person,
+  name: personRef().name,
+  jobTitle: SITE.role,
   description: SITE.description,
-  url: absolute('/'),
-  image: heroWedding ? absolute(heroWedding.data.cover.src) : undefined,
-  areaServed: SITE.areas.map((city) => ({ '@type': 'City', name: city })),
+  url: absolute('/sobre'),
+  image: heroOg ? absolute(heroOg.src) : undefined,
   address: {
     '@type': 'PostalAddress',
     addressLocality: SITE.city,
     addressRegion: SITE.state,
     addressCountry: 'BR',
   },
-  sameAs: [SITE.instagram, SITE.whatsappUrl],
-};
+  knowsAbout: SITE.areas.filter((area) => !area.startsWith('muito')),
+  sameAs: [SITE.instagram],
+  ...(SITE.email ? { email: SITE.email } : {}),
+  ...(SITE.whatsapp ? { telephone: SITE.whatsapp } : {}),
+});
+
+const jsonLd = [
+  node({
+    '@type': 'ProfessionalService',
+    '@id': ID.business,
+    name: SITE.name,
+    description: SITE.description,
+    url: absolute('/'),
+    ...(heroOg ? { image: absolute(heroOg.src) } : {}),
+    priceRange: '$$$',
+    founder: { '@id': ID.person },
+    employee: { '@id': ID.person },
+    areaServed: SITE.areas
+      .filter((area) => !area.startsWith('muito'))
+      .map((city) => ({ '@type': 'City', name: city })),
+    serviceType: 'Fotografia de casamento',
+    hasOfferCatalog: {
+      '@type': 'OfferCatalog',
+      name: 'Serviços',
+      itemListElement: [
+        { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Cobertura completa do casamento' } },
+        { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Ensaio pré-wedding' } },
+        { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Álbum e组图 de impressão' } },
+      ],
+    },
+  }),
+  node({
+    '@type': 'WebSite',
+    '@id': ID.website,
+    url: absolute('/'),
+    name: SITE.name,
+    description: SITE.description,
+    publisher: { '@id': ID.person },
+    inLanguage: SITE.language,
+  }),
+  person,
+];
 ---
 
 <BaseLayout
   title={SITE.name}
   description={SITE.description}
-  jsonLd={[jsonLd, { '@context': 'https://schema.org', '@type': 'WebSite', name: SITE.name, url: absolute('/') }]}
+  jsonLd={jsonLd}
 >
   {heroWedding ? (
     <Hero
