@@ -816,7 +816,6 @@
           '<p class="muted">Comece pelo essencial. O slug é gerado automaticamente e o restante é preenchido na edição.</p>' +
           '<div class="grid">' +
           '<div class="field"><label>Nome do casal *</label><input type="text" name="couple" required autofocus placeholder="Yara e Ataíde"></div>' +
-          '<div class="field"><label>Título</label><input type="text" name="title" placeholder="Yara + Ataíde"></div>' +
           '<div class="field"><label>Data</label><input type="date" name="date"></div>' +
           '<div class="field"><label>Cidade *</label><input type="text" name="city" required placeholder="Ouro Preto"></div>' +
           '<div class="field"><label>Estado *</label><input type="text" name="state" required placeholder="MG"></div>' +
@@ -831,7 +830,6 @@
         var fd = new FormData(form);
         var payload = {
           couple: fd.get("couple").trim(),
-          title: (fd.get("title") || "").trim(),
           date: (fd.get("date") || "").trim(),
           city: (fd.get("city") || "").trim(),
           state: (fd.get("state") || "").trim(),
@@ -883,9 +881,6 @@
           '" readonly>' +
           '<button type="button" class="small" id="btn-regenerate-slug">Gerar novo</button></div>' +
           '<div class="grid">' +
-          '<div class="field"><label>Título</label><input type="text" id="f-title" value="' +
-          esc(e.title) +
-          '"></div>' +
           '<div class="field"><label>Nome do casal</label><input type="text" id="f-couple" value="' +
           esc(e.couple) +
           '"></div>' +
@@ -1451,7 +1446,6 @@
           .filter(Boolean);
 
         return {
-          title: byId("f-title").value.trim(),
           couple: byId("f-couple").value.trim(),
           date: byId("f-date").value,
           city: byId("f-city").value.trim(),
@@ -1497,7 +1491,6 @@
           return !files.cover || files.cover.name !== p.name;
         }).length;
         var probe = {
-          title: e.title,
           couple: e.couple,
           date: e.date,
           city: e.city,
@@ -1509,7 +1502,6 @@
         };
         var missed = [];
         [
-          "title",
           "couple",
           "date",
           "city",
@@ -1529,7 +1521,7 @@
         var probe = collectStatusProbe();
         var min = state.config ? state.config.minGallery : 8;
         var items = [
-          ["Título e casal", !!state.event.title && !!state.event.couple],
+          ["Casal", !!state.event.couple],
           ["Data", !!state.event.date],
           ["Cidade · estado", !!state.event.city && !!state.event.state],
           ["Local (opcional)", true],

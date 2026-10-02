@@ -16,7 +16,7 @@ POST api.github.com/repos/{owner}/{repo}/dispatches   (event_type: publish-weddi
 workflow .github/workflows/publish-wedding.yml
       │ POST https://script.google.com/macros/s/<url_id>/exec  {action:"publication", token, publicationId}
       ▼
-doPost → {"slug","title","couple","date",..., "cover":{...}, "gallery":[...]}
+doPost → {"slug","couple","date",..., "cover":{...}, "gallery":[...]}
       │
       ▼
 node scripts/generate-wedding.mjs publication.json
@@ -114,7 +114,6 @@ Resposta (200, sempre — erros vêm no corpo):
 ```json
 {
   "slug": "yara-e-ataide-ouro-preto",
-  "title": "Yara + Ataíde",
   "couple": "Yara e Ataíde",
   "date": "2026-09-26",
   "city": "Ouro Preto",

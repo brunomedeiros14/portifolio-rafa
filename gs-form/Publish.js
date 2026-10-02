@@ -45,7 +45,6 @@ const Publish = {
 
     return {
       slug: event.slug,
-      title: event.title,
       couple: event.couple,
       date: event.date,
       city: event.city,

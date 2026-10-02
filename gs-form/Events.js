@@ -2,7 +2,7 @@
  * Camada de dados: planilha "Eventos" — uma linha por casamento.
  *
  * Campos:
- *  - Colunas escalares (title, couple, date, ...) viram célula de texto.
+ *  - Colunas escalares (couple, date, ...) viram célula de texto.
  *  - Colunas estruturais (tags, gallery) são JSON stringified.
  *
  * O campo obrigatório de frontmatter `slug` é também a chave da linha (coluna A).
@@ -14,7 +14,7 @@
  */
 const Events = {
   HEADERS: [
-    'slug', 'title', 'couple', 'date', 'city', 'state', 'venue',
+    'slug', 'couple', 'date', 'city', 'state', 'venue',
     'description', 'excerpt', 'featured', 'tags',
     'cover_id', 'cover_name', 'gallery', 'status', 'created_at', 'updated_at',
   ],
@@ -28,9 +28,12 @@ const Events = {
    * `seoTitle`/`seoDescription` saíram porque o título e a descrição da
    * página passam a vir de `excerpt` e `description` — manter os quatro
    * campos obrigava a escrever a mesma frase duas vezes, e as cópias
-   * divergiam.
+   * divergiam. `title` saiu junto: nunca chegou a ser lido por nada, já
+   * que virava duplicata de `couple` no formato "Cintia + Guilherme".
    */
-  DROPPED_HEADERS: ['vendors', 'historia_html', 'story', 'seoTitle', 'seoDescription'],
+  DROPPED_HEADERS: [
+    'vendors', 'historia_html', 'story', 'seoTitle', 'seoDescription', 'title',
+  ],
 
   ensureSetup() {
     const props = PropertiesService.getScriptProperties();
@@ -189,7 +192,6 @@ const Events = {
     const now = new Date().toISOString();
     const event = {
       slug,
-      title: (payload && payload.title) || '',
       couple: (payload && payload.couple) || '',
       date: (payload && payload.date) || '',
       city: (payload && payload.city) || '',
@@ -299,7 +301,7 @@ const Events = {
   computeStatus(event) {
     const missed = [];
     const textFields = [
-      'title', 'couple', 'date', 'city', 'state', 'description', 'excerpt',
+      'couple', 'date', 'city', 'state', 'description', 'excerpt',
     ];
     for (const field of textFields) {
       if (Events.blank_(event[field])) missed.push(field);
@@ -350,7 +352,6 @@ const Events = {
     const at = (name) => (idx[name] >= 0 ? v[idx[name]] : undefined);
     const event = {
       slug: String(at('slug') || ''),
-      title: String(at('title') || ''),
       couple: String(at('couple') || ''),
       city: String(at('city') || ''),
       state: String(at('state') || ''),

@@ -9,7 +9,6 @@ const weddings = defineCollection({
   }),
   schema: ({ image }) =>
     z.object({
-      title: z.string(),
       slug: z.string(),
       couple: z.string(),
       date: z.coerce.date(),
