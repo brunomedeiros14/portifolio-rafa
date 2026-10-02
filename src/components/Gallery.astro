@@ -1,5 +1,5 @@
 ---
-import { Picture } from 'astro:assets';
+import { Picture, getImage } from 'astro:assets';
 import Lightbox from './Lightbox.astro';
 import type { GalleryItem } from '../utils/weddings';
 
@@ -10,6 +10,23 @@ interface Props {
 }
 
 const { id, items } = Astro.props;
+
+/**
+ * O lightbox abria o arquivo original: `item.image.src` é o JPEG de 2–4 MB
+ * que estava no disco. Como essa URL virava um atributo `data-src` do HTML,
+ * o Astro era obrigado a copiar o original inteiro para `dist/` — 57 MB de
+ * JPEG só para isso, e um clique na miniatura baixava megabytes.
+ *
+ * Geramos uma variante de exibição (1920 px de lado maior, WebP q82), que é o
+ * que o lightbox efetivamente mostra (`max-h-[78vh]`). O original deixa de ser
+ * referenciado e some do build.
+ */
+const LIGHTBOX_WIDTH = 1920;
+const fulls = await Promise.all(
+  items.map((item) =>
+    getImage({ src: item.image, width: LIGHTBOX_WIDTH, format: 'webp', quality: 82 }),
+  ),
+);
 ---
 
 <div id={id} class="columns-2 gap-3 sm:gap-4 lg:columns-3">
@@ -21,9 +38,9 @@ const { id, items } = Astro.props;
         data-lightbox-item
         data-gallery={id}
         data-index={index}
-        data-src={item.image.src}
-        data-width={item.image.width}
-        data-height={item.image.height}
+        data-src={fulls[index]!.src}
+        data-width={fulls[index]!.attributes.width}
+        data-height={fulls[index]!.attributes.height}
         data-caption={item.caption}
         aria-label={`Ampliar foto: ${item.caption}`}
       >
