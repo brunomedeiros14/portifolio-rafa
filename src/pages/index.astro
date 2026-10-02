@@ -8,9 +8,9 @@ import SectionHeading from '../components/SectionHeading.astro';
 import WeddingGrid from '../components/WeddingGrid.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { SITE, absolute } from '../site.config';
-import { getGalleryItems, getWeddingImages, weddingFolder, type GalleryItem } from '../utils/weddings';
-import { ID, node, personRef } from '../utils/schema';
 import { ogImageFrom } from '../utils/og';
+import { ID, node, personRef } from '../utils/schema';
+import { getGalleryItems, getWeddingImages, weddingFolder, type GalleryItem } from '../utils/weddings';
 
 const featured = (
   await getCollection('weddings', ({ data }) => data.featured && !data.draft)
@@ -233,7 +233,7 @@ const jsonLd = [
       <div class="mt-12 grid gap-10 md:grid-cols-3">
         {[
           { step: '01', title: 'Conversa', text: 'Café, vídeo ou mensagem. Conte a história de vocês, o lugar, o estilo — e eu mostro como trabalho, sem enrolação. Saímos da conversa com o roteiro do dia, horários e os lugares que importam para vocês.' },
-          { step: '02', title: 'O grande dia', text: 'Presença discreta do início ao fim: preparativos, cerimônia, retratos e festa. Sem cronômetro, acompanhando o ritmo da emoção — desde o vestido sendo abotoado até o último brinde na madrugada.' },
+          { step: '02', title: 'O grande dia', text: 'Presença discreta do início ao fim: preparativos, cerimônia, retratos e festa. Sem cronômetro, acompanhando o ritmo da emoção.' },
           { step: '03', title: 'História entregue', text: 'Curadoria e edição com calma. Em até 60 dias você recebe suas melhores fotografias, prontas para imprimir e eternizar, em alta resolução e com autorização de uso plena.' },
         ].map((item) => (
           <div class="reveal border-t border-line pt-6">
