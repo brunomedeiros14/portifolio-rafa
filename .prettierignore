@@ -9,6 +9,11 @@ pnpm-lock.yaml
 publication.json
 casamentos-para-publicar/
 
+# Artefato do build do admin (gs-form/src → gs-form/*.html). Quem formata é o
+# build: o `pnpm check` cobra que o arquivo bate com a saída de `gs-form/build.mjs`.
+gs-form/index.html
+gs-form/login.html
+
 # Material bruto das fotos — não é código
 src/content/weddings/*/images/
 src/content/blog/images/

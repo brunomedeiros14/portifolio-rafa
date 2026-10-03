@@ -4,7 +4,7 @@ import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 import { existsSync, readdirSync, readFileSync, statSync, unlinkSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { dirname, join, relative, resolve, sep } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 
@@ -75,6 +75,30 @@ const { map: lastmodByPath, drafts: draftPaths } = buildLastmodMap();
 const REFERENCEABLE = /\.(html|xml|json|txt|webmanifest|css|js)$/i;
 
 /**
+ * As duas formas de referência a um asset, e por que as duas são necessárias.
+ *
+ * A **absoluta** (`src="/_astro/x.jpg"`) é o que todo mundo escreve. A
+ * **relativa** (`from "./lifecycle.C7m0AI1y.js"`) é como os chunks do Vite se
+ * importam entre si: nenhum HTML aponta para eles, e ler só a absoluta fazia
+ * `lifecycle` e `prefetch` parecerem órfãos. A poda os apagou, quebrando o
+ * reveal por rolagem, o header e o roteador em toda página do `preview` —
+ * enquanto `dev` seguia normal, porque nunca passa por `astro:build:done`.
+ *
+ * Note que a relativa só significa algo a partir de um arquivo que mora em
+ * `_astro/`: em HTML, `./x` é relativo à URL da página, não ao arquivo.
+ *
+ * E note que nenhuma das duas é `[\w.$~-]+`: o Astro emite
+ * `WhatsApp Image 2026-09-26 at 21.43.39 (1).jpeg` e o HTML cita isso
+ * percent-encoded, com `%`, espaço e parênteses. Uma classe de caracteres
+ * "segura" faz a referência da galeria inteira ser invisível para a varredura,
+ * e as fotos saem como órfãs junto com os originais da câmera que a poda veio
+ * remover. Por isso o padrão é "tudo até a próxima aspa ou espaço", e o nome é
+ * decodificado na resolução.
+ */
+const REFERENCIA_ABSOLUTA = /\/_astro\/([^"'\s]+)/g;
+const REFERENCIA_RELATIVA = /["'(](\.{1,2}\/[^"'()\s]+)["')]/g;
+
+/**
  * Remove do `dist` os assets que nenhuma página gerada referencia.
  *
  * ## Por que a poda é necessária
@@ -96,7 +120,8 @@ const REFERENCEABLE = /\.(html|xml|json|txt|webmanifest|css|js)$/i;
  * página, feed, sitemap ou stylesheet referencia é, por construção,
  * inalcançável para um visitante. Se a regra deixar de valer, o sintoma é um
  * arquivo sumindo — por isso a poda roda em `astro:build:done`, quando todas as
- * páginas e todas as variantes já estão no disco, e nunca sai de `_astro/`.
+ * páginas e todas as variantes já estão no disco, nunca sai de `_astro/`, e no
+ * fim se audita contra o `dist` para não poder apagar referência viva.
  *
  * @returns {import('astro').AstroIntegration}
  */
@@ -109,37 +134,107 @@ function pruneUnreferencedAssets() {
         const assetsDir = join(outDir, '_astro');
         if (!existsSync(assetsDir)) return;
 
-        /** Nomes de arquivo presentes em `/_astro/`, sem o caminho. @type {Set<string>} */
-        const referenced = new Set();
+        /** Caminhos absolutos dos arquivos referenciados. @type {Set<string>} */
+        const referenciados = new Set();
 
-        /** @param {string} directory */
-        const scan = (directory) => {
+        /**
+         * Todos os arquivos do `dist` que um arquivo referencia.
+         *
+         * A poda e a auditoria usam esta mesma função de propósito. A auditoria
+         * só tem valor se enxergar **exatamente** o que a poda enxerga: quando
+         * cada uma tinha o seu próprio regex, a poda apagou coisas que a
+         * auditoria não estava olhando — o pior arranjo possível, já que a
+         * verificação que existe para pegar o erro passa por cima dele.
+         *
+         * @param {string} path
+         * @returns {string[]}
+         */
+        const alvosDe = (path) => {
+          const content = readFileSync(path, 'utf8');
+          /** @type {string[]} */
+          const alvos = [];
+          /** `url(/_astro/x.jpeg)` captura o `)` do CSS; o nome é o resto. @type {(n: string) => string} */
+          const nome = (n) => decodeURIComponent(n).replace(/\)$/, '');
+
+          for (const match of content.matchAll(REFERENCIA_ABSOLUTA)) {
+            alvos.push(join(outDir, '_astro', nome(match[1])));
+          }
+          // Só quem está dentro de `_astro/` importa por caminho relativo.
+          if (path.startsWith(assetsDir + sep)) {
+            for (const match of content.matchAll(REFERENCIA_RELATIVA)) {
+              alvos.push(resolve(dirname(path), nome(match[1])));
+            }
+          }
+          return alvos;
+        };
+
+        /**
+         * @param {string} directory
+         * @param {(path: string) => void} visitar
+         */
+        const scan = (directory, visitar) => {
           for (const entry of readdirSync(directory, { withFileTypes: true })) {
             const path = join(directory, entry.name);
             if (entry.isDirectory()) {
-              scan(path);
-              continue;
-            }
-            if (!REFERENCEABLE.test(entry.name)) continue;
-
-            const content = readFileSync(path, 'utf8');
-            for (const match of content.matchAll(/\/_astro\/([\w.$~-]+\.\w+)/g)) {
-              referenced.add(match[1]);
+              scan(path, visitar);
+            } else if (REFERENCEABLE.test(entry.name)) {
+              visitar(path);
             }
           }
         };
-        scan(outDir);
+        scan(outDir, (path) => {
+          for (const alvo of alvosDe(path)) referenciados.add(alvo);
+        });
 
         let count = 0;
         let bytes = 0;
-        for (const name of readdirSync(assetsDir)) {
-          if (referenced.has(name)) continue;
-          const path = join(assetsDir, name);
-          if (!statSync(path).isFile()) continue;
+        /**
+         * @param {string} directory
+         */
+        const podar = (directory) => {
+          for (const entry of readdirSync(directory, { withFileTypes: true })) {
+            const path = join(directory, entry.name);
+            if (entry.isDirectory()) {
+              podar(path);
+              continue;
+            }
+            if (referenciados.has(path)) continue;
 
-          bytes += statSync(path).size;
-          unlinkSync(path);
-          count += 1;
+            bytes += statSync(path).size;
+            unlinkSync(path);
+            count += 1;
+          }
+        };
+        podar(assetsDir);
+
+        /**
+         * A poda se audita.
+         *
+         * "Não referenciado" é uma conclusão sobre o que a varredura viu, e a
+         * varredura só enxerga a sintaxe que alguém lembrou de listar. Se sobrou
+         * alguma forma de referência que ninguém previu, o sintoma é um 404
+         * silencioso no `preview`: animação morta, menu quebrado, galeria
+         * vazia, conteúdo preso atrás de `opacity: 0` — e nada no `dev`, que
+         * nem passa por aqui, para denunciar.
+         *
+         * Por isso, depois de apagar, refazemos a varredura com a mesma função e
+         * exigimos que todo alvo ainda exista. Uma referência quebrada
+         * **derruba o build**.
+         */
+        /** @type {string[]} */
+        const quebradas = [];
+        scan(outDir, (path) => {
+          for (const alvo of alvosDe(path)) {
+            if (existsSync(alvo)) continue;
+            quebradas.push(`${relative(outDir, path)} -> ${relative(outDir, alvo)}`);
+          }
+        });
+        if (quebradas.length > 0) {
+          throw new Error(
+            `Poda do bundle: ${quebradas.length} referência(s) quebrada(s) no dist, ` +
+              `o que significa que a varredura de referências está incompleta:\n  ` +
+              quebradas.join('\n  '),
+          );
         }
 
         if (count > 0) {
@@ -168,7 +263,7 @@ function pruneUnreferencedAssets() {
  *
  * O tamanho é o do arquivo **comprimido com gzip**, que é o que o servidor
  * entrega. `gzipSync` nível 9 é uma aproximação do que GitHub Pages/CDN fazem
- * (nível 6 mais uns bytes de cabeçalho) —相差 de alguns por cento, o bastante
+ * (nível 6 mais uns bytes de cabeçalho) — difere de alguns por cento, o bastante
  * para um limite de duas casas, não para uma auditoria de byte.
  *
  * Um limite estourado **derruba o build**. É proposital: um teto que só avisa
