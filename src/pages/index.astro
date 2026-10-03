@@ -1,9 +1,15 @@
 ---
 import { Picture } from 'astro:assets';
 import { getCollection } from 'astro:content';
+import Button from '../components/Button.astro';
 import CTA from '../components/CTA.astro';
+import Eyebrow from '../components/Eyebrow.astro';
 import Gallery from '../components/Gallery.astro';
 import Hero from '../components/Hero.astro';
+import MediaFrame from '../components/MediaFrame.astro';
+import Prose from '../components/Prose.astro';
+import Reveal from '../components/Reveal.astro';
+import Section from '../components/Section.astro';
 import SectionHeading from '../components/SectionHeading.astro';
 import WeddingGrid from '../components/WeddingGrid.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
@@ -19,12 +25,37 @@ import {
   type GalleryItem,
 } from '../utils/weddings';
 
+const EXPERIENCE = [
+  {
+    step: '01',
+    title: 'Conversa',
+    text: 'Café, vídeo ou mensagem. Conte a história de vocês, o lugar, o estilo — e eu mostro como trabalho, sem enrolação. Saímos da conversa com o roteiro do dia, horários e os lugares que importam para vocês.',
+  },
+  {
+    step: '02',
+    title: 'O grande dia',
+    text: 'Presença discreta do início ao fim: preparativos, cerimônia, retratos e festa. Sem cronômetro, acompanhando o ritmo da emoção.',
+  },
+  {
+    step: '03',
+    title: 'História entregue',
+    text: 'Curadoria e edição com calma. Em até 60 dias você recebe suas melhores fotografias, prontas para imprimir e eternizar, em alta resolução e com autorização de uso plena.',
+  },
+];
+
+const INCLUDED = [
+  'Cobertura do preparo à pista de dança',
+  'Dois fotógrafos nos dias inteiros',
+  'Ensaios pré-casamento ou no dia',
+  'Galeria online com todas as imagens',
+  'Suporte humano antes e depois da festa',
+];
+
 const featured = (await getCollection('weddings', ({ data }) => data.featured && !data.draft)).sort(
   (a, b) => b.data.date.getTime() - a.data.date.getTime(),
 );
 
 const heroWedding = featured[0];
-const aboutImage = featured[1];
 
 // Seleção editorial: algumas fotografias fortes de histórias próximas.
 const selected: GalleryItem[] = [];
@@ -106,7 +137,7 @@ const jsonLd = [
       image={heroWedding.data.cover}
       alt={heroWedding.data.excerpt}
       eyebrow={`${SITE.role} · ${SITE.city}, ${SITE.state}`}
-      title={`Histórias de amor, fotografadas como acontecem`}
+      title="Histórias de amor, fotografadas como acontecem"
       subtitle="Fotografia editorial e documental de casamento em Belo Horizonte, Nova Lima, Ouro Preto, Tiradentes e toda Minas Gerais."
       ctas={[
         { label: 'Vamos conversar', href: '/contato', primary: true },
@@ -115,95 +146,89 @@ const jsonLd = [
     />
   ) : null}
 
-  <div class="bg-background">
-    {/* Posicionamento */}
-    <section class="mx-auto max-w-3xl px-4 py-20 text-center sm:px-6 md:py-28">
-      <p class="reveal text-xs font-medium uppercase tracking-[0.24em] text-accent">
-        Fotografia de casamento
-      </p>
-      <h2
-        class="reveal mx-auto mt-5 max-w-2xl font-display text-3xl font-medium leading-tight tracking-tight sm:text-4xl md:text-[2.6rem]"
-        style="--reveal-delay:80ms"
+  {/* Declaração. Fica entre o hero e o portfólio como um respiro: uma frase só,
+      em display, antes de qualquer lista. O fio de 4rem é o que segura o bloco
+      na tela larga — sem ele o texto solta no meio da viewport. */}
+  <Section rhythm="page" class="text-center">
+    <div class="mx-auto max-w-3xl">
+      <Eyebrow class="!justify-center">Fotografia de casamento</Eyebrow>
+      <Reveal
+        as="h2"
+        delay={80}
+        class="mt-6 font-display text-3xl leading-[1.08] font-medium tracking-tight text-balance sm:text-4xl md:text-[3.4rem]"
       >
-        Não fotografar o que é "perfeito". Fotografar o que é{' '}
-        <em class="italic text-accent">verdadeiro</em>.
-      </h2>
-      <p
-        class="reveal mx-auto mt-6 max-w-xl text-base leading-relaxed text-muted"
-        style="--reveal-delay:160ms"
-      >
+        Não fotografo o que é <em class="text-accent italic">perfeito</em>. Fotografo o que é
+        verdadeiro.
+      </Reveal>
+      <Reveal as="p" delay={160} class="mx-auto mt-7 max-w-xl text-base leading-relaxed text-muted">
         Sou Rafael Dias, fotógrafo de casamento e estudante de Fotografia. Busco uma fotografia
         natural, elegante e emocional, com uma estética cinematográfica — mas sem perder a verdade
         das pessoas e dos lugares. Observo gestos, expressões e aquilo que muitas vezes acontece em
         silêncio.
+      </Reveal>
+    </div>
+  </Section>
+
+  {/* Portfólio. A linha de catálogo antes do texto: o código do item é o que
+      transforma um grid de fotos em índice, e ele precisa estar na mesma
+      altura da primeira linha da capa. */}
+  <Section tone="surface">
+    <div class="flex flex-col gap-8 md:flex-row md:items-end md:justify-between md:gap-16">
+      <SectionHeading
+        eyebrow="Histórias recentes"
+        title="Casamentos selecionados"
+        description="Uma pequena seleção das cerimônias mais bonitas que fotografei por Minas Gerais."
+        class="md:flex-1"
+      />
+      <p class="max-w-sm text-sm leading-relaxed text-muted md:pb-2">
+        Cada dia inteiro vivido ao lado de famílias, padrinhos e amigos. Navegue pelas histórias e
+        veja o clima de cada festa como se estivesse lá.
       </p>
-    </section>
+    </div>
+    <div class="mt-14">
+      <WeddingGrid weddings={featured} priorityFirst />
+    </div>
+    <Reveal class="mt-12">
+      <a
+        href="/casamentos"
+        class="link-line inline-flex items-center gap-2 text-sm font-medium text-accent"
+        data-astro-prefetch
+      >
+        Ver todos os casamentos
+        <span aria-hidden="true">→</span>
+      </a>
+    </Reveal>
+  </Section>
 
-    {/* Casamentos em destaque */}
-    <section class="bg-surface py-20 md:py-28">
-      <div class="mx-auto max-w-(--content-max) px-4 sm:px-6">
-        <div class="reveal flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-          <SectionHeading
-            eyebrow="Histórias recentes"
-            title="Casamentos selecionados"
-            description="Uma pequena seleção dos casamentos mais bonitos que fotografei por Minas Gerais."
+  {/* Abordagem. A imagem é o retrato do fotógrafo, não a capa de um casal: a
+      seção fala de método, e a foto precisa sustentar o assunto. */}
+  <Section aria-labelledby="abordagem-heading">
+    <div class="grid gap-12 md:grid-cols-12 md:gap-16">
+      <Reveal class="md:col-span-5">
+        <MediaFrame ratio="4/5">
+          <Picture
+            src={portrait}
+            alt="Rafael Dias em campo, fotografando ao entardecer"
+            widths={[480, 1280]}
+            sizes="(min-width: 1024px) 40vw, 92vw"
+            formats={['avif', 'webp']}
+            fallbackFormat="jpeg"
+            width={1280}
+            loading="lazy"
+            decoding="async"
+            class="h-full w-full object-cover"
           />
-          <a
-            href="/casamentos"
-            class="link-line shrink-0 text-sm font-medium text-accent"
-            data-astro-prefetch
-          >
-            Ver todos →
-          </a>
-        </div>
-        <p
-          class="reveal mt-8 max-w-2xl text-base leading-relaxed text-muted"
-          style="--reveal-delay:100ms"
-        >
-          Cada história aqui representa um dia inteiro vivido ao lado de famílias, padrinhos e
-          amigos: o preparo, a cerimônia, os retratos ao entardecer e a festa que só termina de
-          madrugada. Aos poucos, este portfólio vai crescendo com novos casais de Belo Horizonte,
-          Nova Lima, Ouro Preto, Tiradentes e outras cidades mineiras. Navegue pelos casamentos,
-          veja os detalhes de cada cerimônia e sinta o clima de cada festa como se estivesse lá.
-        </p>
-        <div class="mt-12">
-          <WeddingGrid weddings={featured} priorityFirst />
-        </div>
-      </div>
-    </section>
-
-    {/* Sobre o fotógrafo */}
-    <section
-      class="mx-auto max-w-(--content-max) px-4 py-20 sm:px-6 md:py-28"
-      aria-labelledby="sobre-heading"
-    >
-      <div class="grid items-center gap-10 md:grid-cols-2 md:gap-16">
-        {aboutImage ? (
-          <div class="reveal media relative aspect-[4/5] overflow-hidden rounded-sm bg-line">
-            <Picture
-              src={aboutImage.data.cover}
-              alt={`${aboutImage.data.couple} — ${aboutImage.data.excerpt}`}
-              widths={[480, 1280]}
-              sizes="(min-width: 1024px) 45vw, 92vw"
-              formats={['avif', 'webp']}
-              fallbackFormat="webp"
-              loading="lazy"
-              decoding="async"
-              class="h-full w-full object-cover"
-            />
-          </div>
-        ) : null}
-        <div>
-          <SectionHeading
-            eyebrow="Sobre"
-            title="Uma abordagem editorial e humana"
-            headingId="sobre-heading"
-          />
-          <div
-            class="reveal mt-6 space-y-5 text-base leading-relaxed text-muted"
-            style="--reveal-delay:120ms"
-          >
-            <p>
+        </MediaFrame>
+      </Reveal>
+      <div class="md:col-span-6 md:col-start-7">
+        <SectionHeading
+          eyebrow="Sobre"
+          title="Uma abordagem editorial e humana"
+          headingId="abordagem-heading"
+        />
+        <Reveal class="mt-7">
+          <Prose class="text-muted">
+            <p class="!mt-0">
               Acredito que fotografia de casamento não é sobre poses perfeitas, e sim sobre
               preservar o que aconteceu de verdade: o nervosismo antes da entrada, a risada da
               madrinha, o abraço apertado no final da noite.
@@ -214,136 +239,114 @@ const jsonLd = [
             </p>
             <p>
               Meu compromisso é devolver a vocês imagens que despertem a memória vivida: a textura
-              do vestido, o cheiro do buffet, a música que embalou a primeira dança. Por isso eu
-              fotografo o essencial e deixei o resto falar, com edição demorada e um cuidado
-              artesanal na entrega do álbum.
+              do vestido, o som da música que embalou a primeira dança. Por isso fotografo o
+              essencial e deixo o resto falar.
             </p>
-          </div>
-          <div class="reveal mt-8">
-            <a
-              href="/sobre"
-              class="inline-flex items-center justify-center rounded-full border border-text/20 px-6 py-3 text-sm font-medium transition-colors hover:border-accent hover:bg-accent hover:text-white"
-            >
-              Sobre mim
-            </a>
-          </div>
-        </div>
+          </Prose>
+        </Reveal>
+        <Reveal class="mt-8">
+          <Button href="/sobre" variant="secondary" prefetch>
+            Sobre mim
+          </Button>
+        </Reveal>
       </div>
-    </section>
+    </div>
+  </Section>
 
-    {/* Seleção editorial — fotografias soltas */}
-    <section class="bg-ink py-20 text-white md:py-28">
-      <div class="mx-auto max-w-(--content-max) px-4 sm:px-6">
-        <div class="reveal mb-12 max-w-2xl">
-          <p class="text-xs font-medium uppercase tracking-[0.24em] text-accent-soft">
-            Seleção editorial
-          </p>
-          <h2 class="mt-3 font-display text-3xl font-medium tracking-tight sm:text-4xl">
-            Fotografias que já guardaram histórias
-          </h2>
-          <p class="mt-4 text-sm leading-relaxed text-white/70">
-            Momentos separados das galerias completas: detalhes, emoções e encontros que resumem
-            como as histórias de amor acontecem em cada casamento que acompanho.
-          </p>
-        </div>
-        <div class="reveal">
-          <Gallery id="home-editorial" items={selected} />
-        </div>
+  {/* Seleção editorial — fotografias soltas, em fundo escuro */}
+  <Section tone="ink">
+    <div class="grid gap-8 md:grid-cols-12 md:gap-16">
+      <div class="md:col-span-5">
+        <Eyebrow onInk>Seleção editorial</Eyebrow>
+        <h2 class="mt-3 font-display text-3xl font-medium tracking-tight text-white sm:text-4xl">
+          Fotografias que já guardaram histórias
+        </h2>
       </div>
-    </section>
+      <p class="text-sm leading-relaxed text-white/65 md:col-span-5 md:col-start-8 md:pt-8">
+        Momentos separados das galerias completas: detalhes, emoção e encontros que resumem como as
+        histórias de amor acontecem em cada casamento que acompanho.
+      </p>
+    </div>
+    <div class="mt-14">
+      <Gallery id="home-editorial" items={selected} />
+    </div>
+  </Section>
 
-    {/* Experiência */}
-    <section
-      class="mx-auto max-w-(--content-max) px-4 py-20 sm:px-6 md:py-28"
-      aria-labelledby="experiencia-heading"
-    >
+  {/* Como funciona. Numeral grande na margem e um fio que atravessa as três
+      etapas: a lista vira sequência, não três blocos soltos. */}
+  <Section aria-labelledby="experiencia-heading">
+    <div class="flex flex-col gap-8 md:flex-row md:items-end md:justify-between md:gap-16">
       <SectionHeading
         eyebrow="Como funciona"
         title="Sua experiência comigo"
-        description="Do primeiro café ao álbum na mesa da sala, um processo simples e transparente."
         headingId="experiencia-heading"
+        class="md:flex-1"
       />
-      <div class="mt-12 grid gap-10 md:grid-cols-3">
-        {[
-          {
-            step: '01',
-            title: 'Conversa',
-            text: 'Café, vídeo ou mensagem. Conte a história de vocês, o lugar, o estilo — e eu mostro como trabalho, sem enrolação. Saímos da conversa com o roteiro do dia, horários e os lugares que importam para vocês.',
-          },
-          {
-            step: '02',
-            title: 'O grande dia',
-            text: 'Presença discreta do início ao fim: preparativos, cerimônia, retratos e festa. Sem cronômetro, acompanhando o ritmo da emoção.',
-          },
-          {
-            step: '03',
-            title: 'História entregue',
-            text: 'Curadoria e edição com calma. Em até 60 dias você recebe suas melhores fotografias, prontas para imprimir e eternizar, em alta resolução e com autorização de uso plena.',
-          },
-        ].map((item) => (
-          <div class="reveal border-t border-line pt-6">
-            <p class="font-display text-sm italic text-accent">{item.step}</p>
-            <h3 class="mt-3 font-display text-xl font-medium tracking-tight">{item.title}</h3>
-            <p class="mt-3 text-sm leading-relaxed text-muted">{item.text}</p>
-          </div>
-        ))}
-      </div>
-      <div class="reveal mt-10">
-        <a
-          href="/experiencia"
-          class="link-line text-sm font-medium text-accent"
-          data-astro-prefetch
-        >
-          Como funciona
-        </a>
-      </div>
-      <div class="reveal mt-12 max-w-2xl space-y-4 text-sm leading-relaxed text-muted">
-        <p class="font-medium text-text">Tudo o que você encontra em um contrato:</p>
-        <div class="grid gap-x-8 gap-y-2 sm:grid-cols-2">
-          {[
-            'Cobertura do preparo à pista de dança',
-            'Dois fotógrafos nos dias inteiros',
-            'Ensaios pré-casamento ou no dia',
-            'Galeria online com todas as imagens',
-            'Suporte humano antes e depois da festa',
-          ].map((item) => (
-            <p class="flex items-start gap-2">
-              <span class="mt-0.5 text-accent" aria-hidden="true">
-                ✦
-              </span>
-              {item}
-            </p>
-          ))}
-        </div>
-      </div>
-    </section>
+      <a
+        href="/experiencia"
+        class="link-line shrink-0 pb-2 text-sm font-medium text-accent"
+        data-astro-prefetch
+      >
+        Detalhes do processo →
+      </a>
+    </div>
 
-    {/* Locais */}
-    <section class="bg-surface py-20">
-      <div class="mx-auto max-w-(--content-max) px-4 sm:px-6">
+    <ol class="mt-14 grid gap-10 md:grid-cols-3 md:gap-8">
+      {EXPERIENCE.map((item, index) => (
+        <Reveal as="li" delay={index * 90} class="border-t border-line pt-6">
+          <p class="font-display text-4xl leading-none text-accent/35 italic">{item.step}</p>
+          <h3 class="mt-5 font-display text-xl font-medium tracking-tight">{item.title}</h3>
+          <p class="mt-3 text-sm leading-relaxed text-muted">{item.text}</p>
+        </Reveal>
+      ))}
+    </ol>
+
+    <Reveal class="mt-16 border-t border-line pt-10">
+      <h3 class="font-display text-lg font-medium tracking-tight">Tudo o que entra no contrato</h3>
+      <ul class="mt-6 grid gap-x-10 gap-y-3 sm:grid-cols-2">
+        {INCLUDED.map((item) => (
+          <li class="flex items-start gap-3 text-sm leading-relaxed text-muted">
+            <span class="mt-0.5 shrink-0 text-accent" aria-hidden="true">
+              ✦
+            </span>
+            {item}
+          </li>
+        ))}
+      </ul>
+    </Reveal>
+  </Section>
+
+  {/* Onde atuo. Lista em duas colunas separada por fios em vez de etiquetas
+      arredondadas: as cidades leem como texto editorial, e 14 chips viravam
+      ruído visual no lugar de informação. */}
+  <Section tone="surface" rhythm="tight">
+    <div class="grid gap-10 md:grid-cols-12 md:gap-16">
+      <div class="md:col-span-5">
         <SectionHeading
           eyebrow="Onde atuo"
           title="Casamentos por Minas Gerais"
           description="De Belo Horizonte às cidades históricas — e com alegria para além de Minas."
-          align="center"
         />
-        <p class="reveal mx-auto mt-6 max-w-2xl text-center text-base leading-relaxed text-muted">
+      </div>
+      <div class="md:col-span-6 md:col-start-7">
+        <Reveal as="p" class="text-base leading-relaxed text-muted">
           Atendo casamentos na capital e no interior, sem taxa de deslocamento dentro de Minas. Se a
           festa de vocês sai do estado, combinamos um orçamento transparente para viagem e
-          hospedagem. Gosto de trabalhar tanto em salões de fazenda quanto em cerimônias ao ar
-          livre, igrejas centenárias ou quintais de casa — o cenário ideal é aquele que faz os dois
-          se sentirem à vontade.
-        </p>
-        <ul class="reveal mt-10 flex flex-wrap justify-center gap-3">
+          hospedagem.
+        </Reveal>
+        <ul class="mt-8 grid gap-x-8 sm:grid-cols-2">
           {SITE.areas.map((area) => (
-            <li class="rounded-full border border-line bg-background px-5 py-2.5 text-sm text-text">
-              {area}
+            <li class="flex items-baseline justify-between gap-4 border-t border-line py-3 text-sm">
+              <span>{area}</span>
+              <span class="shrink-0 text-xs text-muted/70" aria-hidden="true">
+                MG
+              </span>
             </li>
           ))}
         </ul>
       </div>
-    </section>
+    </div>
+  </Section>
 
-    <CTA />
-  </div>
+  <CTA />
 </BaseLayout>

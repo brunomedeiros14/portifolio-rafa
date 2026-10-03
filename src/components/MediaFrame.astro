@@ -1,0 +1,28 @@
+---
+/**
+ * Moldura de imagem com o hover editorial (`.media`).
+ *
+ * O `bg-line` do placeholder é o que segura o layout enquanto a imagem
+ * carrega: sem ele, o grid dá um salto no primeiro render em conexão lenta.
+ */
+interface Props {
+  /** `4/5` retrato, `3/2` horizontal, `1/1` quadrado, `16/10` capa de artigo. */
+  ratio?: string;
+  /** Arredonda os cantos. O padrão é o raio da casa. */
+  rounded?: boolean;
+  class?: string;
+}
+
+const { ratio, rounded = true, class: className } = Astro.props;
+
+/**
+ * O `aspect-ratio` vem inline, não de `aspect-${ratio}`: o Tailwind só gera
+ * classes que aparecem literalmente no fonte, e o ratio é uma prop. Com uma
+ * classe dinâmica o utilities saía do bundle e o grid colapsava.
+ */
+const style = ratio ? `aspect-ratio:${ratio.replace(/\s*\/\s*/, '/')}` : undefined;
+---
+
+<div class:list={['media', rounded && 'rounded-sm', className]} style={style}>
+  <slot />
+</div>

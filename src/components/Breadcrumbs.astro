@@ -1,14 +1,17 @@
 ---
+import type { Crumb } from '../types';
+
 interface Props {
-  items: Array<{ label: string; href?: string }>;
+  items: Crumb[];
   /** Fallback para journeys fora de coleção (home, blog…) */
   home?: string;
+  class?: string;
 }
 
-const { items, home = 'Início' } = Astro.props;
+const { items, home = 'Início', class: className } = Astro.props;
 ---
 
-<nav aria-label="Trilha" class="text-sm">
+<nav aria-label="Trilha" class:list={['text-sm', className]}>
   <ol class="flex flex-wrap items-center gap-x-2 gap-y-1 text-muted">
     <li>
       <a href="/" data-astro-prefetch class="transition-colors hover:text-text">

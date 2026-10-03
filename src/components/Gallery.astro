@@ -17,14 +17,21 @@ const { id, items } = Astro.props;
  * o Astro era obrigado a copiar o original inteiro para `dist/` — 57 MB de
  * JPEG só para isso, e um clique na miniatura baixava megabytes.
  *
- * Geramos uma variante de exibição (1920 px de lado maior, WebP q82), que é o
- * que o lightbox efetivamente mostra (`max-h-[78vh]`). O original deixa de ser
- * referenciado e some do build.
+ * Geramos uma variante de exibição (1920 px de lado maior, WebP q75), que é o
+ * que o lightbox efetivamente mostra (`max-h-[78vh]`).
+ *
+ * O original continua sendo copiado para o `dist/` pelo `import.meta.glob` que
+ * lista as imagens — nenhuma página o referencia, e a integração
+ * `prune-unreferenced-assets` do `astro.config.mjs` o remove no fim do build.
+ *
+ * `width={1024}` limita também o `<img>` de reserva: sem ele, o Astro usa a
+ * largura intrínseca do arquivo (4016 px em boa parte das fotos) e emite um
+ * WebP de 3 MB que só seria baixado por navegador sem suporte a AVIF/WebP.
  */
 const LIGHTBOX_WIDTH = 1920;
 const fulls = await Promise.all(
   items.map((item) =>
-    getImage({ src: item.image, width: LIGHTBOX_WIDTH, format: 'webp', quality: 82 }),
+    getImage({ src: item.image, width: LIGHTBOX_WIDTH, format: 'webp', quality: 75 }),
   ),
 );
 ---
@@ -53,7 +60,7 @@ const fulls = await Promise.all(
           widths={[480, 1024]}
           sizes="(min-width: 1280px) 384px, (min-width: 1024px) 31vw, (min-width: 640px) 48vw, 96vw"
           formats={['avif', 'webp']}
-          fallbackFormat="webp"
+          width={1024}
           loading="lazy"
           decoding="async"
           class="w-full transition-transform duration-700 ease-out group-hover:scale-[1.03]"

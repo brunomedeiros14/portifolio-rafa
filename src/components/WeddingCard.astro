@@ -2,6 +2,7 @@
 import { Picture } from 'astro:assets';
 import type { CollectionEntry } from 'astro:content';
 import { formatDate } from '../site.config';
+import MediaFrame from './MediaFrame.astro';
 
 interface Props {
   wedding: CollectionEntry<'weddings'>;
@@ -25,14 +26,14 @@ const { data } = wedding;
     href={`/casamentos/${data.slug}`}
     class="block rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
   >
-    <div class="media relative aspect-[4/5] overflow-hidden rounded-sm bg-line">
+    <MediaFrame ratio="4/5">
       <Picture
         src={data.cover}
         alt={data.excerpt}
         widths={[480, 1280]}
         sizes="(min-width: 1280px) 340px, (min-width: 1024px) 30vw, (min-width: 640px) 45vw, 92vw"
         formats={['avif', 'webp']}
-        fallbackFormat="webp"
+        width={1280}
         loading={priority ? 'eager' : 'lazy'}
         decoding="async"
         fetchpriority={priority ? 'high' : undefined}
@@ -42,10 +43,10 @@ const { data } = wedding;
         class="absolute inset-0 bg-gradient-to-t from-ink/50 via-transparent to-transparent opacity-70 transition-opacity duration-500 group-hover:opacity-40"
         aria-hidden="true"
       />
-      <p class="absolute bottom-4 left-4 text-xs font-medium uppercase tracking-[0.2em] text-white/90">
+      <p class="absolute bottom-4 left-4 text-xs font-medium tracking-eyebrow text-white/90 uppercase">
         {data.city}, {data.state}
       </p>
-    </div>
+    </MediaFrame>
     <h3 class="mt-4 font-display text-xl font-medium tracking-tight transition-colors group-hover:text-accent">
       {data.couple}
     </h3>
