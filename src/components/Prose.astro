@@ -1,0 +1,21 @@
+---
+/**
+ * Envelope de texto longo (corpo de artigo, biografia, manifesto).
+ *
+ * `.story` cobria só metade do editor de prosa: os links estavam em `@layer
+ * base` com um seletor `.story a, .prose a`, e as imagens apareciam repetidas
+ * em dois seletores. `.prose` agora cobre o conjunto inteiro num lugar só.
+ */
+interface Props {
+  as?: 'div' | 'article' | 'section';
+  /** Sobre `bg-ink`, links e itálicos precisam do tom claro de acento. */
+  onInk?: boolean;
+  class?: string;
+}
+
+const { as: Tag = 'div', onInk = false, class: className } = Astro.props;
+---
+
+<Tag class:list={['prose', onInk && 'prose-on-ink', className]}>
+  <slot />
+</Tag>

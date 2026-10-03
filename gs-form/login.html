@@ -185,7 +185,6 @@
               SUA_SENHA</code
             >
           </li>
-          <li><code>ADMIN_SESSION_SECRET</code> — string longa e aleatória.</li>
           <li><code>CMS_API_TOKEN</code> — o mesmo valor usado no GitHub Actions.</li>
         </ol>
         <p>
@@ -197,6 +196,11 @@
     <!--
       A senha vai por `google.script.run` (POST), não pela query string: um GET
       a deixaria no histórico do navegador e nos logs de acesso.
+
+      Já o *token* de sessão vai na query do GET que carrega o painel — é a
+      única forma de ele chegar ao servidor, que não lê cookie (ver Auth.js).
+      Por isso o redirect abaixo é `/?token=...`, e não `/`. O `index.html` apaga
+      o parâmetro da barra de endereço assim que o lê.
 
       Não há cookie. O HtmlService não monta headers de resposta, então o
       servidor não consegue ler um; `apiLogin` devolve um token opaco que o
@@ -248,7 +252,7 @@
         google.script.run
           .withSuccessHandler((result) => {
             storeToken(result && result.token);
-            location.replace('/');
+            location.replace('/?token=' + encodeURIComponent(result && result.token));
           })
           .withFailureHandler(fail)
           .apiLogin(input.value);

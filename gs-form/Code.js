@@ -36,6 +36,21 @@ const Serve = {
  * `doGet` entrega `login.html` a quem não tem sessão, e todas as funções `api*`
  * chamam `Auth.requireAuth_()`.
  *
+ * ## Por que o token vai na query string
+ *
+ * Não existe cookie para o servidor ler (ver Auth.js), então a sessão precisa
+ * chegar por algum lugar no GET que serve o painel. Sem ela, num deployment
+ * "qualquer pessoa" o painel seria inalcançável: `Session.getActiveUser()` não
+ * devolve email, `doGet` devolveria `login.html` de novo, e o `login.html`
+ * repetiria o redirect — laço infinito logo após o login dar certo.
+ *
+ * O custo é o token aparecer no histórico e no log de acesso do web app. Ele
+ * fica ali até o painel subir, e o `index.html` o apaga da barra de endereço com
+ * `history.replaceState` assim que lê — de forma que ele não sobrevive a
+ * navegação. Como a sessão é de 7 dias e revogável, e o único lugar que registra
+ * essa URL é o seu próprio histórico, o risco é menor que o de um painel
+ * impossível de abrir.
+ *
  * Observação: o GAS sempre responde HTTP 200 em web apps. Por isso os erros
  * chegam no corpo como JSON { error: "..." } e é o `generate-wedding.mjs` que
  * valida o conteúdo.
@@ -46,13 +61,23 @@ function doGet(e) {
   // Sonda de saúde: sem sessão e sem tocar planilha nem Drive. O
   // `Events.ensureSetup()` criava uma planilha e uma pasta em *toda* visita à
   // página, inclusive no `?health=1`.
+  // Token de sessão, quando o painel foi aberto por `?token=` (ver Auth.js).
+  const token = String(p.token || '');
+  const auth = Auth.authorized_(token);
+
   if (p.health === '1') {
-    return Publish.json_({ ok: true, service: 'portfolio-cms', auth: !!Auth.authorized_() });
+    return Publish.json_({ ok: true, service: 'portfolio-cms', auth: !!auth });
   }
 
-  Events.ensureSetup();
+  // `ensureSetup()` cria a planilha e a pasta no Drive. Ele fica depois do gate
+  // de propósito: antes, até uma visita anônima à tela de login provisionava
+  // recursos na sua conta.
+  if (auth) {
+    Events.ensureSetup();
+    return Serve.panel();
+  }
 
-  return Auth.authorized_() ? Serve.panel() : Serve.login();
+  return Serve.login();
 }
 
 /**

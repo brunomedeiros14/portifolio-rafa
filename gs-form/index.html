@@ -659,7 +659,27 @@
        * continua funcionando e só perde o token ao recarregar, e é por isso que
        * nada aqui é essencial: `authGate` na partida é quem garante acesso.
        */
-      var session = { token: readStoredToken() };
+      var session = { token: tokenFromUrl() || readStoredToken() };
+
+      /**
+       * Token que o `login.html` pôs na query ao redirecionar.
+       *
+       * Sem ele o painel não carrega num deployment "qualquer pessoa": o
+       * `doGet` não tem cookie para ler e devolveria a tela de login, que
+       * redirecionaria de novo — laço. Ler aqui e apagar em seguida deixa o
+       * token fora da barra de endereço e do histórico assim que o painel sobe.
+       */
+      function tokenFromUrl() {
+        var token = new URLSearchParams(window.location.search).get('token') || '';
+        if (!token) return '';
+        try {
+          window.sessionStorage.setItem('gs_token', token);
+        } catch (err) {
+          /* sem storage: o token vive só nesta aba */
+        }
+        window.history.replaceState(null, '', window.location.pathname);
+        return token;
+      }
 
       function readStoredToken() {
         try {
@@ -1140,6 +1160,88 @@
       /* ------------------------------------------------------------------ */
       /* Upload de fotos (fundo, 1 por vez, pasta única, nome UUID)         */
       /* ------------------------------------------------------------------ */
+      /**
+       * Lado maior máximo do que sai daqui.
+       *
+       * O maior consumo do site é a variante de 1920 px do lightbox (ver
+       * `Gallery.astro`). Acima de 2400 px não sobra nada para nenhuma tela, e
+       * cada byte extra viaja pelo base64 do `google.script.run`, que ainda
+       * multiplica por 1,33. Uma foto de 6016 px (4 MB) sai com cerca de 900 KB:
+       * mesmo arquivo visível, um quinto do upload — e um envio que antes
+       * estourava o limite de payload do GAS passa a caber.
+       */
+      var MAX_EDGE = 2400;
+      var JPEG_QUALITY = 0.88;
+
+      var resizedCount = 0;
+      var savedBytes = 0;
+
+      function humanBytes(n) {
+        if (n < 1024) return n + ' B';
+        if (n < 1024 * 1024) return Math.round(n / 1024) + ' kB';
+        return (n / 1048576).toFixed(1).replace('.', ',') + ' MB';
+      }
+
+      /**
+       * Reduz a foto antes de mandar, se ela for maior que o necessário.
+       *
+       * Devolve o arquivo original quando já cabe, quando não dá para decodificar
+       * (HEIC do iPhone, por exemplo) ou quando o `canvas` falha. Redimensionar é
+       * uma economia, nunca um requisito: um erro aqui não pode impedir o envio,
+       * senão uma foto some do painel por um motivo invisível para quem opera.
+       */
+      function preparePhoto(file) {
+        if (typeof createImageBitmap !== 'function' || !/^image\//.test(file.type)) {
+          return Promise.resolve({ file: file });
+        }
+
+        return createImageBitmap(file, { imageOrientation: 'from-image' })
+          .then(function (bitmap) {
+            var longest = Math.max(bitmap.width, bitmap.height);
+            if (longest <= MAX_EDGE) {
+              bitmap.close();
+              return { file: file };
+            }
+
+            var scale = MAX_EDGE / longest;
+            var w = Math.round(bitmap.width * scale);
+            var h = Math.round(bitmap.height * scale);
+
+            var canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            var ctx = canvas.getContext('2d');
+            // Fundo branco antes do desenho: PNG com transparência viraria
+            // preto no JPEG.
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, w, h);
+            ctx.drawImage(bitmap, 0, 0, w, h);
+            bitmap.close();
+
+            return new Promise(function (resolve) {
+              canvas.toBlob(
+                function (blob) {
+                  if (!blob || blob.size >= file.size) {
+                    resolve({ file: file });
+                    return;
+                  }
+                  var name = file.name.replace(/\.[^.]+$/, '') + '.jpg';
+                  resolve({
+                    file: new File([blob], name, { type: 'image/jpeg' }),
+                    saved: file.size - blob.size,
+                    note: w + '\u00d7' + h,
+                  });
+                },
+                'image/jpeg',
+                JPEG_QUALITY,
+              );
+            });
+          })
+          .catch(function () {
+            return { file: file };
+          });
+      }
+
       function uploadsPending() {
         return state.uploads.filter(function (u) {
           return u.status === 'pending' || u.status === 'uploading';
@@ -1209,14 +1311,39 @@
           if (!next) {
             uploadRunning = false;
             updateUploadBar();
+            // Uma mensagem só no fim: um casamento tem ~25 fotos e 25 toasts
+            // informa menos do que um.
+            if (resizedCount > 0) {
+              toast(
+                resizedCount +
+                  (resizedCount === 1
+                    ? ' foto redimensionada para 2400 px'
+                    : ' fotos redimensionadas para 2400 px') +
+                  ', ' +
+                  humanBytes(savedBytes) +
+                  ' a menos no envio.',
+              );
+            }
+            resizedCount = 0;
+            savedBytes = 0;
             return;
           }
           next.status = 'uploading';
           replaceUploadTile_(next, uploadingTile(next));
           updateUploadBar();
-          readPayload(next.file)
-            .then(function (pl) {
-              return runQuiet('apiUploadPhoto', state.slug, pl);
+          preparePhoto(next.file)
+            .then(function (prep) {
+              next.file = prep.file;
+              if (prep.saved) {
+                resizedCount += 1;
+                savedBytes += prep.saved;
+              }
+              return prep.file;
+            })
+            .then(function (file) {
+              return readPayload(file).then(function (pl) {
+                return runQuiet('apiUploadPhoto', state.slug, pl);
+              });
             })
             .then(
               function (files) {

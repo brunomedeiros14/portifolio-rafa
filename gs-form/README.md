@@ -68,6 +68,17 @@ exigiria a senha de novo em _cada_ requisição, porque o browser não reenviari
 O token fica em `sessionStorage` só por conveniência (evita pedir a senha num F5). Num iframe com
 storage de terceiros bloqueado o painel abre normalmente e basta entrar de novo.
 
+### O token viaja na query do GET que abre o painel
+
+Não havendo cookie para o servidor ler, o `doGet` precisa do token de algum lugar. O `login.html`
+redireciona para `/?token=<token>` e o `index.html` o lê no boot, guarda em `sessionStorage` e
+apaga o parâmetro com `history.replaceState` — assim ele não fica na barra de endereço.
+
+Sem esse passo o painel seria inalcançável num deployment "qualquer pessoa": `getActiveUser()` não
+devolve email, `doGet` devolveria `login.html` de novo, e o login redirecionaria outra vez — laço
+infinito logo após a senha conferir. O custo é o token passar pelo histórico do navegador e pelo
+log de acesso do web app, que só você enxerga.
+
 ### Alternativa recomendada: restringir o deployment
 
 Se o deployment estiver em _Quem tem acesso: apenas \<sua conta\>_, o Google já autoriza e

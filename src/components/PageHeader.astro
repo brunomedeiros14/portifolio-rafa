@@ -1,0 +1,41 @@
+---
+import Eyebrow from './Eyebrow.astro';
+import Breadcrumbs from './Breadcrumbs.astro';
+import type { Crumb } from '../types';
+
+/**
+ * Cabeçalho das páginas internas.
+ *
+ * A mesma `border-b border-line` + `pt-[calc(var(--header-h)+2rem)] pb-14` +
+ * eyebrow + `h1` estava copiada em cinco páginas (`sobre`, `experiencia`,
+ * `contato`, `casamentos/index`, `blog/index`). Uma cópia de cabeçalho por
+ * página é uma cópia a mais para atualizar quando o espaçamento mudar.
+ *
+ * `title` recebe a string pronta: os usos reaislead com `<em>` em itálico
+ * (`"Fotografia, para mim, é <em>memória</em>..."`) e o HTML configurado no
+ * frontmatter não sobrevive à passagem por `<slot />` deste componente.
+ */
+interface Props {
+  eyebrow?: string;
+  title: string;
+  description?: string;
+  /** Trilha opcional, renderizada acima do rótulo. */
+  breadcrumbs?: Crumb[];
+}
+
+const { eyebrow, title, description, breadcrumbs } = Astro.props;
+---
+
+<header class="border-b border-line">
+  <div class="shell pb-14 pt-[calc(var(--header-h)+3rem)] md:pb-18">
+    {breadcrumbs ? <Breadcrumbs items={breadcrumbs} class="mb-8" /> : null}
+    {eyebrow ? <Eyebrow>{eyebrow}</Eyebrow> : null}
+    <h1
+      class="mt-3 font-display text-4xl font-medium tracking-tight sm:text-5xl md:text-[3.25rem]"
+      set:html={title}
+    />
+    {description ? (
+      <p class="mt-5 max-w-measure text-base leading-relaxed text-muted">{description}</p>
+    ) : null}
+  </div>
+</header>
