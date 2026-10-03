@@ -26,7 +26,46 @@ export interface OgImage {
  *
  * Pior, a URL original também arrastava o JPEG de 2,5 MB para o `dist/`.
  */
+/**
+ * Uma transformação por imagem, por build.
+ *
+ * `ogImageFrom` é o único lugar do site que entra no sharp sempedir, e antes
+ * desta memoização o mesmo arquivo era reprocessado várias vezes:
+ *
+ * - o retrato em `SEO.astro` roda em **toda** página que não traz `ogImage`
+ *   própria — com 5 casamentos e 3 posts, eram 7 páginas repassando a mesma
+ *   imagem, mais `index.astro` e `sobre.astro`, que pedem o retrato de novo;
+ * - a capa de cada casamento era transformada na página dele **e** de novo no
+ *   índice, para o `thumbnailUrl` do `ItemList`.
+ *
+ * São 22 gerações para 5 casamentos, e o número crescia em duas direções: mais
+ * casamentos, mais uma geração cada no índice — sem limite, porque o índice
+ * gerava a capa de *todos* os casamentos em `Promise.all`, mesmo os que não
+ * estavam naquela página.
+ *
+ * O cache guarda a **promise**, não o resultado: assim as chamadas concorrentes
+ * do `Promise.all` compartilham o mesmo trabalho em vez de só se encontrarem
+ * depois de prontas. A chave é o `src` da imagem, que já vem com hash e é
+ * único por arquivo.
+ */
+const cache = new Map<string, Promise<OgImage>>();
+
 export async function ogImageFrom(cover: ImageMetadata): Promise<OgImage> {
+  const chave = cover.src;
+  const emCache = cache.get(chave);
+  if (emCache) return emCache;
+
+  const geracao = gerarOgImage(cover).catch((erro: unknown) => {
+    // Uma falha não pode ficar no cache: a próxima página que pedir a mesma
+    // imagem precisa tentar de novo, não receber o erro de graça.
+    cache.delete(chave);
+    throw erro;
+  });
+  cache.set(chave, geracao);
+  return geracao;
+}
+
+async function gerarOgImage(cover: ImageMetadata): Promise<OgImage> {
   // O sharp não amplia: pedir 1200px para uma capa de 1080 devolve 1080. Como
   // as dimensões declaradas em `og:image:width/height` vêm daqui, devolver as
   // pedidas anunciava um arquivo maior do que o que existe — e o retrato, que

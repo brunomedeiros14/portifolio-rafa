@@ -27,6 +27,24 @@ const { id, items } = Astro.props;
  * `width={1024}` limita também o `<img>` de reserva: sem ele, o Astro usa a
  * largura intrínseca do arquivo (4016 px em boa parte das fotos) e emite um
  * WebP de 3 MB que só seria baixado por navegador sem suporte a AVIF/WebP.
+ *
+ * ## `fallbackFormat="webp"`: o que se economiza e o que se perde
+ *
+ * `formats={['avif', 'webp']}` gera as duas variantes e, por padrão, o Astro
+ * mantém também o **formato original** como `<img>` de reserva. Como as fontes
+ * são JPEG de câmera, isso rendia um JPEG extra por imagem — 7,1 MB e 51
+ * arquivos numa página de casamento, para servir ao navegador que não sabe ler
+ * WebP.
+ *
+ * Apontar o fallback para o WebP que já existe elimina esse arquivo sem
+ * duplicar nada: `<img src>` passa a ser o mesmo WebP que já estava no `srcset`.
+ * No site inteiro foram 852 → 624 arquivos e 70,2 → 43,4 MB.
+ *
+ * O que se perde: quem não suporte WebP deixa de ver foto. WebP está no Chrome
+ * desde 2018, no Firefox desde 2017 e no Safari desde 2020 — sobra o Internet
+ * Explorer e o Safari 13, de 2019. Para um portfólio de fotografia em 2026, é
+ * um trade bom, mas é um trade: se um dia aparecer público assim, voltar
+ * `fallbackFormat="jpeg"` nos sete `<Picture>` do site custa uma linha em cada.
  */
 const LIGHTBOX_WIDTH = 1920;
 const fulls = await Promise.all(
@@ -60,6 +78,7 @@ const fulls = await Promise.all(
           widths={[480, 1024]}
           sizes="(min-width: 1280px) 384px, (min-width: 1024px) 31vw, (min-width: 640px) 48vw, 96vw"
           formats={['avif', 'webp']}
+          fallbackFormat="webp" /* fallback de JPEG para JPEG em webp — ver Gallery.astro */
           width={1024}
           loading="lazy"
           decoding="async"

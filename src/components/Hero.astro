@@ -32,6 +32,7 @@ const { image, alt, eyebrow, title, subtitle, ctas = [], priority = true } = Ast
     widths={[1280, 1920]}
     sizes="100vw"
     formats={['avif', 'webp']}
+    fallbackFormat="webp" /* fallback de JPEG para JPEG em webp — ver Gallery.astro */
     width={1920}
     loading={priority ? 'eager' : 'lazy'}
     decoding="async"

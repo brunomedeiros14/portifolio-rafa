@@ -1,0 +1,30 @@
+---
+import CasamentosIndex from '../../components/CasamentosIndex.astro';
+import { listWeddingsPages } from '../../utils/weddings';
+
+/**
+ * Páginas 2+ da listagem, em `/casamentos/2`, `/casamentos/3`…
+ *
+ * O parâmetro é `[page]` (dinâmico) e não `[...page]` (rest) porque o
+ * detalhe do casamento já ocupa uma rota rest neste diretório. Na resolução do
+ * Astro, estático > dinâmico > rest, então `/casamentos/2` vem para cá e
+ * `/casamentos/sara-e-wallison` continua indo para `[...slug]`. O comentário do
+ * `CasamentosIndex` traz o porquê completo.
+ *
+ * As linhas 0 e 1 são de `/casamentos`, gerada por `index.astro`. Pular as duas
+ * aqui em vez de fatiar os dados com `slice` é o que impede a página 2 de
+ * repetir a primeira: `paginate()` não serve aqui porque contaria de novo a
+ * partir da 1, gerando um `/casamentos/1` fantasma.
+ */
+export async function getStaticPaths() {
+  const pages = await listWeddingsPages();
+  return pages.slice(1).map((page) => ({
+    params: { page: String(page.number) },
+    props: { page },
+  }));
+}
+
+const { page } = Astro.props;
+---
+
+<CasamentosIndex page={page} />
