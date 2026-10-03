@@ -1,4 +1,6 @@
 ---
+import Button from './Button.astro';
+
 interface Props {
   title?: string;
   description?: string;
@@ -10,8 +12,8 @@ const {
 } = Astro.props;
 ---
 
-<section class="reveal bg-ink text-white">
-  <div class="mx-auto flex max-w-(--content-max) flex-col items-start gap-10 px-4 py-20 sm:px-6 md:flex-row md:items-center md:justify-between md:py-28">
+<section class="bg-ink text-white">
+  <div class="mx-auto flex max-w-(--content-max) flex-col items-start gap-10 px-(--gutter) py-20 md:flex-row md:items-center md:justify-between md:py-28">
     <div class="max-w-2xl">
       <h2 class="font-display text-3xl font-medium tracking-tight sm:text-4xl md:text-5xl">
         {title}
@@ -19,18 +21,12 @@ const {
       <p class="mt-5 max-w-xl text-base leading-relaxed text-white/70">{description}</p>
     </div>
     <div class="flex flex-col gap-4 sm:flex-row">
-      <a
-        href="/contato"
-        class="inline-flex items-center justify-center rounded-full bg-accent px-7 py-3.5 text-sm font-medium text-white transition-colors hover:bg-accent-soft"
-      >
+      <Button href="/contato" prefetch>
         Entrar em contato
-      </a>
-      <a
-        href="/casamentos"
-        class="inline-flex items-center justify-center rounded-full border border-white/30 px-7 py-3.5 text-sm font-medium text-white transition-colors hover:border-white/70"
-      >
+      </Button>
+      <Button href="/casamentos" variant="on-ink" prefetch>
         Ver portfólio
-      </a>
+      </Button>
     </div>
   </div>
 </section>

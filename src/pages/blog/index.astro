@@ -2,6 +2,11 @@
 import { Picture } from 'astro:assets';
 import { getCollection } from 'astro:content';
 import CTA from '../../components/CTA.astro';
+import Eyebrow from '../../components/Eyebrow.astro';
+import MediaFrame from '../../components/MediaFrame.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import Reveal from '../../components/Reveal.astro';
+import Section from '../../components/Section.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { SITE, absolute, formatDate, canonicalPath } from '../../site.config';
 import { ID, node } from '../../utils/schema';
@@ -52,56 +57,107 @@ const jsonLd = node({
   headerTransparent={false}
   jsonLd={jsonLd}
 >
-  <header class="border-b border-line bg-background">
-    <div class="mx-auto max-w-(--content-max) px-4 pb-16 pt-[calc(var(--header-h)+2rem)] sm:px-6 md:pb-20">
-      <p class="reveal text-xs font-medium uppercase tracking-[0.24em] text-accent">Diário</p>
-      <h1 class="reveal mt-3 max-w-3xl font-display text-4xl font-medium tracking-tight sm:text-5xl">
-        Blog de casamento
-      </h1>
-      <p class="reveal mt-5 max-w-2xl text-base leading-relaxed text-muted" style="--reveal-delay:120ms">
-        Textos úteis para noivas e noivos de verdade — sobre lugares, luz, ensaios e a escolha de
-        quem vai registrar o seu dia.
-      </p>
-    </div>
-  </header>
+  <PageHeader
+    eyebrow="Diário"
+    title="Blog de casamento"
+    description="Textos úteis para noivas e noivos de verdade — sobre lugares, luz, ensaios e a escolha de quem vai registrar o seu dia."
+  />
 
-  <div class="bg-surface">
-    <div class="mx-auto max-w-(--content-max) px-4 py-16 sm:px-6 md:py-20">
-      <div class="grid gap-x-10 gap-y-14 md:grid-cols-2">
-        {posts.map((post, index) => (
-          <article class="group">
+  {/*
+    O texto mais recente ganha a página inteira.
+
+    Numa grade de duas colunas, o artigo novo tem exatamente o mesmo peso dos
+    antigos — e a visitors chega pelo que é atual. Destacando o primeiro, a
+    lista vira "o que é novo" + "o que já escrevi", que é a estrutura que a
+    pessoa espera de um diário.
+  */}
+  <Section rhythm="page">
+    {posts.length > 0 ? (
+      <>
+        <Eyebrow>Mais recente</Eyebrow>
+        <Reveal as="article" class="mt-6 grid gap-10 md:grid-cols-12 md:items-center md:gap-16">
+          <a
+            href={`/blog/${posts[0].data.slug}`}
+            class="block md:col-span-7 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+            data-astro-prefetch
+          >
+            {posts[0].data.cover ? (
+              <MediaFrame ratio="16/10">
+                <Picture
+                  src={posts[0].data.cover}
+                  alt={posts[0].data.description}
+                  widths={[640, 1280]}
+                  sizes="(min-width: 1024px) 42rem, 92vw"
+                  formats={['avif', 'webp']}
+                  width={1280}
+                  loading="eager"
+                  decoding="async"
+                  fetchpriority="high"
+                  class="h-full w-full object-cover"
+                />
+              </MediaFrame>
+            ) : null}
+          </a>
+          <div class="md:col-span-5">
+            <p class="eyebrow">
+              <time datetime={posts[0].data.date.toISOString().slice(0, 10)}>
+                {formatDate(posts[0].data.date)}
+              </time>
+            </p>
+            <h2 class="mt-3 font-display text-3xl font-medium tracking-tight sm:text-4xl">
+              <a
+                href={`/blog/${posts[0].data.slug}`}
+                class="transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+              >
+                {posts[0].data.title}
+              </a>
+            </h2>
+            <p class="mt-4 text-base leading-relaxed text-muted">{posts[0].data.description}</p>
+          </div>
+        </Reveal>
+      </>
+    ) : null}
+  </Section>
+
+  {posts.length > 1 ? (
+    <Section tone="surface" rhythm="page">
+      <Eyebrow>Anteriores</Eyebrow>
+      <ul class="mt-10 grid gap-x-10 gap-y-14 sm:grid-cols-2">
+        {posts.slice(1).map((post) => (
+          <Reveal as="li" class="group border-t border-line pt-6">
             <a href={`/blog/${post.data.slug}`} class="block" data-astro-prefetch>
               {post.data.cover ? (
-                <div class="media aspect-16/10 overflow-hidden rounded-sm bg-line">
+                <MediaFrame ratio="16/10">
                   <Picture
                     src={post.data.cover}
                     alt={post.data.description}
                     widths={[480, 1024]}
-                    sizes="(min-width: 1024px) 544px, 92vw"
+                    sizes="(min-width: 640px) 26rem, 92vw"
                     formats={['avif', 'webp']}
-                    fallbackFormat="webp"
-                    loading={index === 0 ? 'eager' : 'lazy'}
+                    width={1024}
+                    loading="lazy"
                     decoding="async"
-                    fetchpriority={index === 0 ? 'high' : undefined}
                     class="h-full w-full object-cover"
                   />
-                </div>
+                </MediaFrame>
               ) : null}
-              <div class="mt-5">
-                <p class="text-xs font-medium uppercase tracking-[0.2em] text-accent">
+              <h2 class="mt-5 font-display text-xl font-medium tracking-tight transition-colors group-hover:text-accent">
+                {post.data.title}
+              </h2>
+              <p class="mt-2 text-xs tracking-eyebrow text-muted uppercase">
+                <time datetime={post.data.date.toISOString().slice(0, 10)}>
                   {formatDate(post.data.date)}
-                </p>
-                <h2 class="mt-2 font-display text-2xl font-medium tracking-tight transition-colors group-hover:text-accent">
-                  {post.data.title}
-                </h2>
-                <p class="mt-2 line-clamp-3 text-sm leading-relaxed text-muted">{post.data.description}</p>
-              </div>
+                </time>
+              </p>
+              <p class="mt-3 line-clamp-3 text-sm leading-relaxed text-muted">
+                {post.data.description}
+              </p>
             </a>
-          </article>
+          </Reveal>
         ))}
-      </div>
-    </div>
-  </div>
+      </ul>
+    </Section>
+  ) : null}
 
-  <CTA />
+  <CTA title="Gostou dos textos? Vamos conversar" />
 </BaseLayout>

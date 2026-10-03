@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <base target="_top" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Casamentos — acesso</title>
+    <style>
+      :root {
+        --bg: #faf7f2;
+        --surface: #ffffff;
+        --text: #16120e;
+        --muted: #6f665c;
+        --line: #d5cabb;
+        --accent: #8a5f3f;
+        --danger: #a33030;
+        --radius: 10px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          15px/1.5 ui-sans-serif,
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .card {
+        width: 100%;
+        max-width: 400px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 28px;
+        box-shadow:
+          0 1px 2px rgb(22 18 14 / 0.05),
+          0 10px 30px rgb(22 18 14 / 0.07);
+      }
+
+      h1 {
+        margin: 0 0 4px;
+        font-family: Georgia, serif;
+        font-size: 24px;
+        font-style: italic;
+        font-weight: 400;
+      }
+
+      p {
+        margin: 0 0 20px;
+        font-size: 14px;
+        color: var(--muted);
+      }
+
+      label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      input {
+        width: 100%;
+        font: inherit;
+        color: var(--text);
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+      }
+
+      input:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgb(138 95 63 / 0.18);
+      }
+
+      button {
+        width: 100%;
+        margin-top: 16px;
+        font: inherit;
+        font-weight: 500;
+        cursor: pointer;
+        color: #fff;
+        background: var(--accent);
+        border: 1px solid var(--accent);
+        border-radius: 8px;
+        padding: 11px 16px;
+        transition: background 0.12s ease;
+      }
+
+      button:hover {
+        background: #7c5737;
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .msg {
+        display: none;
+        margin: 0 0 16px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        border: 1px solid;
+      }
+
+      .msg.show {
+        display: block;
+      }
+
+      .msg.err {
+        color: var(--danger);
+        background: #fdf0f0;
+        border-color: #f0cfcf;
+      }
+
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 1px 5px;
+        word-break: break-all;
+      }
+
+      ol {
+        margin: 0 0 16px;
+        padding-left: 20px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      ol li {
+        margin: 6px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <h1>Casamentos</h1>
+      <p>Controle de publicação</p>
+
+      <div id="msg" class="msg" role="status" aria-live="polite"></div>
+
+      <form id="form">
+        <label for="password">Senha</label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          autocomplete="current-password"
+          required
+          autofocus
+        />
+        <button id="submit" type="submit">Entrar</button>
+      </form>
+
+      <section id="setup" hidden>
+        <p><strong>Nenhuma senha configurada.</strong></p>
+        <p>Em <em>Apps Script → Configurações do projeto → Propriedades do script</em>, defina:</p>
+        <ol>
+          <li>
+            <code>ADMIN_PASSWORD_HASH</code> — no formato <code>sha256:&lt;hash&gt;</code>. Gere o
+            hash com
+            <code
+              >node -e
+              "console.log('sha256:'+require('crypto').createHash('sha256').update(process.argv[1]).digest('hex'))"
+              SUA_SENHA</code
+            >
+          </li>
+          <li><code>CMS_API_TOKEN</code> — o mesmo valor usado no GitHub Actions.</li>
+        </ol>
+        <p>
+          Até a senha existir o painel fica fechado. Recarregue esta página depois de configurar.
+        </p>
+      </section>
+    </main>
+
+    <!--
+      A senha vai por `google.script.run` (POST), não pela query string: um GET
+      a deixaria no histórico do navegador e nos logs de acesso.
+
+      Já o *token* de sessão vai na query do GET que carrega o painel — é a
+      única forma de ele chegar ao servidor, que não lê cookie (ver Auth.js).
+      Por isso o redirect abaixo é `/?token=...`, e não `/`. O `index.html` apaga
+      o parâmetro da barra de endereço assim que o lê.
+
+      Não há cookie. O HtmlService não monta headers de resposta, então o
+      servidor não consegue ler um; `apiLogin` devolve um token opaco que o
+      painel envia como primeiro argumento de cada chamada (ver Auth.js). O
+      `sessionStorage` só evita pedir a senha de novo num F5 — num iframe com
+      storage de terceiros bloqueado o painel abre, e basta entrar outra vez.
+    -->
+    <script>
+      const form = document.getElementById('form');
+      const input = document.getElementById('password');
+      const submit = document.getElementById('submit');
+      const msg = document.getElementById('msg');
+
+      const TOKEN_KEY = 'gs_token';
+
+      function readStoredToken() {
+        try {
+          return window.sessionStorage.getItem(TOKEN_KEY) || '';
+        } catch (err) {
+          return '';
+        }
+      }
+
+      function storeToken(token) {
+        try {
+          if (token) window.sessionStorage.setItem(TOKEN_KEY, token);
+          else window.sessionStorage.removeItem(TOKEN_KEY);
+        } catch (err) {
+          /* sem storage: o token vale só enquanto a aba estiver aberta */
+        }
+      }
+
+      function show(text, kind) {
+        msg.textContent = text;
+        msg.className = 'msg show ' + kind;
+      }
+
+      function fail(err) {
+        show((err && err.message) || 'Não foi possível entrar.', 'err');
+        submit.disabled = false;
+        input.value = '';
+        input.focus();
+      }
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        msg.className = 'msg';
+        submit.disabled = true;
+        google.script.run
+          .withSuccessHandler((result) => {
+            storeToken(result && result.token);
+            location.replace('/?token=' + encodeURIComponent(result && result.token));
+          })
+          .withFailureHandler(fail)
+          .apiLogin(input.value);
+      });
+
+      // Se já existe sessão válida, não faz sentido mostrar o formulário.
+      google.script.run
+        .withSuccessHandler((status) => {
+          if (status && status.authenticated) {
+            location.replace('/');
+            return;
+          }
+          if (status && !status.hasPassword) {
+            form.hidden = true;
+            document.getElementById('setup').hidden = false;
+          }
+        })
+        .withFailureHandler(() => {})
+        .apiAuthStatus(readStoredToken());
+    </script>
+  </body>
+</html>

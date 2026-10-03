@@ -9,7 +9,6 @@ const weddings = defineCollection({
   }),
   schema: ({ image }) =>
     z.object({
-      title: z.string(),
       slug: z.string(),
       couple: z.string(),
       date: z.coerce.date(),
@@ -35,8 +34,6 @@ const weddings = defineCollection({
        */
       draft: z.boolean().default(false),
       tags: z.array(z.string()).default([]),
-      seoTitle: z.string().optional(),
-      seoDescription: z.string().max(160).optional(),
     }),
 });
 
@@ -49,7 +46,7 @@ const blog = defineCollection({
     z.object({
       title: z.string(),
       slug: z.string(),
-      description: z.string().max(180),
+      description: z.string().max(160),
       date: z.coerce.date(),
       updated: z.coerce.date().optional(),
       cover: image().optional(),
@@ -57,8 +54,6 @@ const blog = defineCollection({
       tags: z.array(z.string()).default([]),
       canonical: z.url().optional(),
       draft: z.boolean().default(false),
-      seoTitle: z.string().optional(),
-      seoDescription: z.string().max(160).optional(),
     }),
 });
 

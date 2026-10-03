@@ -1,10 +1,13 @@
 ---
+import { Picture } from 'astro:assets';
 import { getCollection } from 'astro:content';
-import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import CTA from '../../components/CTA.astro';
-import WeddingGrid from '../../components/WeddingGrid.astro';
+import MediaFrame from '../../components/MediaFrame.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import Reveal from '../../components/Reveal.astro';
+import Section from '../../components/Section.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { absolute, canonicalPath } from '../../site.config';
+import { absolute, canonicalPath, formatDate } from '../../site.config';
 import { ID, node } from '../../utils/schema';
 import { ogImageFrom } from '../../utils/og';
 
@@ -59,32 +62,108 @@ const jsonLd = node({
   headerTransparent={false}
   jsonLd={jsonLd}
 >
-  <header class="border-b border-line bg-background">
-    <div class="mx-auto max-w-(--content-max) px-4 pt-[calc(var(--header-h)+2rem)] sm:px-6">
-      <Breadcrumbs items={[{ label: 'Casamentos' }]} />
-    </div>
-    <div class="mx-auto max-w-(--content-max) px-4 pb-16 pt-10 sm:px-6 md:pb-20">
-      <p class="reveal text-xs font-medium uppercase tracking-[0.24em] text-accent">Portfólio</p>
-      <h1 class="reveal mt-3 max-w-3xl font-display text-4xl font-medium tracking-tight sm:text-5xl" style="--reveal-delay:80ms">
-        Cada casamento, uma história
-      </h1>
-      <p class="reveal mt-5 max-w-2xl text-base leading-relaxed text-muted" style="--reveal-delay:160ms">
-        Uma curadoria das cerimônias que tive o privilégio de fotografar. {weddings.length} histórias
-        completas — e cada uma com galeria, bastidores e lugares reais de Minas Gerais.
-      </p>
-      {/* Os cartões são <h3> (nome do casal). Sem um <h2> intermediário a
-          hierarquia saltava de h1 para h3, e o outline do leitor de tela
-          apresentava os casamentos como se fossem subseções do <h1> — o que
-          eles não são. */}
-      <h2 class="sr-only">Casamentos fotografados</h2>
-    </div>
-  </header>
+  <PageHeader
+    eyebrow="Portfólio"
+    title="Cada casamento, uma história"
+    description={`Uma curadoria das cerimônias que tive o privilégio de fotografar. ${weddings.length} histórias completas — e cada uma com galeria, bastidores e lugares reais de Minas Gerais.`}
+    breadcrumbs={[{ label: 'Casamentos' }]}
+  />
 
-  <div class="bg-surface">
-    <div class="mx-auto max-w-(--content-max) px-4 py-16 sm:px-6 md:py-20">
-      <WeddingGrid weddings={weddings} priorityFirst />
-    </div>
-  </div>
+  {/*
+    Índice editorial em vez de grade de cartões.
 
-  <CTA />
+    A grade de 3 colunas mostra as fotos, mas não dá ideia de volume: cinco
+    retratos idênticos na mesma caixa leem como um mosaico, e o nome do casal
+    perde a escala que ele tem numa página de casamentos real. Aqui cada
+    casamento ocupa uma faixa inteira, com o número do índice na margem — o
+    olho desce a página e entende a sequência.
+
+    Os cartões são <h3> (nome do casal) com um <h2> visualmente escondido: sem
+    ele a hierarquia saltaria de h1 para h3 e o outline do leitor de tela
+    apresentaria os casamentos como subseções do <h1>.
+  */}
+  <Section tone="surface" rhythm="page">
+    <h2 class="sr-only">Casamentos fotografados</h2>
+
+    <ol class="border-t border-line">
+      {weddings.map(({ data }, index) => (
+        <li class="border-b border-line">
+          <Reveal
+            as="article"
+            class="grid items-center gap-8 py-10 md:grid-cols-12 md:gap-12 md:py-14"
+          >
+            <div class="md:col-span-4">
+              <a
+                href={`/casamentos/${data.slug}`}
+                class="block focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+                aria-labelledby={`casamento-${data.slug}`}
+              >
+                <MediaFrame ratio="4/5">
+                  <Picture
+                    src={data.cover}
+                    alt={data.excerpt}
+                    widths={[480, 1280]}
+                    sizes="(min-width: 1024px) 24rem, 92vw"
+                    formats={['avif', 'webp']}
+                    width={1280}
+                    loading={index === 0 ? 'eager' : 'lazy'}
+                    decoding="async"
+                    fetchpriority={index === 0 ? 'high' : undefined}
+                    class="h-full w-full object-cover"
+                  />
+                </MediaFrame>
+              </a>
+            </div>
+
+            <div class="md:col-span-7 md:col-start-6">
+              <div class="flex items-baseline gap-4">
+                <p class="font-display text-sm text-accent/70 italic">
+                  {String(index + 1).padStart(2, '0')}
+                </p>
+                <p class="text-xs tracking-eyebrow text-muted uppercase">
+                  {data.city}, {data.state}
+                </p>
+              </div>
+
+              <h3
+                id={`casamento-${data.slug}`}
+                class="mt-3 font-display text-2xl font-medium tracking-tight sm:text-3xl"
+              >
+                <a
+                  href={`/casamentos/${data.slug}`}
+                  class="transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+                >
+                  {data.couple}
+                </a>
+              </h3>
+
+              <p class="mt-2 text-sm text-muted">
+                <time datetime={data.date.toISOString().slice(0, 10)}>{formatDate(data.date)}</time>
+                {data.venue ? <span aria-hidden="true"> · </span> : null}
+                {data.venue ? data.venue : null}
+              </p>
+
+              <p class="mt-4 max-w-prose text-sm leading-relaxed text-muted">{data.excerpt}</p>
+
+              <p class="mt-6">
+                <a
+                  href={`/casamentos/${data.slug}`}
+                  class="link-line text-sm font-medium text-accent"
+                  data-astro-prefetch
+                >
+                  Ver a história
+                  <span class="sr-only"> de {data.couple}</span>
+                </a>
+              </p>
+            </div>
+          </Reveal>
+        </li>
+      ))}
+    </ol>
+  </Section>
+
+  <CTA
+    title="O seu casamento pode ser o próximo"
+    description="Se a história de vocês ainda não está aqui, é porque ela está por escrever. Me conte sobre ela."
+  />
 </BaseLayout>

@@ -11,26 +11,26 @@ Minas Gerais. Site estático gerado com [Astro](https://astro.build),
 
 ## Stack
 
-| Camada            | Escolha                                  |
-| ----------------- | ---------------------------------------- |
-| Framework         | Astro 7 (`output: 'static'`)            |
-| Conteúdo          | Content Collections + MDX (glob loader)  |
-| Estilo            | Tailwind CSS v4 (`@tailwindcss/vite`)    |
-| Imagens           | `astro:assets` / `sharp`                 |
-| SEO               | `@astrojs/sitemap` + JSON-LD por página  |
-| Transições        | `astro:transitions` (`ClientRouter`)     |
-| Validação         | `astro check`                            |
+| Camada     | Escolha                                 |
+| ---------- | --------------------------------------- |
+| Framework  | Astro 7 (`output: 'static'`)            |
+| Conteúdo   | Content Collections + MDX (glob loader) |
+| Estilo     | Tailwind CSS v4 (`@tailwindcss/vite`)   |
+| Imagens    | `astro:assets` / `sharp`                |
+| SEO        | `@astrojs/sitemap` + JSON-LD por página |
+| Transições | `astro:transitions` (`ClientRouter`)    |
+| Validação  | `astro check`                           |
 
 ## Comandos
 
-| Comando          | Ação                                                |
-| ---------------- | --------------------------------------------------- |
-| `pnpm install`   | Instala as dependências                             |
-| `pnpm dev`       | Servidor de desenvolvimento em `localhost:4321`      |
-| `pnpm build`     | Build de produção em `dist/`                        |
-| `pnpm preview`   | Serve o build local para conferência                |
-| `pnpm check`     | Verificação de tipos de `.astro` e `.ts`            |
-| `pnpm astro ...` | CLI do Astro (ex.: `pnpm astro info`)               |
+| Comando          | Ação                                            |
+| ---------------- | ----------------------------------------------- |
+| `pnpm install`   | Instala as dependências                         |
+| `pnpm dev`       | Servidor de desenvolvimento em `localhost:4321` |
+| `pnpm build`     | Build de produção em `dist/`                    |
+| `pnpm preview`   | Serve o build local para conferência            |
+| `pnpm check`     | Verificação de tipos de `.astro` e `.ts`        |
+| `pnpm astro ...` | CLI do Astro (ex.: `pnpm astro info`)           |
 
 > Em desenvolvimento, prefira rodar o servidor em segundo plano:
 > `astro dev --background`, gerenciado com `astro dev stop`,
@@ -53,32 +53,33 @@ src/
 ├── site.config.ts       # SITE (marca, contato, áreas) e NAV_LINKS
 └── utils/weddings.ts    # Descoberta/ordenação de imagens e legendas
 
-public/                  # favicon, og-default, webmanifest, fonts/
+public/                  # favicon, webmanifest, robots.txt, fonts/
 scripts/                 # scripts Node (pipeline de publicação)
 gs-form/                 # projeto Google Apps Script (CMS)
 ```
 
 ## Rotas
 
-| Rota                    | Tipo   | Conteúdo                                   |
-| ----------------------- | ------ | ------------------------------------------ |
-| `/`                     | SSG    | Home, destaques e seleção editorial        |
-| `/casamentos`           | SSG    | Índice do portfólio                        |
-| `/casamentos/[slug]`   | SSG    | Detalhe de um casamento (`getStaticPaths`) |
-| `/blog`                 | SSG    | Lista de artigos                           |
-| `/blog/[slug]`          | SSG    | Artigo (`getStaticPaths`)                  |
-| `/sobre`                | SSG    | Sobre o fotógrafo                          |
-| `/experiencia`          | SSG    | Processo, do contato à entrega             |
-| `/contato`              | SSG    | Canais de contato                          |
-| `/404`                  | SSG    | Página de erro (`noindex`)                 |
+| Rota                 | Tipo | Conteúdo                                   |
+| -------------------- | ---- | ------------------------------------------ |
+| `/`                  | SSG  | Home, destaques e seleção editorial        |
+| `/casamentos`        | SSG  | Índice do portfólio                        |
+| `/casamentos/[slug]` | SSG  | Detalhe de um casamento (`getStaticPaths`) |
+| `/blog`              | SSG  | Lista de artigos                           |
+| `/blog/[slug]`       | SSG  | Artigo (`getStaticPaths`)                  |
+| `/sobre`             | SSG  | Sobre o fotógrafo                          |
+| `/experiencia`       | SSG  | Processo, do contato à entrega             |
+| `/contato`           | SSG  | Canais de contato                          |
+| `/404`               | SSG  | Página de erro (`noindex`)                 |
 
 ## Publicar um casamento (CMS)
 
 O `gs-form` é um painel em Google Apps Script que grava os dados numa Google
-Sheet, sobe as fotos para o Drive e dispara o workflow de publicação.
+Sheet, sobe as fotos para o Drive e dispara o workflow de publicação. O painel
+exige senha (ou um deployment restrito à sua conta); ver `gs-form/README.md`.
 
-1. No painel, preencha o evento, envie as fotos e marque no editor quais
-   imagens são `cover`, quais são `story` e quais vão para a galeria.
+1. No painel, preencha o evento, envie as fotos e marque uma delas como capa —
+   as demais vão para a galeria.
 2. **Executar automação** faz `repository_dispatch` com `publish-wedding`.
 3. `.github/workflows/publish-wedding.yml` lê a publicação no GAS, roda
    `node scripts/generate-wedding.mjs publication.json` e faz commit das
@@ -87,11 +88,12 @@ Sheet, sobe as fotos para o Drive e dispara o workflow de publicação.
 
 ### Variáveis
 
-| Segredo               | Onde                     | Necessário para                       |
-| --------------------- | ------------------------ | ------------------------------------- |
-| `CMS_API_TOKEN`       | Repo + Script Properties | Calls autenticadas do GAS             |
-| `GITHUB_OWNER/REPO/TOKEN` | Script Properties   | Disparar o `repository_dispatch`      |
-| `SHEET_ID`, `DRIVE_ROOT_ID`, `MIN_GALLERY`, `SITE_URL` | Script Properties | Opcional (defaults no `gs-form/`) |
+| Segredo                                                | Onde                     | Necessário para                                |
+| ------------------------------------------------------ | ------------------------ | ---------------------------------------------- |
+| `CMS_API_TOKEN`                                        | Repo + Script Properties | Calls autenticadas do GAS                      |
+| `GITHUB_OWNER/REPO/TOKEN`                              | Script Properties        | Disparar o `repository_dispatch`               |
+| `ADMIN_PASSWORD_HASH`                                  | Script Properties        | Login do painel (se o deploy não for restrito) |
+| `SHEET_ID`, `DRIVE_ROOT_ID`, `MIN_GALLERY`, `SITE_URL` | Script Properties        | Opcional (defaults no `gs-form/`)              |
 
 ## Deploy
 

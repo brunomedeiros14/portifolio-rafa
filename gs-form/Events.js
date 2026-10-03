@@ -2,7 +2,7 @@
  * Camada de dados: planilha "Eventos" — uma linha por casamento.
  *
  * Campos:
- *  - Colunas escalares (title, couple, date, ...) viram célula de texto.
+ *  - Colunas escalares (couple, date, ...) viram célula de texto.
  *  - Colunas estruturais (tags, gallery) são JSON stringified.
  *
  * O campo obrigatório de frontmatter `slug` é também a chave da linha (coluna A).
@@ -11,28 +11,69 @@
  * (o estabelecimento) é opcional. Como a planilha é posicional, `alignHeaders_`
  * reescreve uma aba antiga no layout novo — sem ela, cada gravação seguinte
  * jogaria `state` na coluna `city` e empurraria o resto da linha.
+ *
+ * Toda escrita passa por `Lock.withScriptLock_`: as operações abaixo são
+ * read-modify-write da planilha inteira, e sem lock dois uploads simultâneos
+ * partem do mesmo snapshot e um dos patches se perde sem erro. Ver Lock.js.
  */
 const Events = {
   HEADERS: [
-    'slug', 'title', 'couple', 'date', 'city', 'state', 'venue',
-    'description', 'excerpt', 'featured', 'tags',
-    'seoTitle', 'seoDescription',
-    'cover_id', 'cover_name', 'gallery', 'status', 'created_at', 'updated_at',
+    'slug',
+    'couple',
+    'date',
+    'city',
+    'state',
+    'venue',
+    'description',
+    'excerpt',
+    'featured',
+    'tags',
+    'cover_id',
+    'cover_name',
+    'gallery',
+    'status',
+    'created_at',
+    'updated_at',
   ],
 
   /**
-   * Colunas removidas ao longo do tempo, na ordem em que saíram.
-   *
-   * `vendors` saiu quando o bloco de fornecedores foi removido do site.
-   * `historia_html`/`story` saíram junto com o texto editorial: sobrou só a
-   * frase de apoio da intro.
+   * Campos que `update` aceita. `cover_id`, `cover_name`, `gallery`, `status`,
+   * `created_at` e `updated_at` ficam de fora de propósito: são mantidos por
+   * `setCover`/`appendPhoto`/`removePhoto`/`markPublished`. Sem a whitelist, o
+   * formulário (ou qualquer chamada direta) trocaria a capa por um id de Drive
+   * arbitrário — e esse id acaba no JSON público da publicação.
    */
-  DROPPED_HEADERS: ['vendors', 'historia_html', 'story'],
+  EDITABLE: [
+    'slug',
+    'couple',
+    'date',
+    'city',
+    'state',
+    'venue',
+    'description',
+    'excerpt',
+    'featured',
+    'tags',
+  ],
+
+  /** Tetos por campo de texto: uma célula do Sheets segura 50 mil caracteres,
+   * e sem teto um `<textarea>` com 2 MB trava a planilha inteira. */
+  MAX_LEN: {
+    couple: 120,
+    city: 80,
+    state: 40,
+    venue: 120,
+    description: 5000,
+    excerpt: 300,
+  },
+
+  MAX_TAGS: 20,
+  MAX_TAG_LEN: 40,
 
   ensureSetup() {
     const props = PropertiesService.getScriptProperties();
     if (!props.getProperty('SHEET_ID')) Events.sheet_();
-    if (!props.getProperty('DRIVE_ROOT_ID')) Drive.root_();
+    if (!props.getProperty('DRIVE_ROOT_ID')) Files.root_();
     if (!props.getProperty('CMS_API_TOKEN')) {
       props.setProperty('CMS_API_TOKEN', Utilities.getUuid());
     }
@@ -69,6 +110,11 @@ const Events = {
    * não escreve nada. Só reescreve quando falta alguma coluna nova ou sobra
    * alguma antiga, inclusive desfazendo o `location` único: o texto
    * "Fazenda X, Nova Lima" volta a virar `venue` + `city`.
+   *
+   * Colunas que saíram ao longo do tempo, na ordem: `vendors` (bloco de
+   * fornecedores removido do site), `historia_html`/`story` (texto editorial),
+   * `seoTitle`/`seoDescription` (título e descrição passaram a vir de `couple`
+   * e `excerpt`) e `title` (nunca lido — virava duplicata de `couple`).
    */
   alignHeaders_(sheet) {
     const lastRow = sheet.getLastRow();
@@ -102,12 +148,19 @@ const Events = {
         return { city: legacyCity, venue };
       }
       if (!raw) return { city: '', venue: '' };
-      const parts = raw.split(',').map((part) => part.trim()).filter(Boolean);
+      const parts = raw
+        .split(',')
+        .map((part) => part.trim())
+        .filter(Boolean);
       if (parts.length < 2) return { city: parts[0] || '', venue: '' };
       // "Igreja de São Francisco, Tiradentes, MG": a sigla que já está em
       // `state` não é cidade, então fica fora da quebra.
       const state = String(oldValue(row, 'state') || '').trim();
-      if (parts.length > 2 && state && parts[parts.length - 1].toLowerCase() === state.toLowerCase()) {
+      if (
+        parts.length > 2 &&
+        state &&
+        parts[parts.length - 1].toLowerCase() === state.toLowerCase()
+      ) {
         parts.pop();
       }
       return { city: parts[parts.length - 1], venue: parts.slice(0, -1).join(', ') };
@@ -143,6 +196,14 @@ const Events = {
     return idx;
   },
 
+  /** Índice (0-based, dentro de `values`) da linha do slug, ou -1. */
+  rowOf_(values, slug) {
+    for (let r = 1; r < values.length; r++) {
+      if (String(values[r][0]) === String(slug)) return r;
+    }
+    return -1;
+  },
+
   /** Lista todos os eventos, com campos de prontidão calculados. */
   all() {
     const sheet = Events.sheet_();
@@ -162,11 +223,9 @@ const Events = {
     const sheet = Events.sheet_();
     const values = sheet.getDataRange().getValues();
     if (values.length < 2) return null;
-    const idx = Events.columnIndex_(values[0]);
-    for (let r = 1; r < values.length; r++) {
-      if (values[r][0] === slug) return Events.rowToObject_(idx, values[r]);
-    }
-    return null;
+    const r = Events.rowOf_(values, slug);
+    if (r < 0) return null;
+    return Events.rowToObject_(Events.columnIndex_(values[0]), values[r]);
   },
 
   slugs_() {
@@ -178,102 +237,147 @@ const Events = {
   },
 
   create(payload) {
-    const slug = Slug.ensureUnique(
-      Slug.slugify(payload && payload.couple),
-      payload && payload.city,
-      Events.slugs_(),
-    );
-    const now = new Date().toISOString();
-    const event = {
-      slug,
-      title: (payload && payload.title) || '',
-      couple: (payload && payload.couple) || '',
-      date: (payload && payload.date) || '',
-      city: (payload && payload.city) || '',
-      state: (payload && payload.state) || '',
-      venue: (payload && payload.venue) || '',
-      description: (payload && payload.description) || '',
-      excerpt: (payload && payload.excerpt) || '',
-      featured: !!(payload && payload.featured),
-      tags: [],
-      seoTitle: (payload && payload.seoTitle) || '',
-      seoDescription: (payload && payload.seoDescription) || '',
-      cover_id: '',
-      cover_name: '',
-      gallery: [],
-      status: 'draft',
-      created_at: now,
-      updated_at: now,
-    };
-    Events.sheet_().appendRow(Events.rowToValues_(event));
-    return Events.get(slug);
+    const input = payload || {};
+    if (Events.blank_(input.couple)) throw new Error('Informe o nome do casal.');
+
+    return Lock.withScriptLock_(() => {
+      const slug = Slug.ensureUnique(Slug.slugify(input.couple), input.city, Events.slugs_());
+      const now = new Date().toISOString();
+      const event = {
+        slug,
+        couple: Events.text_(input.couple, Events.MAX_LEN.couple),
+        date: Events.normalizeDate_(input.date),
+        city: Events.text_(input.city, Events.MAX_LEN.city),
+        state: Events.text_(input.state, Events.MAX_LEN.state),
+        venue: Events.text_(input.venue, Events.MAX_LEN.venue),
+        description: Events.text_(input.description, Events.MAX_LEN.description),
+        excerpt: Events.text_(input.excerpt, Events.MAX_LEN.excerpt),
+        featured: !!input.featured,
+        tags: [],
+        cover_id: '',
+        cover_name: '',
+        gallery: [],
+        status: 'draft',
+        created_at: now,
+        updated_at: now,
+      };
+      Events.sheet_().appendRow(Events.rowToValues_(event));
+      return Events.get(slug);
+    });
   },
 
   update(slug, payload) {
-    const current = Events.get(slug);
-    if (!current) throw new Error(`Evento não encontrado: ${slug}`);
+    return Lock.withScriptLock_(() => {
+      const current = Events.get(slug);
+      if (!current) throw new Error(`Evento não encontrado: ${slug}`);
 
-    const merged = Object.assign({}, current, payload || {});
-    merged.updated_at = new Date().toISOString();
-    merged.featured = !!merged.featured;
+      // Whitelist: campos desconhecidos ou gerenciados por outra rota
+      // (capa, galeria, status) são descartados em vez de aceitos.
+      const input = payload || {};
+      const patch = {};
+      Events.EDITABLE.forEach((name) => {
+        if (Object.prototype.hasOwnProperty.call(input, name)) patch[name] = input[name];
+      });
 
-    if (!Array.isArray(merged.tags)) merged.tags = [];
-    if (!Array.isArray(merged.gallery)) merged.gallery = [];
-
-    if (merged.slug && merged.slug !== slug) {
-      if (Events.get(merged.slug)) {
-        throw new Error(`Já existe um evento com o slug "${merged.slug}".`);
+      if (patch.couple !== undefined) {
+        if (Events.blank_(patch.couple)) throw new Error('Informe o nome do casal.');
+        patch.couple = Events.text_(patch.couple, Events.MAX_LEN.couple);
       }
-    } else {
-      merged.slug = slug;
-    }
-    Events.setRow_(slug, merged);
-    return Events.get(merged.slug);
+      if (patch.date !== undefined) patch.date = Events.normalizeDate_(patch.date);
+      ['city', 'state', 'venue', 'description', 'excerpt'].forEach((name) => {
+        if (patch[name] !== undefined)
+          patch[name] = Events.text_(patch[name], Events.MAX_LEN[name]);
+      });
+      if (patch.featured !== undefined) patch.featured = !!patch.featured;
+      if (patch.tags !== undefined) patch.tags = Events.normalizeTags_(patch.tags);
+
+      let target = String(slug);
+      if (patch.slug !== undefined) {
+        const next = Slug.slugify(patch.slug || current.couple || current.slug);
+        if (next && next !== target) {
+          if (Events.get(next)) throw new Error(`Já existe um evento com o slug "${next}".`);
+          patch.slug = next;
+          target = next;
+        } else {
+          patch.slug = target;
+        }
+      }
+
+      Events.setRow_(slug, patch);
+
+      // A pasta do Drive é nomeada pelo slug: sem renomear junto, os uploads
+      // seguintes criariam uma pasta vazia e as fotos antigas sumiriam.
+      if (target !== String(slug)) Files.renameFolder_(slug, target);
+
+      return Events.get(target);
+    });
   },
 
   remove(slug) {
-    const sheet = Events.sheet_();
-    const values = sheet.getDataRange().getValues();
-    for (let r = 1; r < values.length; r++) {
-      if (values[r][0] === slug) {
-        sheet.deleteRow(r + 1);
-        return;
-      }
-    }
-    throw new Error(`Evento não encontrado: ${slug}`);
+    Lock.withScriptLock_(() => {
+      const sheet = Events.sheet_();
+      const values = sheet.getDataRange().getValues();
+      const r = Events.rowOf_(values, slug);
+      if (r < 0) throw new Error(`Evento não encontrado: ${slug}`);
+      sheet.deleteRow(r + 1);
+    });
   },
 
   /** Marca uma foto (por nome) como capa; '' limpa. */
   setCover(slug, name) {
-    const current = Events.get(slug);
-    const photo = String(name || '')
-      ? (current.gallery || []).filter((f) => f.name === name)[0]
-      : null;
-    const patch = {
-      cover_id: photo ? photo.id : '',
-      cover_name: photo ? photo.name : '',
-    };
-    Events.setRow_(slug, patch);
+    Lock.withScriptLock_(() => {
+      const current = Events.get(slug);
+      if (!current) throw new Error(`Evento não encontrado: ${slug}`);
+      const photo = String(name || '')
+        ? (current.gallery || []).filter((f) => f.name === name)[0]
+        : null;
+      if (String(name || '') && !photo) {
+        throw new Error(`A capa precisa ser uma foto da galeria: ${name}`);
+      }
+      Events.setRow_(slug, {
+        cover_id: photo ? photo.id : '',
+        cover_name: photo ? photo.name : '',
+      });
+    });
   },
 
-  /** Adiciona uma foto à lista única do evento (gallery = todas as fotos). */
+  /**
+   * Adiciona uma foto à lista única do evento (gallery = todas as fotos).
+   *
+   * Ignora o reenvio com o mesmo `clientId`: se a resposta se perde e o painel
+   * tenta de novo, o retry não pode criar uma segunda entrada — o usuário
+   * veria a mesma foto duplicada na galeria publicada.
+   */
   appendPhoto(slug, saved) {
-    const current = Events.get(slug);
-    const list = Array.isArray(current.gallery) ? current.gallery : [];
-    Events.setRow_(slug, { gallery: list.concat([saved]) });
+    Lock.withScriptLock_(() => {
+      const current = Events.get(slug);
+      if (!current) throw new Error(`Evento não encontrado: ${slug}`);
+
+      const list = Array.isArray(current.gallery) ? current.gallery : [];
+      if (saved.clientId && list.some((f) => f.clientId === saved.clientId)) return;
+
+      if (list.length >= Files.MAX_PHOTOS) {
+        throw new Error(`Limite de ${Files.MAX_PHOTOS} fotos por evento.`);
+      }
+
+      Events.setRow_(slug, { gallery: list.concat([saved]) });
+    });
   },
 
-  /** Remove a foto do Drive e da lista; limpa a capa se ela era a capa. */
+  /** Remove a foto da lista; limpa a capa se ela era a capa. */
   removePhoto(slug, name) {
-    const current = Events.get(slug);
-    const patch = {
-      gallery: (current.gallery || []).filter((f) => f.name !== name),
-    };
-    if (current.cover_name === name) {
-      patch.cover_id = '';
-      patch.cover_name = '';
-    }
-    Events.setRow_(slug, patch);
+    Lock.withScriptLock_(() => {
+      const current = Events.get(slug);
+      if (!current) throw new Error(`Evento não encontrado: ${slug}`);
+      const patch = {
+        gallery: (current.gallery || []).filter((f) => f.name !== name),
+      };
+      if (current.cover_name === name) {
+        patch.cover_id = '';
+        patch.cover_name = '';
+      }
+      Events.setRow_(slug, patch);
+    });
   },
 
   listFiles(slug) {
@@ -297,59 +401,118 @@ const Events = {
    */
   computeStatus(event) {
     const missed = [];
-    const textFields = [
-      'title', 'couple', 'date', 'city', 'state', 'description', 'excerpt',
-    ];
+    const textFields = ['couple', 'date', 'city', 'state', 'description', 'excerpt'];
     for (const field of textFields) {
       if (Events.blank_(event[field])) missed.push(field);
     }
     if (Events.blank_(event.cover_id)) missed.push('cover');
 
-    const minGallery = Number(PropertiesService.getScriptProperties().getProperty('MIN_GALLERY') || '8');
+    const minGallery = Events.minGallery_();
     const photos = Array.isArray(event.gallery) ? event.gallery : [];
     const galleryCount = photos.filter((p) => p.name !== event.cover_name).length;
     if (galleryCount < minGallery) missed.push(`gallery (${galleryCount}/${minGallery})`);
     return { status: missed.length === 0 ? 'ready' : 'pending', missed };
   },
 
+  /**
+   * Mínimo de fotos da galeria, com cache.
+   *
+   * `computeStatus` roda uma vez por linha dentro de `all()`, e ler
+   * PropertiesService por linha custava uma chamada de rede por evento — a
+   * lista do painel ficava visivelmente lenta com a planilha grande.
+   */
+  minGallery_() {
+    const cache = CacheService.getScriptCache();
+    const hit = cache.get('min_gallery');
+    if (hit !== null) return Math.max(1, Math.min(60, Number(hit)));
+
+    const raw = Number(PropertiesService.getScriptProperties().getProperty('MIN_GALLERY'));
+    const value = Math.max(1, Math.min(60, raw > 0 ? raw : 8));
+    cache.put('min_gallery', String(value), 600);
+    return value;
+  },
+
   blank_(value) {
     return value === null || value === undefined || String(value).trim() === '';
+  },
+
+  /** Texto de célula: sempre string, sem espaços nas pontas, com teto de tamanho. */
+  text_(value, maxLen) {
+    const s = String(value === undefined || value === null ? '' : value).trim();
+    const cap = maxLen || 5000;
+    return s.length > cap ? s.slice(0, cap) : s;
+  },
+
+  /** Lista de strings limpa, sem repetidas e sem vazias. */
+  normalizeTags_(value) {
+    const raw = Array.isArray(value) ? value : String(value || '').split(',');
+    const out = [];
+    raw.forEach((item) => {
+      const tag = Events.text_(item, Events.MAX_TAG_LEN);
+      if (tag && out.indexOf(tag) < 0) out.push(tag);
+    });
+    return out.slice(0, Events.MAX_TAGS);
   },
 
   /**
    * Normaliza a data para "YYYY-MM-DD" (formato do <input type=date> e do frontmatter).
    * O Sheets converte células reconhecidas como data para Date; sem isso o valor
    * voltaria como "Sat May 30 2026 ...", quebrado no editor e no MDX gerado.
+   *
+   * Texto que não é data vira **vazio**, e não volta como veio. Uma data inválida
+   * antiga era devolvida crua e acabava interpolada em `innerHTML` no painel —
+   * uma célula com `<img src=x onerror=...>` virava XSSStored. Vazando, ela
+   * entra no checklist como "falta date" e a publicação fica bloqueada até
+   * alguém corrigir no formulário.
    */
   normalizeDate_(value) {
     if (value instanceof Date && !isNaN(value.getTime())) {
       return Utilities.formatDate(value, Session.getScriptTimeZone(), 'yyyy-MM-dd');
     }
-    const s = String(value || '');
-    const m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
-    if (m) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
-    return s;
+    const s = String(value === undefined || value === null ? '' : value).trim();
+    const m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (!m) return '';
+
+    const year = Number(m[1]);
+    const month = Number(m[2]);
+    const day = Number(m[3]);
+    if (month < 1 || month > 12 || day < 1 || day > 31) return '';
+    // Rejeita 31/02 e 29/02 de ano não bissexto, que o `Date` normalizaria para
+    // março e o frontmatter receberia uma data diferente da digitada.
+    const probe = new Date(Date.UTC(year, month - 1, day));
+    if (
+      probe.getUTCFullYear() !== year ||
+      probe.getUTCMonth() !== month - 1 ||
+      probe.getUTCDate() !== day
+    ) {
+      return '';
+    }
+    return `${m[1]}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   },
 
   setRow_(slug, patch) {
     const sheet = Events.sheet_();
     const values = sheet.getDataRange().getValues();
-    const idx = Events.columnIndex_(values[0]);
-    for (let r = 1; r < values.length; r++) {
-      if (values[r][0] !== slug) continue;
-      const event = Object.assign(Events.rowToObject_(idx, values[r]), patch);
-      const row = Events.rowToValues_(event);
-      sheet.getRange(r + 1, 1, 1, row.length).setValues([row]);
-      return;
-    }
-    throw new Error(`Evento não encontrado: ${slug}`);
+    const r = Events.rowOf_(values, slug);
+    if (r < 0) throw new Error(`Evento não encontrado: ${slug}`);
+
+    const event = Object.assign(
+      Events.rowToObject_(Events.columnIndex_(values[0]), values[r]),
+      patch,
+    );
+    // Qualquer escrita mexe em `updated_at` — inclusive foto, capa e status.
+    // Sem isso o campo só refletia edição de texto e o painel mostrava "alterado
+    // há 3 meses" depois de uma troca de capa.
+    event.updated_at = new Date().toISOString();
+
+    const row = Events.rowToValues_(event);
+    sheet.getRange(r + 1, 1, 1, row.length).setValues([row]);
   },
 
   rowToObject_(idx, v) {
     const at = (name) => (idx[name] >= 0 ? v[idx[name]] : undefined);
     const event = {
       slug: String(at('slug') || ''),
-      title: String(at('title') || ''),
       couple: String(at('couple') || ''),
       city: String(at('city') || ''),
       state: String(at('state') || ''),
@@ -359,8 +522,6 @@ const Events = {
       date: Events.normalizeDate_(at('date')),
       featured: Events.truthy_(at('featured')),
       tags: Events.parseJSON_(at('tags'), []),
-      seoTitle: String(at('seoTitle') || ''),
-      seoDescription: String(at('seoDescription') || ''),
       cover_id: String(at('cover_id') || ''),
       cover_name: String(at('cover_name') || ''),
       gallery: Events.parseJSON_(at('gallery'), []),

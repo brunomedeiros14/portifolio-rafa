@@ -1,0 +1,15 @@
+# Saída de build
+dist/
+.astro/
+
+# Gerado pelo pnpm — reescrito a cada install e nunca editado à mão.
+pnpm-lock.yaml
+
+# CMS
+publication.json
+casamentos-para-publicar/
+
+# Material bruto das fotos — não é código
+src/content/weddings/*/images/
+src/content/blog/images/
+src/assets/

@@ -1,5 +1,19 @@
 ---
+import Button from '../components/Button.astro';
+import Eyebrow from '../components/Eyebrow.astro';
+import Section from '../components/Section.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
+
+/**
+ * 404 como página editorial.
+ *
+ * Um 404 não é uma tela de erro com um botão: é a primeira impressão de quem
+ * clicou num link quebrado. A estrutura é a mesma das outras páginas — um
+ * `<h1>` que diz o que aconteceu, três saídas para onde a pessoa queria ir.
+ *
+ * O "404" em display gigante fica atrás do texto como marca d'água: dá o código
+ * de quem procura um erro no log, sem roubar a hierarquia do recado.
+ */
 ---
 
 <BaseLayout
@@ -9,34 +23,34 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   noindex={true}
   headerTransparent={false}
 >
-  <div class="flex min-h-[70svh] flex-col items-center justify-center bg-background px-4 py-24 text-center">
-    <p class="font-display text-lg italic text-accent">404</p>
-    <h1 class="mt-4 max-w-xl font-display text-4xl font-medium tracking-tight sm:text-5xl">
-      Essa página não existe — mas a fotografia é bem real.
-    </h1>
-    <p class="mt-5 max-w-xl text-base leading-relaxed text-muted">
-      O endereço pode ter sido digitado errado ou a página foi movida. Que tal voltar para o
-      início e conhecer as histórias que já contei por aqui?
+  <Section rhythm="page" class="relative overflow-hidden">
+    <p
+      class="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 font-display text-[clamp(8rem,28vw,20rem)] leading-none text-ink/[0.04] select-none"
+      aria-hidden="true"
+    >
+      404
     </p>
-    <div class="mt-10 flex flex-wrap items-center justify-center gap-4">
-      <a
-        href="/"
-        class="inline-flex items-center justify-center rounded-full bg-accent px-7 py-3.5 text-sm font-medium text-white transition-colors hover:bg-accent-soft"
-      >
-        Voltar para a home
-      </a>
-      <a
-        href="/casamentos"
-        class="inline-flex items-center justify-center rounded-full border border-text/20 px-7 py-3.5 text-sm font-medium transition-colors hover:border-accent"
-      >
-        Ver casamentos
-      </a>
-      <a
-        href="/contato"
-        class="inline-flex items-center justify-center rounded-full border border-text/20 px-7 py-3.5 text-sm font-medium transition-colors hover:border-accent"
-      >
-        Falar comigo
-      </a>
+
+    <div class="relative text-center">
+      <Eyebrow class="!justify-center">Erro 404</Eyebrow>
+      <h1 class="mx-auto mt-5 max-w-2xl font-display text-4xl leading-tight font-medium tracking-tight text-balance sm:text-5xl">
+        Essa página não existe — mas a fotografia é bem real.
+      </h1>
+      <p class="mx-auto mt-6 max-w-lg text-base leading-relaxed text-muted">
+        O endereço pode ter sido digitado errado ou a página foi movida. Que tal voltar para o
+        início e conhecer as histórias que já contei por aqui?
+      </p>
+      <div class="mt-10 flex flex-wrap items-center justify-center gap-4">
+        <Button href="/" prefetch>
+          Voltar para a home
+        </Button>
+        <Button href="/casamentos" variant="secondary" prefetch>
+          Ver casamentos
+        </Button>
+        <Button href="/contato" variant="secondary" prefetch>
+          Falar comigo
+        </Button>
+      </div>
     </div>
-  </div>
+  </Section>
 </BaseLayout>

@@ -1,30 +1,30 @@
 export const SITE = {
   /** Nome público / marca do fotógrafo */
-  name: "Rafael Dias - Fotos",
-  role: "Fotógrafo de casamento",
+  name: 'Rafael Dias - Fotos',
+  role: 'Fotógrafo de casamento',
   /** URL canônica (troque pela produção real) */
-  url: "https://rafaeldiasfotos.com.br",
+  url: 'https://rafaeldiasfotos.com.br',
   description:
-    "Fotógrafo de casamento em Belo Horizonte e Minas Gerais. Fotografia natural, elegante e emocional, com estética cinematográfica e sem perder a verdade.",
-  language: "pt-BR",
-  locale: "pt_BR",
-  city: "Belo Horizonte",
-  state: "MG",
+    'Fotógrafo de casamento em Belo Horizonte e Minas Gerais. Fotografia natural, elegante e emocional, com estética cinematográfica e sem perder a verdade.',
+  language: 'pt-BR',
+  locale: 'pt_BR',
+  city: 'Belo Horizonte',
+  state: 'MG',
   /** Áreas atendidas — usadas no SEO local e na home */
   areas: [
-    "Belo Horizonte",
-    "Nova Lima",
-    "Ouro Preto",
-    "Tiradentes",
-    "Lavras Novas",
-    "Brumadinho",
-    "muito além de Minas",
+    'Belo Horizonte',
+    'Nova Lima',
+    'Ouro Preto',
+    'Tiradentes',
+    'Lavras Novas',
+    'Brumadinho',
+    'muito além de Minas',
   ],
-  email: "rafaelr7dias@hotmail.com",
-  whatsapp: "55 31 99336-6755",
-  whatsappUrl: "https://wa.me/5531993366755",
-  instagram: "https://www.instagram.com/rafaeldias.foto",
-  instagramHandle: "@rafaeldias.foto",
+  email: 'rafaelr7dias@hotmail.com',
+  whatsapp: '55 31 99336-6755',
+  whatsappUrl: 'https://wa.me/5531993366755',
+  instagram: 'https://www.instagram.com/rafaeldias.foto',
+  instagramHandle: '@rafaeldias.foto',
 } as const;
 
 /**
@@ -38,31 +38,31 @@ export const SITE = {
 export const BLOG_PUBLIC = false;
 
 const ALL_NAV_LINKS = [
-  { label: "Casamentos", href: "/casamentos" },
-  { label: "Sobre", href: "/sobre" },
-  { label: "Experiência", href: "/experiencia" },
-  { label: "Blog", href: "/blog" },
-  { label: "Contato", href: "/contato" },
+  { label: 'Casamentos', href: '/casamentos' },
+  { label: 'Sobre', href: '/sobre' },
+  { label: 'Experiência', href: '/experiencia' },
+  { label: 'Blog', href: '/blog' },
+  { label: 'Contato', href: '/contato' },
 ] as const;
 
 export const NAV_LINKS = BLOG_PUBLIC
   ? ALL_NAV_LINKS
-  : ALL_NAV_LINKS.filter((link) => link.href !== "/blog");
+  : ALL_NAV_LINKS.filter((link) => link.href !== '/blog');
 
 export function formatDate(date: Date): string {
   return new Intl.DateTimeFormat(SITE.language, {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
     // O frontmatter traz a data como `2026-09-26`, que o Astro lê como meia-noite
     // UTC. Formatando no fuso local (UTC-3), o casamento do dia 26 aparecia como
     // 25 de setembro — no dia errado, na página que oumbnail do casal vai ler.
-    timeZone: "UTC",
+    timeZone: 'UTC',
   }).format(date);
 }
 
 export function absolute(href: string): string {
-  if (href.startsWith("http")) return href;
+  if (href.startsWith('http')) return href;
   return new URL(href, SITE.url).toString();
 }
 
@@ -75,14 +75,14 @@ export function absolute(href: string): string {
  * versão sem — e o canonical apontava para uma URL que redireciona, o que faz o
  * Google enxergar duas URLs para o mesmo conteúdo.
  *
- * Arquivos com extensão (`/rss.xml`, `/og-default.jpg`) ficam como estão.
+ * Arquivos com extensão (`/rss.xml`, `/favicon.svg`) ficam como estão.
  */
 export function canonicalPath(href: string): string {
-  if (href.startsWith("http")) return href;
+  if (href.startsWith('http')) return href;
 
   const [path, suffix] = href.split(/([?#].*)$/);
-  if (!path.endsWith("/") && !/[^/]+\.[a-z0-9]+$/i.test(path)) {
-    return `${path}/${suffix ?? ""}`;
+  if (!path.endsWith('/') && !/[^/]+\.[a-z0-9]+$/i.test(path)) {
+    return `${path}/${suffix ?? ''}`;
   }
 
   return href;
@@ -97,13 +97,13 @@ export function canonicalPath(href: string): string {
  * para que `/casamentos` não case com `/casamentos-fazenda-x`.
  */
 export function isCurrentPath(pathname: string, href: string): boolean {
-  const normalize = (path: string) => (path.length > 1 ? path.replace(/\/+$/, "") : path);
+  const normalize = (path: string) => (path.length > 1 ? path.replace(/\/+$/, '') : path);
 
   const current = normalize(pathname);
   const target = normalize(href);
 
   if (current === target) return true;
-  if (target === "/") return false;
+  if (target === '/') return false;
 
   return current.startsWith(`${target}/`);
 }

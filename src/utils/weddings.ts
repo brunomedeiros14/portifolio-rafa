@@ -1,6 +1,16 @@
 import type { ImageMetadata } from 'astro';
 
-/** Descobre todas as imagens de um casamento a partir de `content/weddings/<slug>/images/`. */
+/**
+ * Descobre todas as imagens de um casamento a partir de `content/weddings/<slug>/images/`.
+ *
+ * O glob com `eager` é o que faz o Astro copiar o arquivo original da câmera
+ * para `dist/_astro` — 60 MB de JPEG que nenhuma página referencia. O
+ * `astro:assets` remove o original de quem não é importado fora do
+ * processamento de imagem (é o que ele faz com `src/assets`), mas uma imagem
+ * que entra no grafo de módulos conta como referenciada e fica no bundle. Por
+ * isso o original não some sozinho: `astro.config.mjs` poda, no fim do build,
+ * os arquivos de `dist` que nenhuma página gerada referencia.
+ */
 const imageModules = import.meta.glob('../content/weddings/*/images/*.{jpg,jpeg,png,webp,avif}', {
   eager: true,
   import: 'default',
@@ -32,7 +42,10 @@ export function weddingFolder(entry: { filePath?: string; data: { slug: string }
  * Lista as imagens da pasta do casamento, ordenadas naturalmente,
  * com opção de excluir a imagem de capa (que já aparece no hero da página).
  */
-export function getWeddingImages(slugOrFolder: string, excludeCover?: ImageMetadata): ImageMetadata[] {
+export function getWeddingImages(
+  slugOrFolder: string,
+  excludeCover?: ImageMetadata,
+): ImageMetadata[] {
   const prefix = `../content/weddings/${slugOrFolder}/images/`;
   const excluded = excludeCover ? imageKey(excludeCover) : null;
 
@@ -71,9 +84,7 @@ export function getGalleryItems(
 ): GalleryItem[] {
   return images.map((image, index) => ({
     image,
-    caption:
-      custom?.[index] ??
-      `${DEFAULT_CAPTIONS[index % DEFAULT_CAPTIONS.length]} — ${couple}`,
+    caption: custom?.[index] ?? `${DEFAULT_CAPTIONS[index % DEFAULT_CAPTIONS.length]} — ${couple}`,
   }));
 }
 

@@ -1,0 +1,45 @@
+# dependencies (bun install)
+node_modules
+
+# output
+out
+dist
+*.tgz
+
+# code coverage
+coverage
+*.lcov
+
+# logs
+logs
+_.log
+report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
+
+# dotenv environment variable files
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+# caches
+.eslintcache
+.cache
+*.tsbuildinfo
+
+# IntelliJ based IDEs
+.idea
+
+# Finder (MacOS) folder config
+.DS_Store
+
+# O scriptId fica local: identifica o projeto do GAS e cada instalação tem o
+# seu. O README manda preencher no primeiro uso.
+.clasp.json
+
+# O painel é servido verbatim pelo HtmlService e não tem dependência de Node:
+# o `tsconfig.json` aponta para o typescript da raiz (`pnpm check`), então
+# não há nada a instalar aqui dentro.
+bun.lock
+package.json
+node_modules/

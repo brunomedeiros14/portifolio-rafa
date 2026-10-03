@@ -1,0 +1,24 @@
+---
+/**
+ * Número grande + rótulo, para grades de entregáveis e de números-chave.
+ *
+ * O `50+ / 100% / 30 dias / Uso total` da página de experiência era um bloco
+ * de `<div>` escrito à mão a cada vez que um número mudava — sem nenhuma
+ * garantia de alinhamento entre os quatro.
+ */
+interface Props {
+  value: string;
+  /** Rótulo curto. Opcional: nos entregáveis o número já se explica sozinho. */
+  label?: string;
+  /** Linha de apoio abaixo do número. */
+  detail?: string;
+}
+
+const { value, label, detail } = Astro.props;
+---
+
+<div class="border-t border-line pt-4">
+  <p class="font-display text-3xl font-medium text-accent tracking-tight sm:text-4xl">{value}</p>
+  {label ? <p class="mt-1 text-sm font-medium">{label}</p> : null}
+  {detail ? <p class="mt-3 text-sm leading-relaxed text-muted">{detail}</p> : null}
+</div>

@@ -1,0 +1,26 @@
+---
+/**
+ * Rótulo em versalete que abre um título.
+ *
+ * O padrão aparecia em doze lugares com cinco valores de tracking diferentes
+ * (`0.18em` … `0.28em`) — ninguém notava a olho, mas a distância entre letras
+ * variava de seção para seção. Agora sai daqui.
+ *
+ * O texto vem por `<slot />`, e não por prop: em Astro quem escreve
+ * `<Eyebrow>Galeria</Eyebrow>` alimenta o slot. Declarar `children` e imprimir
+ * `{children}` compila sem erro e renderiza vazio — foi exatamente o que
+ * aconteceu aqui, e o sintoma (uma `<p>` vazia em cada seção) só apareceu
+ * depois de olhar o HTML gerado.
+ */
+interface Props {
+  /** Sobre `bg-ink` o tom claro é obrigatório: `--color-accent` a 3.36 contra ink falha. */
+  onInk?: boolean;
+  class?: string;
+}
+
+const { onInk = false, class: className } = Astro.props;
+---
+
+<p class:list={['eyebrow', onInk && 'eyebrow-on-ink', className]}>
+  <slot />
+</p>
