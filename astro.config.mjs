@@ -412,6 +412,25 @@ function enforceBundleBudget() {
 // Páginas sem data própria não recebem `lastmod`: omitir o campo é honesto,
 // enquanto `new Date()` seria uma afirmação falsa de modificação.
 export default defineConfig({
+  /**
+   * Desligado de propósito, e é a única configuração aqui que não é sobre o
+   * site: é sobre a Cloudflare.
+   *
+   * A ofuscação de e-mail da Cloudflare (Email Address Obfuscation, feature de
+   * zona) se neutraliza por marcação — `<!--email_off-->` em volta do trecho —
+   * e esse é o único opt-out que existe. O compressor de HTML do Astro remove
+   * comentários, então no padrão o marcador morre antes de sair do build e a
+   * proteção não existe, sem erro nenhum para denunciar.
+   *
+   * O preço é 5,2 kB de gzip em todo o site e 0,4 kB na maior página, contra
+   * um teto de 40 kB por página. Em troca o HTML servido é o que está escrito
+   * no fonte, sem regra implícita de colapso de espaço em volta dos elementos.
+   *
+   * Se a ofuscação for desligada na zona e continuar assim, voltar ao padrão
+   * aqui é seguro — mas aí a proteção passa a depender de ninguém mexer no
+   * toggle. Ver `src/components/EmailOff.astro`.
+   */
+  compressHTML: false,
   site: SITE.url,
   output: 'static',
   trailingSlash: 'ignore',
