@@ -1,0 +1,73 @@
+---
+/**
+ * Navegação entre as páginas de uma listagem paginada.
+ *
+ * ## Por que não é um widget de "1 2 3 4 5"
+ *
+ * A lista de páginas só funciona enquanto são poucas. Com 9 páginas de casamentos
+ * ela vira uma segunda listagem disputando espaço com a primeira, e o botão
+ * "próxima" — que é o que quase todo mundo usa — fica espremido numa ponta. Aqui
+ * ficam "anterior", a posição e "próxima": três alvos, sempre no mesmo lugar, e o
+ * alvo óbvio dobra de largura quando existe.
+ *
+ * ## Acessibilidade
+ *
+ * - `<nav aria-label>` distingue esta navegação da navegação principal, que já
+ *   existe no header com o mesmo tipo de landmark.
+ * - `rel="prev"`/`rel="next"` ajudam quem navega por teclado e os buscadores a
+ *   entender a ordem; `aria-current="page"` diz onde se está.
+ * - O botão desabilitado no lugar do link ausente: some com a iteração de quem
+ *   usa leitor de tela e mantém o grid estável, sem o "próxima" saltando de
+ *   posição quando se chega na última página.
+ */
+interface Props {
+  /** Número da página atual, base 1. */
+  current: number;
+  /** Total de páginas. */
+  lastPage: number;
+  /** Caminho de cada página. */
+  pathFor: (page: number) => string;
+  /** Rótulo do conjunto, no singular do `aria-label`. */
+  label: string;
+}
+
+const { current, lastPage, pathFor, label } = Astro.props;
+const anterior = current > 1 ? current - 1 : null;
+const proxima = current < lastPage ? current + 1 : null;
+
+const botao =
+  'link-line inline-flex items-center gap-2 text-sm font-medium disabled:pointer-events-none disabled:opacity-35';
+---
+
+{lastPage > 1 && (
+  <nav
+    aria-label={`Paginação de ${label}`}
+    class="mt-16 flex items-center justify-between gap-6 border-t border-line pt-8"
+  >
+    {anterior ? (
+      <a href={pathFor(anterior)} rel="prev" class={botao}>
+        <span aria-hidden="true">←</span> Anterior
+        <span class="sr-only"> — página {anterior}</span>
+      </a>
+    ) : (
+      <span class={botao} aria-hidden="true">
+        <span>←</span> Anterior
+      </span>
+    )}
+
+    <p class="text-xs tracking-eyebrow text-muted uppercase">
+      Página <span class="text-accent">{current}</span> de {lastPage}
+    </p>
+
+    {proxima ? (
+      <a href={pathFor(proxima)} rel="next" class={botao}>
+        Próxima <span aria-hidden="true">→</span>
+        <span class="sr-only"> — página {proxima}</span>
+      </a>
+    ) : (
+      <span class={botao} aria-hidden="true">
+        Próxima <span>→</span>
+      </span>
+    )}
+  </nav>
+)}

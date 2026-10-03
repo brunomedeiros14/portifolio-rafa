@@ -71,6 +71,24 @@ function buildLastmodMap() {
 
 const { map: lastmodByPath, drafts: draftPaths } = buildLastmodMap();
 
+/**
+ * `/casamentos/2`, `/casamentos/3`… — as páginas following da listagem.
+ *
+ * Não entram no sitemap. Cada casamento já tem página própria, listada e com
+ * `lastmod` próprio, e é ela que o buscador precisa indexar; a listagem paginada
+ * é alcançável pelo `rel="next"` e pelo menu. Listar as duas cria uma
+ * competição em que a listagem briga com a página de cada casamento pela mesma
+ * consulta — sem nenhum casamento novo a ganhar.
+ *
+ * O `-` no fim de `/casamentos` não está no regex porque a listagem canônica é
+ * `/casamentos`, sem número: ela entra, e é a âncora da série.
+ *
+ * @param {string} page
+ */
+function isWeddingPageNumber(page) {
+  return /^\/casamentos\/\d+\/?$/.test(new URL(page).pathname);
+}
+
 /** Arquivos que podem apontar para um asset de `_astro/`. */
 const REFERENCEABLE = /\.(html|xml|json|txt|webmanifest|css|js)$/i;
 
@@ -450,6 +468,7 @@ export default defineConfig({
         !page.endsWith('/404') &&
         !page.includes('/_astro') &&
         !page.endsWith('.xml') &&
+        !isWeddingPageNumber(page) &&
         !draftPaths.has(new URL(page).pathname.replace(/\/$/, '')),
       serialize(item) {
         const url = new URL(item.url);

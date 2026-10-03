@@ -33,6 +33,7 @@ const { data } = wedding;
         widths={[480, 1280]}
         sizes="(min-width: 1280px) 340px, (min-width: 1024px) 30vw, (min-width: 640px) 45vw, 92vw"
         formats={['avif', 'webp']}
+        fallbackFormat="webp" /* fallback de JPEG para JPEG em webp — ver Gallery.astro */
         width={1280}
         loading={priority ? 'eager' : 'lazy'}
         decoding="async"

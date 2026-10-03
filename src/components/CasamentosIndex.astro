@@ -1,0 +1,220 @@
+---
+/**
+ * A listagem de casamentos, inteira, para as duas rotas que a renderizam.
+ *
+ * A página 1 vive em `/casamentos` (`index.astro`) e as seguintes em
+ * `/casamentos/2` (`[page].astro`). As duas rotas só coletam os dados e
+ * delegam aqui: manter o markup em dois arquivos era garantir que a segunda
+ * página saísse com um campo a menos, uma `alt` diferente, o `og:image` errado.
+ *
+ * ## Por que a listagem não usa `paginate()`
+ *
+ * `paginate()` gera as páginas da rota que o chama, e para montar `/casamentos/2`
+ * a rota precisa de um parâmetro — `[...page]`. Mas `casamentos/[...slug].astro`
+ * **já é** uma rota rest, e duas rests no mesmo nível se sobrepõem. Trocar o
+ * detalhe para `[slug]` não resolve: dinâmico ganha de rest, e o `/casamentos/2`
+ * passaria a ser consumido pela página do casamento. Mover o detalhe para outra
+ * URL não era opção — esses links já foram publicados e compartilhados.
+ *
+ * A saída é a divisão explícita: `index.astro` para a primeira e `[page].astro`
+ * para o resto, com `[page]` dinâmico acima de `[...slug]` rest na resolução do
+ * Astro. As rotas não se sobrepõem, nenhuma URL publicada muda, e a conta das
+ * páginas fica visível em `paginateWeddings`.
+ */
+import { Picture } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+import CTA from './CTA.astro';
+import MediaFrame from './MediaFrame.astro';
+import PageHeader from './PageHeader.astro';
+import Pagination from './Pagination.astro';
+import Reveal from './Reveal.astro';
+import Section from './Section.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { absolute, canonicalPath, formatDate } from '../site.config';
+import { ogImageFrom } from '../utils/og';
+import { ID, node } from '../utils/schema';
+import { paginateWeddings, weddingPageMeta, weddingPagePath } from '../utils/weddings';
+
+interface Props {
+  /** Página a renderizar. */
+  page: ReturnType<typeof paginateWeddings<CollectionEntry<'weddings'>>>[number];
+}
+
+const { page } = Astro.props;
+
+/**
+ * `thumbnailUrl` de cada item, e só dos itens desta página.
+ *
+ * Antes da paginação o índice gerava a imagem de compartilhamento de **todos** os
+ * casamentos, num `Promise.all`, mesmo os que não apareceriam naquela página — com
+ * 100 casamentos isso eram 100 entradas do sharp para gerar um `ItemList` de 5.
+ * Aqui são 12, e a memoização em `utils/og` garante que a página do casamento não
+ * gere a capa de novo.
+ */
+const ogBySlug = Object.fromEntries(
+  await Promise.all(
+    page.items.map(async ({ data }) => [data.slug, (await ogImageFrom(data.cover)).src]),
+  ),
+);
+
+const meta = weddingPageMeta(page);
+
+/**
+ * `hasPartOf` com `Article` não descreve uma lista navegável. `ItemList` é o tipo
+ * que o Google usa para gerar o rich result de lista, e cada item precisa de
+ * `position` para ordenar.
+ *
+ * O `position` é global (`offset + índice`), e não 1, 2, 3 de novo em cada
+ * página: é o que faz o Google entender que `/casamentos/2` continua a mesma
+ * listagem em vez de ser outra lista que por acaso começa igual.
+ */
+const jsonLd = node({
+  '@type': 'CollectionPage',
+  name: meta.title,
+  description: meta.description,
+  url: absolute(canonicalPath(weddingPagePath(page))),
+  isPartOf: { '@id': ID.website },
+  provider: { '@id': ID.person },
+  mainEntity: {
+    '@type': 'ItemList',
+    name: 'Casamentos fotografados',
+    numberOfItems: page.total,
+    itemListOrder: 'https://schema.org/ItemListOrderDescending',
+    itemListElement: page.items.map(({ data }, index) => ({
+      '@type': 'ListItem',
+      position: page.offset + index + 1,
+      url: absolute(`/casamentos/${data.slug}`),
+      item: {
+        '@type': 'Article',
+        '@id': absolute(`/casamentos/${data.slug}#article`),
+        headline: `${data.couple} — casamento em ${data.city}`,
+        description: data.excerpt,
+        url: absolute(`/casamentos/${data.slug}`),
+        datePublished: data.date.toISOString().slice(0, 10),
+        thumbnailUrl: absolute(ogBySlug[data.slug]!),
+        author: { '@id': ID.person },
+      },
+    })),
+  },
+});
+---
+
+<BaseLayout
+  title={meta.title}
+  description={meta.description}
+  headerTransparent={false}
+  jsonLd={jsonLd}
+>
+  <PageHeader
+    eyebrow="Portfólio"
+    title="Cada casamento, uma história"
+    description={`Uma curadoria das cerimônias que tive o privilégio de fotografar. ${page.total} histórias completas — e cada uma com galeria, bastidores e lugares reais de Minas Gerais.`}
+    breadcrumbs={[{ label: 'Casamentos' }]}
+  />
+
+  {/*
+    Índice editorial em vez de grade de cartões.
+
+    A grade de 3 colunas mostra as fotos, mas não dá ideia de volume: cinco
+    retratos idênticos na mesma caixa leem como um mosaico, e o nome do casal
+    perde a escala que ele tem numa página de casamentos real. Aqui cada
+    casamento ocupa uma faixa inteira, com o número do índice na margem — o
+    olho desce a página e entende a sequência.
+
+    Os cartões são <h3> (nome do casal) com um <h2> visualmente escondido: sem
+    ele a hierarquia saltaria de h1 para h3 e o outline do leitor de tela
+    apresentaria os casamentos como subseções do <h1>.
+  */}
+  <Section tone="surface" rhythm="page">
+    <h2 class="sr-only">Casamentos fotografados</h2>
+
+    <ol class="border-t border-line" start={page.offset + 1}>
+      {page.items.map(({ data }, index) => (
+        <li class="border-b border-line">
+          <Reveal
+            as="article"
+            class="grid items-center gap-8 py-10 md:grid-cols-12 md:gap-12 md:py-14"
+          >
+            <div class="md:col-span-4">
+              <a
+                href={`/casamentos/${data.slug}`}
+                class="block focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+                aria-labelledby={`casamento-${data.slug}`}
+              >
+                <MediaFrame ratio="4/5">
+                  <Picture
+                    src={data.cover}
+                    alt={data.excerpt}
+                    widths={[480, 1280]}
+                    sizes="(min-width: 1024px) 24rem, 92vw"
+                    formats={['avif', 'webp']}
+                    fallbackFormat="webp" /* fallback de JPEG para JPEG em webp — ver Gallery.astro */
+                    width={1280}
+                    loading={page.number === 1 && index === 0 ? 'eager' : 'lazy'}
+                    decoding="async"
+                    fetchpriority={page.number === 1 && index === 0 ? 'high' : undefined}
+                    class="h-full w-full object-cover"
+                  />
+                </MediaFrame>
+              </a>
+            </div>
+
+            <div class="md:col-span-7 md:col-start-6">
+              <div class="flex items-baseline gap-4">
+                <p class="font-display text-sm text-accent/70 italic">
+                  {String(page.offset + index + 1).padStart(2, '0')}
+                </p>
+                <p class="text-xs tracking-eyebrow text-muted uppercase">
+                  {data.city}, {data.state}
+                </p>
+              </div>
+
+              <h3
+                id={`casamento-${data.slug}`}
+                class="mt-3 font-display text-2xl font-medium tracking-tight sm:text-3xl"
+              >
+                <a
+                  href={`/casamentos/${data.slug}`}
+                  class="transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+                >
+                  {data.couple}
+                </a>
+              </h3>
+
+              <p class="mt-2 text-sm text-muted">
+                <time datetime={data.date.toISOString().slice(0, 10)}>{formatDate(data.date)}</time>
+                {data.venue ? <span aria-hidden="true"> · </span> : null}
+                {data.venue ? data.venue : null}
+              </p>
+
+              <p class="mt-4 max-w-prose text-sm leading-relaxed text-muted">{data.excerpt}</p>
+
+              <p class="mt-6">
+                <a
+                  href={`/casamentos/${data.slug}`}
+                  class="link-line text-sm font-medium text-accent"
+                  data-astro-prefetch
+                >
+                  Ver a história
+                  <span class="sr-only"> de {data.couple}</span>
+                </a>
+              </p>
+            </div>
+          </Reveal>
+        </li>
+      ))}
+    </ol>
+
+    <Pagination
+      current={page.number}
+      lastPage={page.lastPage}
+      pathFor={(n) => weddingPagePath({ number: n })}
+      label="casamentos"
+    />
+  </Section>
+
+  <CTA
+    title="O seu casamento pode ser o próximo"
+    description="Se a história de vocês ainda não está aqui, é porque ela está por escrever. Me conte sobre ela."
+  />
+</BaseLayout>

@@ -1,3 +1,4 @@
+import { getCollection, type CollectionEntry } from 'astro:content';
 import type { ImageMetadata } from 'astro';
 
 /**
@@ -112,4 +113,111 @@ export function weddingSimilarity(
   if (a.data.state === b.data.state) score += 2;
   score += a.data.tags.filter((tag) => b.data.tags.includes(tag)).length;
   return score;
+}
+
+/**
+ * Casamentos por página na listagem.
+ *
+ * 12 é o ponto em que a página deixa de ser "role para ver o resto" e vira
+ * rolagem infinita: com a faixa editorial de uma linha por casamento, 12 itens
+ * dão cerca de duas dobras de tela, o que é o que aguenta a leitura antes do
+ * clique. Com 100 casamentos são 9 páginas.
+ */
+export const WEDDINGS_PAGE_SIZE = 12;
+
+export interface WeddingPage<T> {
+  /** Itens desta página. */
+  items: T[];
+  /** Começando em 1. A página 1 vive em `/casamentos`, as seguintes em `/casamentos/2`. */
+  number: number;
+  lastPage: number;
+  /**
+   * Índice do primeiro item **na listagem inteira**, base 0. É o que dá ao
+   * `position` do `ItemList` e o número na margem do item: sem ele, a página 3
+   * repetiria "01, 02, 03…" e o Google leria três listas que começam igual.
+   */
+  offset: number;
+  total: number;
+}
+
+/** Divide a listagem em páginas, já com o deslocamento global de cada uma. */
+export function paginateWeddings<T>(entries: T[], pageSize = WEDDINGS_PAGE_SIZE): WeddingPage<T>[] {
+  const lastPage = Math.max(1, Math.ceil(entries.length / pageSize));
+  return Array.from({ length: lastPage }, (_, index) => ({
+    items: entries.slice(index * pageSize, (index + 1) * pageSize),
+    number: index + 1,
+    lastPage,
+    offset: index * pageSize,
+    total: entries.length,
+  }));
+}
+
+/**
+ * Nenhum casamento pode publicar num slug que seja só número.
+ *
+ * A listagem paginada usa `/casamentos/2`, `/casamentos/3`… e essas rotas
+ * vencem a rota de detalhe na resolução do Astro. Um casal slugado `2024` seria
+ * pedido pela página do casamento e atendido pela listagem — um 404 silencioso
+ * num link que já foi compartido. Os slugs saem dos nomes, então é improvável,
+ * e por isso a checagem é um build quebrado e não um aviso.
+ */
+export function assertPaginationSafe(entries: { data: { slug: string } }[]): void {
+  const conflito = entries
+    .filter(({ data }) => /^\d+$/.test(data.slug))
+    .map(({ data }) => data.slug);
+  if (conflito.length === 0) return;
+  throw new Error(
+    `Slug de casamento em conflito com a paginação: ${conflito.join(', ')}. ` +
+      `Um slug só com dígitos seria resolvido por /casamentos/<n>.`,
+  );
+}
+
+/** Caminho público de uma página da listagem. */
+export function weddingPagePath(page: { number: number }): string {
+  return page.number === 1 ? '/casamentos' : `/casamentos/${page.number}`;
+}
+
+/**
+ * Casamentos publicados, do mais recente para o mais antigo, já paginados.
+ *
+ * É o único lugar que coleta a collection para a listagem, então a checagem de
+ * slug numérico roda em todo build, sem depender de alguém lembrar de chamar.
+ */
+export async function listWeddingsPages(): Promise<WeddingPage<CollectionEntry<'weddings'>>[]> {
+  const entries = await getCollection('weddings', ({ data }) => !data.draft);
+  assertPaginationSafe(entries);
+  const ordered = entries.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+  return paginateWeddings(ordered);
+}
+
+/**
+ * Título e descrição de uma página da listagem.
+ *
+ * A descrição das páginas 2+ cita os casamentos que estão nelas. Não é enfeite:
+ * com 9 páginas(`/casamentos`, `/casamentos/2`…), o Google precisa saber que são
+ * páginas diferentes — e não a mesma listagem com o rodapé cortado. Duas
+ * descrições idênticas em URLs diferentes são o caminho curto para o conjunto
+ * ser tratado como duplicata e Canônico sobre a página 1, o que enterraria 88
+ * casamentos.
+ */
+export function weddingPageMeta<T extends { data: { couple: string } }>(
+  page: WeddingPage<T>,
+): {
+  title: string;
+  description: string;
+} {
+  const base =
+    'Histórias reais de casamento fotografadas por Rafael Dias em Belo Horizonte, Nova Lima, Ouro Preto, Tiradentes e por todo Minas Gerais.';
+  if (page.number === 1) {
+    return { title: 'Casamentos', description: base };
+  }
+
+  const nomes = page.items.map(({ data }) => data.couple);
+  const listagem =
+    nomes.length === 1 ? nomes[0] : `${nomes.slice(0, -1).join(', ')} e ${nomes.at(-1)}`;
+
+  return {
+    title: `Casamentos — página ${page.number} de ${page.lastPage}`,
+    description: `${base} Página ${page.number} de ${page.lastPage}: ${listagem}.`,
+  };
 }
