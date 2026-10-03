@@ -1,0 +1,48 @@
+---
+/**
+ * Impede a Cloudflare de ofuscar o e-mail no HTML que ela entrega.
+ *
+ * ## O que acontece sem este componente
+ *
+ * Email Address Obfuscation é uma feature de **zona** da Cloudflare (não de
+ * projeto Pages), ligada por padrão em domínios customizados. Ela reescreve
+ * todo e-mail visível e todo `href="mailto:"` para um par de spans com o
+ * endereço em hexadecimal, que um script da Cloudflare decodifica no load. O
+ * texto cru é `[email protected]`, e o link só funciona se esse script rodar.
+ *
+ * Por que o script dela não se sustenta num site com roteador: ele é inline e
+ * roda uma vez, no load. Com o `ClientRouter` do Astro a navegação é client-side
+ * — o HTML novo entra por troca em vez de recarregar — e o decoder não roda de
+ * novo. Resultado: a página de contato, alcançada por qualquer link do site,
+ * abre já com o e-mail ofuscado, enquanto um acesso direto por URL funciona.
+ * Esse é o padrão que costuma ser reportado como "funciona às vezes".
+ *
+ * O e-mail dentro do JSON-LD nunca foi problema: `<script>` não é tocado, e é
+ * por isso que os dados estruturados continuam corretos mesmo ofuscando o resto.
+ *
+ * ## Por que isso obriga mexer no `compressHTML`
+ *
+ * A Cloudflare aceita `<!--email_off-->` em volta do trecho como opt-out por
+ * markup, e é o único que existe. O compressor de HTML do Astro remove
+ * comentários, então com `compressHTML` no padrão o marcador é apagado antes de
+ * sair do build — um opt-out que não chega no HTML é um opt-out que não existe,
+ * e o efeito é o de ter escrito a proteção e continuar vulnerável.
+ *
+ * O custo de desligar a compressão foi medido: 98,7 kB → 103,9 kB de HTML
+ * comprimido com gzip no site inteiro, e a maior página de 9,4 kB → 9,8 kB,
+ * contra um teto de 40 kB por página.
+ */
+interface Props {
+  /**
+   * Só marca quando verdadeiro. Existe para o `contato`, onde o mesmo `<a>` é
+   * renderizado em um laço para três canais e só um deles é e-mail.
+   */
+  when?: boolean;
+}
+
+const { when = true } = Astro.props;
+---
+
+{when && <Fragment set:html="<!--email_off-->" />}
+<slot />
+{when && <Fragment set:html="<!--/email_off-->" />}

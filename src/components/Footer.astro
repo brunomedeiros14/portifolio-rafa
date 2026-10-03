@@ -1,4 +1,5 @@
 ---
+import EmailOff from './EmailOff.astro';
 import { NAV_LINKS, SITE } from '../site.config';
 
 const year = new Date().getFullYear();
@@ -43,9 +44,11 @@ const year = new Date().getFullYear();
           </a>
         </li>
         <li>
-          <a href={`mailto:${SITE.email}`} class="link-line text-white/80 hover:text-white">
-            {SITE.email}
-          </a>
+          <EmailOff>
+            <a href={`mailto:${SITE.email}`} class="link-line text-white/80 hover:text-white">
+              {SITE.email}
+            </a>
+          </EmailOff>
         </li>
         <li>
           <a

@@ -1,5 +1,6 @@
 ---
 import { SITE } from '../site.config';
+import EmailOff from './EmailOff.astro';
 import Icon from './Icon.astro';
 
 interface Props {
@@ -31,11 +32,13 @@ const iconColor = tone === 'light' ? 'text-white' : 'text-current';
   >
     <Icon name="whatsapp" size={size} />
   </a>
-  <a
-    href={`mailto:${SITE.email}`}
-    aria-label={`E-mail de ${SITE.name}`}
-    class={`${iconColor} transition-opacity hover:opacity-70`}
-  >
-    <Icon name="envelope" size={size} />
-  </a>
+  <EmailOff>
+    <a
+      href={`mailto:${SITE.email}`}
+      aria-label={`E-mail de ${SITE.name}`}
+      class={`${iconColor} transition-opacity hover:opacity-70`}
+    >
+      <Icon name="envelope" size={size} />
+    </a>
+  </EmailOff>
 </div>
