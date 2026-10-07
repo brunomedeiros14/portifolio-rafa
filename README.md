@@ -23,14 +23,14 @@ Minas Gerais. Site estático gerado com [Astro](https://astro.build),
 
 ## Comandos
 
-| Comando          | Ação                                            |
-| ---------------- | ----------------------------------------------- |
-| `pnpm install`   | Instala as dependências                         |
-| `pnpm dev`       | Servidor de desenvolvimento em `localhost:4321` |
-| `pnpm build`     | Build de produção em `dist/`                    |
-| `pnpm preview`   | Serve o build local para conferência            |
-| `pnpm check`     | Verificação de tipos de `.astro` e `.ts`        |
-| `pnpm astro ...` | CLI do Astro (ex.: `pnpm astro info`)           |
+| Comando             | Ação                                            |
+| ------------------- | ----------------------------------------------- |
+| `bun install`       | Instala as dependências                         |
+| `bun run dev`       | Servidor de desenvolvimento em `localhost:4321` |
+| `bun run build`     | Build de produção em `dist/`                    |
+| `bun run preview`   | Serve o build local para conferência            |
+| `bun run check`     | Verificação de tipos de `.astro` e `.ts`        |
+| `bun run astro ...` | CLI do Astro (ex.: `bun run astro info`)        |
 
 > Em desenvolvimento, prefira rodar o servidor em segundo plano:
 > `astro dev --background`, gerenciado com `astro dev stop`,
@@ -99,7 +99,7 @@ exige senha (ou um deployment restrito à sua conta); ver `gs-form/README.md`.
 
 Cloudflare Pages, conectado ao repositório:
 
-- **Build command:** `pnpm build`
+- **Build command:** `bun run build`
 - **Output directory:** `dist`
 - **Branch:** `main`
 

@@ -221,7 +221,7 @@ async function main() {
   console.log(`  ✓ index.mdx   (${mdx.length} bytes)`);
   console.log(`  ✓ images/  ${coverName} + ${galleryNames.length} fotos`);
   for (const name of galleryNames) console.log(`            ${name}`);
-  console.log('Pronto. Confira o resultado com "pnpm check".');
+  console.log('Pronto. Confira o resultado com "bun run check".');
 }
 
 try {

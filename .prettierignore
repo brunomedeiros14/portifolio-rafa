@@ -2,17 +2,19 @@
 dist/
 .astro/
 
-# Gerado pelo pnpm — reescrito a cada install e nunca editado à mão.
-pnpm-lock.yaml
+# Gerado pelo bun — reescrito a cada install e nunca editado à mão.
+bun.lock
+
+# Gerado pelo plugin de rotas do TanStack Router a cada `vite build`. Formatar
+# isso produz um diff que o próximo build desfaz.
+gs-form/src/ui/routeTree.gen.ts
+
+# Temporário do build da interface
+.tmp-vite/
 
 # CMS
 publication.json
 casamentos-para-publicar/
-
-# Artefato do build do admin (gs-form/src → gs-form/*.html). Quem formata é o
-# build: o `pnpm check` cobra que o arquivo bate com a saída de `gs-form/build.mjs`.
-gs-form/index.html
-gs-form/login.html
 
 # Material bruto das fotos — não é código
 src/content/weddings/*/images/

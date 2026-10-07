@@ -18,17 +18,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 22
-          cache: pnpm
+          bun-version: 1.3.14
 
       - name: Install
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Get publication
         id: publication
@@ -73,14 +69,14 @@ jobs:
 
       - name: Typecheck
         run: |
-          pnpm check
+          bun run check
 
       # `astro check` não executa o build, então um frontmatter inválido ou uma
       # imagem quebrada só apareceria no deploy da Cloudflare. Validar aqui evita
       # commitar conteúdo que não constrói.
       - name: Build
         run: |
-          pnpm build
+          bun run build
 
       - name: Commit
         run: |
