@@ -1,0 +1,44 @@
+---
+import { SITE } from '../site.config';
+import EmailOff from './EmailOff.astro';
+import Icon from './Icon.astro';
+
+interface Props {
+  /** Tamanho do ícone em pixels */
+  size?: number;
+  tone?: 'light' | 'dark';
+}
+
+const { size = 20, tone = 'dark' } = Astro.props;
+const iconColor = tone === 'light' ? 'text-white' : 'text-current';
+---
+
+<div class="flex items-center gap-5" aria-label="Redes sociais">
+  <a
+    href={SITE.instagram}
+    target="_blank"
+    rel="noopener"
+    aria-label={`Instagram de ${SITE.name}`}
+    class={`${iconColor} transition-opacity hover:opacity-70`}
+  >
+    <Icon name="instagram" size={size} />
+  </a>
+  <a
+    href={SITE.whatsappUrl}
+    target="_blank"
+    rel="noopener"
+    aria-label={`WhatsApp de ${SITE.name}`}
+    class={`${iconColor} transition-opacity hover:opacity-70`}
+  >
+    <Icon name="whatsapp" size={size} />
+  </a>
+  <EmailOff>
+    <a
+      href={`mailto:${SITE.email}`}
+      aria-label={`E-mail de ${SITE.name}`}
+      class={`${iconColor} transition-opacity hover:opacity-70`}
+    >
+      <Icon name="envelope" size={size} />
+    </a>
+  </EmailOff>
+</div>

@@ -1,0 +1,18 @@
+---
+import CasamentosIndex from '../../components/CasamentosIndex.astro';
+import { listWeddingsPages } from '../../utils/weddings';
+
+/**
+ * Primeira página da listagem, em `/casamentos`.
+ *
+ * As páginas 2+ são geradas por `[page].astro`. Esta rota existe separada
+ * justamente para a URL da primeira página não virar `/casamentos/1`: `/casamentos`
+ * é o que está no menu, no rodapé, nos `_redirects` e nas URLs já
+ * compartilhadas, e trocar isso por causa de paginação seria deitar fora
+ * linkagem sem ganhar nada. A divisão das linhas de conteúdo entre as duas rotas
+ * é o que o comentário do `CasamentosIndex` explica.
+ */
+const [primeira] = await listWeddingsPages();
+---
+
+<CasamentosIndex page={primeira} />

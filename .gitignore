@@ -28,4 +28,4 @@ pnpm-debug.log*
 
 # material de origem dos casamentos (fotos do WhatsApp, 19 MB) — o que entra no
 # site é a cópia em src/content/weddings/<slug>/images
-casamentos-para-publicar/
+.only-local/

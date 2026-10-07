@@ -1,0 +1,74 @@
+---
+/**
+ * Seção de conteúdo com fundo, largura e ritmo vertical consistentes.
+ *
+ * `py-20` aparecia em dez lugares e `bg-surface` em onze, sempre com o mesmo
+ * par. A alternância `background` → `surface` → `ink` é o que dá a cadência da
+ * página; centralizá-la aqui é o que impede duas seções vizinhas com o mesmo
+ * fundo por descuido.
+ *
+ * ## A largura também mora aqui
+ *
+ * Havia um invariante quebrado: o shell (a margem lateral + o gutter) era
+ * responsabilidade de cada página, e quatro das seis seções da home tinham
+ * simplesmente esquecido — o texto encostava na borda da janela. Isso não
+ * reaparece se a seção for dona da largura: não existe caminho para escrever
+ * o conteúdo dela sem passar por aqui.
+ *
+ */
+type Tone = 'background' | 'surface' | 'ink';
+type Rhythm = 'page' | 'tight';
+type Width = 'wide' | 'narrow' | 'measure';
+
+interface Props {
+  tone?: Tone;
+  /** `page` = espaço generoso de respiro entre seções; `tight` = bloco interno. */
+  rhythm?: Rhythm;
+  /** `wide` = 72rem (padrão), `narrow` = 56rem, `measure` = 42rem. */
+  width?: Width;
+  as?: 'section' | 'div' | 'article' | 'aside';
+  /** Rótulo acessível quando não há título visível para servir de nome. */
+  label?: string;
+  class?: string;
+  /** Âncora de navegação (`id="galeria"`). */
+  id?: string;
+  [key: string]: unknown;
+}
+
+const {
+  tone = 'background',
+  rhythm = 'page',
+  width = 'wide',
+  as: Tag = 'section',
+  label,
+  class: className,
+  ...rest
+} = Astro.props;
+
+const TONES: Record<Tone, string> = {
+  background: 'bg-background',
+  surface: 'bg-surface',
+  ink: 'bg-ink text-white',
+};
+
+const RHYTHMS: Record<Rhythm, string> = {
+  page: 'py-20 md:py-28',
+  tight: 'py-12 md:py-16',
+};
+
+const WIDTHS: Record<Width, string> = {
+  wide: 'shell',
+  narrow: 'shell-narrow',
+  measure: 'shell-measure',
+};
+---
+
+<Tag
+  class:list={[TONES[tone], RHYTHMS[rhythm], className]}
+  {...(label ? { 'aria-label': label } : {})}
+  {...rest}
+>
+  <div class={WIDTHS[width]}>
+    <slot />
+  </div>
+</Tag>

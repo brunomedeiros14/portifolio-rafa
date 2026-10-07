@@ -1,0 +1,56 @@
+---
+import Button from '../components/Button.astro';
+import Eyebrow from '../components/Eyebrow.astro';
+import Section from '../components/Section.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+/**
+ * 404 como página editorial.
+ *
+ * Um 404 não é uma tela de erro com um botão: é a primeira impressão de quem
+ * clicou num link quebrado. A estrutura é a mesma das outras páginas — um
+ * `<h1>` que diz o que aconteceu, três saídas para onde a pessoa queria ir.
+ *
+ * O "404" em display gigante fica atrás do texto como marca d'água: dá o código
+ * de quem procura um erro no log, sem roubar a hierarquia do recado.
+ */
+---
+
+<BaseLayout
+  title="Página não encontrada"
+  description="Essa página não existe ou foi movida. Volte para a home e descubra os casamentos fotografados por Rafael Dias."
+  canonical={false}
+  noindex={true}
+  headerTransparent={false}
+>
+  <Section rhythm="page" class="relative overflow-hidden">
+    <p
+      class="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 font-display text-[clamp(8rem,28vw,20rem)] leading-none text-ink/[0.04] select-none"
+      aria-hidden="true"
+    >
+      404
+    </p>
+
+    <div class="relative text-center">
+      <Eyebrow class="!justify-center">Erro 404</Eyebrow>
+      <h1 class="mx-auto mt-5 max-w-2xl font-display text-4xl leading-tight font-medium tracking-tight text-balance sm:text-5xl">
+        Essa página não existe — mas a fotografia é bem real.
+      </h1>
+      <p class="mx-auto mt-6 max-w-lg text-base leading-relaxed text-muted">
+        O endereço pode ter sido digitado errado ou a página foi movida. Que tal voltar para o
+        início e conhecer as histórias que já contei por aqui?
+      </p>
+      <div class="mt-10 flex flex-wrap items-center justify-center gap-4">
+        <Button href="/" prefetch>
+          Voltar para a home
+        </Button>
+        <Button href="/casamentos" variant="secondary" prefetch>
+          Ver casamentos
+        </Button>
+        <Button href="/contato" variant="secondary" prefetch>
+          Falar comigo
+        </Button>
+      </div>
+    </div>
+  </Section>
+</BaseLayout>

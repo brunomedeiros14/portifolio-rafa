@@ -1,0 +1,70 @@
+/* ------------------------------------------------------------------ */
+/* Tokens de design                                                     */
+/*                                                                     */
+/* Uma fonte só para valores: o resto do CSS consome daqui. Os tokens  */
+/* que o Tailwind v4 transforma em utilitário vivem em `@theme`        */
+/* (`bg-accent`, `tracking-eyebrow`, `ease-editorial`); os que são     */
+/* só CSS ficam em `:root`.                                             */
+/* ------------------------------------------------------------------ */
+
+@theme {
+  /* Superfícies -------------------------------------------------------- */
+  --color-background: #faf7f2;
+  --color-surface: #ffffff;
+  --color-ink: #16120e;
+
+  /* Texto ------------------------------------------------------------- */
+  --color-text: #1b1714;
+  --color-muted: #6f665c;
+
+  /* Acento ------------------------------------------------------------ */
+  /* Três tons com papéis fixos. Os contrastes entre parênteses são a   */
+  /* razão WCAG contra o fundo indicado, para ninguém trocar um pelo   */
+  /* outro e quebrar o contraste sem perceber.                          */
+  --color-accent: #8a5f3f; /* 5.19 em --color-background · 5.54 sob branco */
+  --color-accent-strong: #7a5335; /* hover do botão primário · 6.74 sob branco */
+  --color-accent-light: #d9a878; /* acento sobre --color-ink · 8.72          */
+
+  /* Traços ------------------------------------------------------------ */
+  /* Divisória decorativa: 1.20 contra o fundo. Onde a linha delimita    */
+  /* algo interativo, use `--color-accent` (5.19) no lugar.              */
+  --color-line: #e9e2d6;
+
+  /* Famílias ---------------------------------------------------------- */
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-body:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  /* Escala editorial --------------------------------------------------- */
+  --text-eyebrow: 0.75rem;
+  --tracking-eyebrow: 0.24em;
+  --leading-editorial: 1.06;
+
+  /* Movimento --------------------------------------------------------- */
+  /* Uma curva só. Misturar `cubic-bezier(0.2, 0.7, 0.2, 1)` inline em  */
+  /* componente por componente é como a animação da casa começa a       */
+  /* divergir sem ninguém perceber.                                      */
+  --ease-editorial: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+:root {
+  /* Larguras ---------------------------------------------------------- */
+  --content-max: 72rem;
+  --content-narrow: 56rem;
+  --measure: 42rem;
+
+  /* Gutter lateral das shells. MEXER AQUI mexe em todas as páginas.     */
+  --gutter: 1rem;
+
+  /* Header ------------------------------------------------------------ */
+  --header-h: 4.5rem;
+
+  /* Raios ------------------------------------------------------------- */
+  --radius-sm: 0.25rem;
+}
+
+@media (min-width: 40rem) {
+  :root {
+    --gutter: 1.5rem;
+  }
+}

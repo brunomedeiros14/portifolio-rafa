@@ -1,0 +1,145 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import Eyebrow from '../components/Eyebrow.astro';
+import Section from '../components/Section.astro';
+import { ogImageFrom } from '../utils/og';
+import { ID, node, publisherRef } from '../utils/schema';
+import Hero from '../components/Hero.astro';
+import Gallery from '../components/Gallery.astro';
+import CTA from '../components/CTA.astro';
+import WeddingGrid from '../components/WeddingGrid.astro';
+import { getWeddingImages, getGalleryItems, weddingFolder, weddingPlace } from '../utils/weddings';
+import { SITE, absolute, formatDate, canonicalPath } from '../site.config';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  wedding: CollectionEntry<'weddings'>;
+  related: Array<CollectionEntry<'weddings'>>;
+}
+
+const { wedding, related } = Astro.props;
+const { data } = wedding;
+
+const galleryImages = getWeddingImages(weddingFolder(wedding), data.cover);
+const galleryItems = getGalleryItems(galleryImages, data.couple);
+const ogImage = await ogImageFrom(data.cover);
+
+const articleUrl = absolute(canonicalPath(`/casamentos/${data.slug}`));
+
+// "Fazenda X, Nova Lima · MG" — ou só "Nova Lima · MG" quando não há local.
+const place = weddingPlace(data);
+const placeLabel = `${place} · ${data.state}`;
+
+const jsonLd = [
+  node({
+    '@type': 'Article',
+    '@id': `${articleUrl}#article`,
+    headline: data.excerpt,
+    description: data.description,
+    url: articleUrl,
+    image: [absolute(ogImage.src)],
+    datePublished: data.date.toISOString(),
+    author: { '@id': ID.person },
+    publisher: { '@id': ID.person },
+    isPartOf: { '@id': ID.website },
+    keywords: data.tags.length ? data.tags.join(', ') : undefined,
+    about: {
+      '@type': 'Event',
+      name: `Casamento de ${data.couple}`,
+      location: `${place}, ${data.state}`,
+      startDate: data.date.toISOString().slice(0, 10),
+      eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+      image: absolute(ogImage.src),
+    },
+  }),
+  node({
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Início', item: absolute('/') },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Casamentos',
+        item: absolute(canonicalPath('/casamentos')),
+      },
+      { '@type': 'ListItem', position: 3, name: data.couple, item: articleUrl },
+    ],
+  }),
+  publisherRef(),
+];
+---
+
+<BaseLayout
+  title={data.excerpt}
+  description={data.description}
+  canonical={`/casamentos/${data.slug}`}
+  ogImage={ogImage.src}
+  ogImageWidth={ogImage.width}
+  ogImageHeight={ogImage.height}
+  ogImageAlt={`${data.couple} — casamento em ${data.city}`}
+  type="article"
+  publishedTime={data.date}
+  noindex={data.draft}
+  author={SITE.name}
+  jsonLd={jsonLd}
+>
+  <article>
+    <Hero
+      image={data.cover}
+      alt={`${data.couple} — ${data.excerpt}`}
+      eyebrow={placeLabel}
+      title={data.couple}
+      ctas={[
+        { label: 'Ver a galeria', href: '#galeria', primary: true },
+        { label: 'Conheça o fotógrafo', href: '/sobre' },
+      ]}
+    />
+
+    <Section rhythm="tight" class="!py-10">
+      <Breadcrumbs items={[{ label: 'Casamentos', href: '/casamentos' }, { label: data.couple }]} />
+    </Section>
+
+    {/* Intro */}
+    <Section rhythm="tight" width="narrow" label="Sobre o casamento">
+      <div class="border-y border-line py-12 text-center sm:py-16">
+        <Eyebrow class="!justify-center">{formatDate(data.date)}</Eyebrow>
+        <p class="mx-auto mt-6 max-w-xl font-display text-2xl font-normal leading-snug text-text sm:text-3xl">
+          {data.description}
+        </p>
+        <p class="mt-6 text-sm text-muted">{placeLabel}</p>
+      </div>
+    </Section>
+
+    {/* Galeria editorial */}
+    <Section id="galeria" rhythm="tight" label="Galeria de fotos" class="!pt-16 sm:!pt-20">
+      <div class="mb-10 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <Eyebrow>Galeria</Eyebrow>
+          <h2 class="mt-2 font-display text-3xl font-medium tracking-tight sm:text-4xl">
+            {data.couple} na íntegra
+          </h2>
+        </div>
+        <p class="max-w-xs text-sm text-muted">{galleryImages.length} fotografias curadas</p>
+      </div>
+      <Gallery id={`galeria-${data.slug}`} items={galleryItems} />
+    </Section>
+
+    <CTA title="E agora, será o dia de vocês?" />
+  </article>
+
+  {related.length > 0 ? (
+    <Section>
+      <div class="mb-10 max-w-2xl">
+        <Eyebrow>Continue vendo</Eyebrow>
+        <h2 class="mt-2 font-display text-3xl font-medium tracking-tight sm:text-4xl">
+          Mais casamentos
+        </h2>
+        <p class="mt-3 text-muted">
+          Casamentos com clima e região parecidos com o de {data.couple}.
+        </p>
+      </div>
+      <WeddingGrid weddings={related} />
+    </Section>
+  ) : null}
+</BaseLayout>

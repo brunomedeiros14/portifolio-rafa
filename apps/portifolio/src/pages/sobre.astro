@@ -1,0 +1,163 @@
+---
+import { Picture } from 'astro:assets';
+import CTA from '../components/CTA.astro';
+import MediaFrame from '../components/MediaFrame.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Prose from '../components/Prose.astro';
+import Reveal from '../components/Reveal.astro';
+import Section from '../components/Section.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE, absolute } from '../site.config';
+import { ID, node, personRef } from '../utils/schema';
+import { ogImageFrom } from '../utils/og';
+
+import portrait from '../assets/profile.png';
+import portraitSecondary from '../assets/secondary_profile.png';
+
+const ogImage = await ogImageFrom(portrait);
+
+const PRINCIPLES = [
+  'Cobertura completa, do preparo à pista de dança',
+  'Retratos naturais e atemporais, sem modismo',
+  'Entrega em alta resolução, para imprimir sem limites',
+  'Autorização de uso plena, sem taxas escondidas',
+];
+
+const jsonLd = node({
+  '@type': 'Person',
+  '@id': ID.person,
+  name: personRef().name,
+  jobTitle: SITE.role,
+  description: SITE.description,
+  url: absolute('/sobre'),
+  image: absolute(ogImage.src),
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: SITE.city,
+    addressRegion: SITE.state,
+    addressCountry: 'BR',
+  },
+  sameAs: [SITE.instagram],
+  ...(SITE.email ? { email: SITE.email } : {}),
+  ...(SITE.whatsapp ? { telephone: SITE.whatsapp } : {}),
+});
+---
+
+<BaseLayout
+  title="Sobre"
+  description="Fotógrafo de casamento em Belo Horizonte e Minas Gerais: fotografia natural, elegante e emocional, com estética cinematográfica e sem perder a verdade."
+  jsonLd={jsonLd}
+  headerTransparent={false}
+>
+  <PageHeader
+    eyebrow="Sobre"
+    title="Fotografia, para mim, é <em class='italic text-accent'>memória</em>, verdade e olhar."
+    description="Sou Rafael Dias. Este é o que eu procuro em cada casamento — e o que tento não perder atrás da câmera."
+  />
+
+  <Section rhythm="page">
+    <div class="grid gap-12 md:grid-cols-12 md:gap-16">
+      <Reveal class="md:col-span-5">
+        <MediaFrame ratio="4/5">
+          <Picture
+            src={portrait}
+            alt="Rafael Dias em campo, fotografando ao entardecer"
+            widths={[480, 1280]}
+            sizes="(min-width: 1024px) 40vw, 92vw"
+            formats={['avif', 'webp']}
+            fallbackFormat="jpeg"
+            width={1280}
+            loading="eager"
+            decoding="async"
+            fetchpriority="high"
+            class="h-full w-full object-cover"
+          />
+        </MediaFrame>
+      </Reveal>
+
+      <div class="md:col-span-6 md:col-start-7">
+        {/* A primeira frase da prosa sobe para um display: quem abre a página lê
+            o nome e a profissão antes do resto, e não precisa descer para
+            descobrir de quem se trata. */}
+        <Reveal>
+          <p class="font-display text-2xl leading-snug font-medium tracking-tight sm:text-3xl">
+            Sou <span class="italic">Rafael Dias</span>, fotógrafo e estudante de Fotografia.
+          </p>
+        </Reveal>
+        <Reveal delay={80}>
+          <Prose class="mt-8 text-muted">
+            <p class="!mt-0">
+              Movido pela fé e pela vontade de transformar momentos reais em imagens que tenham
+              significado. Meu trabalho nasceu do desejo de enxergar além do registro: observar
+              gestos, expressões, detalhes e aquilo que muitas vezes acontece em silêncio.
+            </p>
+            <p>
+              Busco uma fotografia natural, elegante e emocional, com uma estética cinematográfica,
+              mas sem perder a verdade das pessoas e dos lugares. Tenho uma conexão especial com
+              casamentos, celebrações, igrejas e histórias que carregam significado — é nesses
+              momentos que encontro o que mais gosto na fotografia: registrar pessoas sendo elas
+              mesmas.
+            </p>
+            <p>
+              Minha fé cristã também faz parte do olhar. Acredito que existe beleza nos detalhes e
+              propósito nas histórias que Deus permite que vivamos. Mais do que entregar fotografias
+              bonitas, quero criar imagens que, anos depois, sejam capazes de fazer você voltar
+              àquele momento.
+            </p>
+          </Prose>
+        </Reveal>
+
+        <Reveal class="mt-10 border-t border-line pt-8">
+          <h2 class="font-display text-lg font-medium tracking-tight">No que eu acredito</h2>
+          <ul class="mt-5">
+            {PRINCIPLES.map((item, index) => (
+              <li class="flex items-baseline gap-5 border-t border-line py-3.5 text-sm leading-relaxed">
+                <span class="font-display text-sm text-accent/70 italic" aria-hidden="true">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </Reveal>
+      </div>
+    </div>
+  </Section>
+
+  <Section tone="surface">
+    <div class="grid gap-12 md:grid-cols-12 md:items-center md:gap-16">
+      <MediaFrame ratio="4/3" class="md:col-span-5">
+        <Picture
+          src={portraitSecondary}
+          alt="Um momento de celebração ao entardecer"
+          widths={[480, 1280]}
+          sizes="(min-width: 1024px) 40vw, 92vw"
+          formats={['avif', 'webp']}
+          fallbackFormat="jpeg"
+          width={1280}
+          loading="lazy"
+          decoding="async"
+          class="h-full w-full object-cover"
+        />
+      </MediaFrame>
+      <div class="md:col-span-6 md:col-start-7">
+        <SectionHeading eyebrow="Direção" title="Menos pose. Mais presença." />
+        <Prose class="mt-6 text-muted">
+          <p>
+            Minha direção de casais é mínima. Guio o essencial e espero o resto — porque o resto,
+            quando é real, não se repete. Trabalho quase sempre com luz natural e deixo que o dia
+            conte a própria história.
+          </p>
+          <p>
+            É por isso que a couverture aparece nos casamentos: não porque exista um checklist a
+            cumprir, mas porque o que mais importa para vocês merece as duas câmeras e as horas
+            inteiras.
+          </p>
+        </Prose>
+      </div>
+    </div>
+  </Section>
+
+  <CTA title="Vamos criar a sua história?" />
+</BaseLayout>
