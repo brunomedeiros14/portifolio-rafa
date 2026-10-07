@@ -82,7 +82,7 @@ commit + push → check + build → deploy → /casamentos/<slug>
 Duas metades compilam diferente porque o GAS as executa diferente:
 
 ```
-src_gas/
+apps/gas/
 ├── appsscript.json          # manifesto: escopos, timezone, bloco webapp
 ├── .clasp.json              # { scriptId, rootDir: "dist" }
 ├── vite.config.ts           # build da UI
@@ -94,9 +94,9 @@ src_gas/
 └── dist/                    # SAÍDA = rootDir do clasp (gitignored)
 ```
 
-O nome da pasta é **`src_gas`** (não `gs-form`): os scripts `gs:build`/`gs:check`/`gs:test`
-do `package.json` da raiz, o `exclude` do `tsconfig.json` raiz e o `.prettierignore` apontam
-para ela — e `bun run check` roda dentro do workflow `publish-wedding.yml`.
+O projeto do painel vive no workspace **`apps/gas`**: os scripts `gs:build`/`gs:check`/`gs:test`
+do `package.json` da raiz delegam para ele via `bun --filter gas` — e `bun run check` roda
+dentro do workflow `publish-wedding.yml`.
 
 ### As duas metades
 
@@ -468,7 +468,7 @@ simultâneos partem do mesmo snapshot e um patch se perde **sem erro** — a fot
 - **`draft` é obrigatório no JSON** (`true`/`false`): o gerador usa para decidir se pula o
   mínimo de galeria e escreve o frontmatter `draft:` (noindex). Um evento `draft: true` publicado
   incompleto vira página gerada mas fora do sitemap e do Google.
-- URLs do Drive **com `?confirm=t`** (sem ele o `fetch` do Node recebe a página interstitial de
+- URLs do Drive **com `?confirm=t`** (sem ele o `fetch` do Bun recebe a página interstitial de
   "arquivo grande" em vez de bytes, e o gerador gravaria HTML em `images/`).
 - Guarda: bytes totais das fotos ≤ `MAX_EVENT_BYTES = 400 MB`.
 - `apiPublication(slug)` devolve exatamente este JSON (preview no painel).
@@ -508,11 +508,11 @@ Três passos, cada um com seu lock — o fetch **nunca** roda dentro de lock:
 `publish-wedding.yml`: recebe o dispatch → `POST <url>/exec` com `{action:"publication", token:
 secrets.CMS_API_TOKEN, publicationId}` → grava `publication.json` → **aborta se o corpo for
 `{"error": ...}`** (hoje o gerador já falha com a mensagem, mas o check explícito dá o erro na
-hora, no passo certo) → `node
-scripts/generate-wedding.mjs publication.json` (valida campos obrigatórios `slug,couple,date,city,
-state,description,excerpt,cover`; regex de data; excerpt ≤ 220; baixa fotos com checagens; escreve
-`src/content/weddings/<slug>/index.mdx` atomicamente via staging) → `bun run check` + `bun run build`
-→ commit/push → deploy do site → `/casamentos/<slug>`.
+hora, no passo certo) → `bun apps/portifolio/scripts/generate-wedding.ts publication.json`
+(valida campos obrigatórios `slug,couple,date,city,state,description,excerpt,cover`; regex de data;
+excerpt ≤ 220; baixa fotos com checagens; escreve `apps/portifolio/src/content/weddings/<slug>/index.mdx`
+atomicamente via staging) → `bun run check` + `bun run build` → commit/push → deploy do site →
+`/casamentos/<slug>`.
 
 ---
 
@@ -542,7 +542,7 @@ existiu URL, então não existe deep link sem autenticação.
 - `entrando`: form de senha (input `type=password`, autofocus, botão "Entrando…/Entrar"). Sucesso →
   `gravarToken` + `navigate('/admin')` **sem recarregar a página**.
 - `sem senha`: mostra `Instrucoes` — como definir `ADMIN_PASSWORD_HASH` e `CMS_API_TOKEN` em
-  Propriedades do Script, com o comando node que gera o hash.
+  Propriedades do Script, com o comando bun que gera o hash.
 - `enviando`: submissão em andamento.
 
 **Painel (`admin/App.tsx`)** — gate (`apiAuthStatus`), header sticky com email, botões `Lista`,
@@ -617,11 +617,11 @@ canonical/robots/JSON-LD (isso fica no site Astro).
 ### Scripts (package.json da raiz do monorepo)
 
 ```
-gs:build  = vite build --config src_gas/vite.config.ts
-gs:test   = bun test src_gas/test/
-gs:check  = tsc server + tsc ui + gs:test + gs:build
-check     = astro check + prettier --check + gs:check
-gs:deploy = vite build --config src_gas/vite.config.ts && clasp deploy (mesmo deploymentId)
+gs:build  = bun --filter gas build
+gs:test   = bun --filter gas test
+gs:check  = bun --filter gas check
+check     = bun --filter portifolio check && bun --filter gas check && bun run format:check
+gs:deploy = bun --filter gas deploy
 ```
 
 ### Pipeline do build
@@ -629,7 +629,7 @@ gs:deploy = vite build --config src_gas/vite.config.ts && clasp deploy (mesmo de
 Plugin `gasDeploy` (`vite-gas.ts`, `enforce: 'post'`) roda em `generateBundle` **antes** de o Vite
 escrever qualquer coisa — auditoria reprovada ⇒ `dist/` intocado. Ele:
 
-1. transpila cada `src_gas/src/server/*.ts` com esbuild → `src_gas/dist/*.js` (saídas vazias como
+1. transpila cada `apps/gas/src/server/*.ts` com esbuild → `apps/gas/dist/*.js` (saídas vazias como
    `types.js` puladas);
 2. audita e grava `dist/index.html` (HTML único com bundle inline) + `dist/login.html` (cópia) +
    `dist/appsscript.json`.
@@ -666,7 +666,7 @@ escrever qualquer coisa — auditoria reprovada ⇒ `dist/` intocado. Ele:
 
 ## 12. Deploy e configuração (uma vez)
 
-1. Criar projeto no Apps Script → colar `Script ID` em `src_gas/.clasp.json`.
+1. Criar projeto no Apps Script → colar `Script ID` em `apps/gas/.clasp.json`.
 2. `clasp login` → `bun run gs:build` → `clasp push` (envia **só** `dist/` por `rootDir`).
 3. Publicar como Web App **pela UI** (só a UI preserva a URL `/exec`):
    - **Executar como: Eu** (crítico — sem isso cada visitante pede consentimento OAuth e o iframe
@@ -684,7 +684,7 @@ escrever qualquer coisa — auditoria reprovada ⇒ `dist/` intocado. Ele:
    porque o workflow depende do `url_id`. Nunca crie um deployment novo como "Nova implantação"
    (isso gera um `url_id` novo e quebra o workflow).
 5. Propriedades do script: tabela §4.3. Gerar hash:
-   `node -e "console.log('sha256:'+require('crypto').createHash('sha256').update(process.argv[1]).digest('hex'))" 'SENHA'`
+   `bun -e "console.log('sha256:'+require('crypto').createHash('sha256').update(process.argv[1]).digest('hex'))" 'SENHA'`
 6. Secret do Actions: `CMS_API_TOKEN` = propriedade homônima.
 7. Escopos OAuth (`appsscript.json`): `spreadsheets`, `drive`, `script.external_request`,
    `userinfo.email`; timezone `America/Sao_Paulo`; `exceptionLogging: STACKDRIVER`.

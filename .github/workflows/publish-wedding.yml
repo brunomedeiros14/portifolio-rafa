@@ -37,7 +37,7 @@ jobs:
 
       - name: Generate content
         run: |
-          bun apps/portifolio/scripts/generate-wedding.mjs publication.json
+          bun apps/portifolio/scripts/generate-wedding.ts publication.json
 
       - name: Typecheck
         run: |
