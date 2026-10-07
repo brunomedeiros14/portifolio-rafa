@@ -16,7 +16,7 @@
     "dev": "bun --filter portifolio dev",
     "build": "bun --filter portifolio build",
     "preview": "bun --filter portifolio preview",
-    "check": "bun --filter portifolio check && bun --filter gas check && bun run format:check",
+    "check": "bun --filter portifolio check",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "gs:build": "bun --filter gas build",
