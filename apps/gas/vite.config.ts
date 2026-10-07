@@ -26,7 +26,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@site': path.join(ROOT, '../src'),
+      '@site': path.join(ROOT, '../portifolio/src'),
     },
   },
   build: {

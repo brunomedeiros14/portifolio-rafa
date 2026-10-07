@@ -67,7 +67,7 @@ const Files = {
 
   /**
    * URL de download para o workflow. `confirm=t` pula o interstitial de
-   * "arquivo grande" do Drive — sem ele o `fetch` do Node receberia HTML
+   * "arquivo grande" do Drive — sem ele o `fetch` do Bun receberia HTML
    * onde esperava bytes e o gerador gravaria HTML em `images/`.
    */
   downloadUrl(id) {

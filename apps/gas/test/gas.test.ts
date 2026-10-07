@@ -1,5 +1,5 @@
 /**
- * Regressões críticas do servidor do CMS — rodam no Node (`bun test src_gas/test/`)
+ * Regressões críticas do servidor do CMS — rodam no Bun (`bun test test/`)
  * contra o bundle transpilado, com mocks do Apps Script (ver `rodar.ts`).
  */
 import { test, expect, describe } from 'bun:test';

@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 /**
  * Publica código no deployment Web App existente SEM quebrar o entry point.
  *
@@ -13,7 +13,7 @@
  *   bun run gs:deploy [descricao-da-versao]
  *   DEPLOY_ID=<id> bun run gs:deploy   # força um deployment específico
  *
- * Requer ~/.clasprc.json (auth do clasp) e src_gas/.clasp.json (scriptId).
+ * Requer ~/.clasprc.json (auth do clasp) e apps/gas/.clasp.json (scriptId).
  */
 import fs from 'node:fs';
 import os from 'node:os';
@@ -32,7 +32,7 @@ if (!cred || !cred.refresh_token) {
 const claspCfg = JSON.parse(fs.readFileSync(path.join(ROOT, '.clasp.json'), 'utf8'));
 const scriptId = claspCfg.scriptId;
 if (!scriptId || scriptId === 'COLE_O_SCRIPT_ID_AQUI') {
-  console.error('Falta o scriptId real em src_gas/.clasp.json (coloque o Script ID do projeto).');
+  console.error('Falta o scriptId real em apps/gas/.clasp.json (coloque o Script ID do projeto).');
   process.exit(1);
 }
 

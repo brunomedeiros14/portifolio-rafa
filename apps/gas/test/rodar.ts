@@ -1,5 +1,5 @@
 /**
- * Roda o bundle do servidor num `vm` do Node com mocks do Apps Script.
+ * Roda o bundle do servidor num `node:vm` do Bun com mocks do Apps Script.
  * O mock é intencionalmente minimalista: só o que os testes exercitam —
  * planilha em memória, Script Properties, cache com TTL, Drive fake, digest.
  */

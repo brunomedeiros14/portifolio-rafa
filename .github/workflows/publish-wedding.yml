@@ -33,39 +33,11 @@ jobs:
           URL_ID: ${{ github.event.client_payload.url_id }}
           CMS_API_TOKEN: ${{ secrets.CMS_API_TOKEN }}
         run: |
-          node --input-type=module -e '
-            import fs from "node:fs";
-            const urlId = process.env.URL_ID;
-            if (!urlId || urlId.includes("undefined") || urlId.includes("(")) {
-              console.error("Faltou github.event.client_payload.url_id (id da URL /macros/s/<id>/exec).");
-              process.exit(1);
-            }
-            const cmsUrl = `https://script.google.com/macros/s/${urlId}/exec`;
-            const res = await fetch(cmsUrl, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              redirect: "follow",
-              body: JSON.stringify({
-                action: "publication",
-                token: process.env.CMS_API_TOKEN,
-                publicationId: process.env.PUBLICATION_ID,
-              }),
-            });
-            const body = await res.text();
-            fs.writeFileSync("publication.json", body);
-            console.log(`HTTP ${res.status} | ${body.length} bytes`);
-            console.log(body.slice(0, 400));
-            if (res.status !== 200 || !body.trim()) {
-              console.error(`GAS respondeu HTTP ${res.status}. Confirme que a URL ${cmsUrl} é o deployment Web App.`);
-              process.exit(1);
-            }
-            try { JSON.parse(body); }
-            catch { console.error("Resposta não é JSON válido."); process.exit(1); }
-          '
+          bun apps/portifolio/scripts/get-wedding.ts
 
       - name: Generate content
         run: |
-          node scripts/generate-wedding.mjs publication.json
+          bun apps/portifolio/scripts/generate-wedding.mjs publication.json
 
       - name: Typecheck
         run: |
@@ -85,7 +57,7 @@ jobs:
 
           # Lista explícita: `git add .` também entraria no publication.json
           # baixado acima, que é artefato temporário de uma execução.
-          git add src/content/weddings .gitignore
+          git add apps/portifolio/src/content/weddings .gitignore
 
           git diff --cached --quiet || \
             git commit \

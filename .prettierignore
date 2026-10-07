@@ -1,13 +1,15 @@
 # Saída de build
 dist/
 .astro/
+apps/*/dist/
+apps/*/.astro/
 
 # Gerado pelo bun — reescrito a cada install e nunca editado à mão.
 bun.lock
 
 # Gerado pelo plugin de rotas do TanStack Router a cada `vite build`. Formatar
 # isso produz um diff que o próximo build desfaz.
-src_gas/src/ui/routeTree.gen.ts
+apps/gas/src/ui/routeTree.gen.ts
 
 # Temporário do build da interface
 .tmp-vite/
@@ -17,6 +19,6 @@ publication.json
 casamentos-para-publicar/
 
 # Material bruto das fotos — não é código
-src/content/weddings/*/images/
-src/content/blog/images/
-src/assets/
+apps/portifolio/src/content/weddings/*/images/
+apps/portifolio/src/content/blog/images/
+apps/portifolio/src/assets/

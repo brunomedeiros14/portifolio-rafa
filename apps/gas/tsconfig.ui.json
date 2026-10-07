@@ -14,7 +14,7 @@
     "forceConsistentCasingInFileNames": true,
     "useDefineForClassFields": true,
     "paths": {
-      "@site/*": ["../src/*"]
+      "@site/*": ["../portifolio/src/*"]
     }
   },
   "include": ["src/ui/**/*.ts", "src/ui/**/*.tsx"]

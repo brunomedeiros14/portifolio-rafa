@@ -1,11 +1,11 @@
 {
-  "name": "rafa-fotografia",
-  "type": "module",
+  "name": "portifolio-rafa-monorepo",
   "version": "0.1.0",
   "private": true,
-  "engines": {
-    "node": ">=22.12.0"
-  },
+  "type": "module",
+  "workspaces": [
+    "apps/*"
+  ],
   "trustedDependencies": [
     "@parcel/watcher",
     "@tailwindcss/oxide",
@@ -13,44 +13,19 @@
     "sharp"
   ],
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview",
-    "gs:build": "vite build --config src_gas/vite.config.ts",
-    "gs:check": "tsc -p src_gas/tsconfig.server.json && tsc -p src_gas/tsconfig.ui.json && bun run gs:test && vite build --config src_gas/vite.config.ts",
-    "gs:test": "bun test src_gas/test/",
-    "gs:deploy": "bun run gs:build && node src_gas/deploy.mjs",
-    "astro": "astro",
-    "sync": "astro sync",
+    "dev": "bun --filter portifolio dev",
+    "build": "bun --filter portifolio build",
+    "preview": "bun --filter portifolio preview",
+    "check": "bun --filter portifolio check && bun --filter gas check && bun run format:check",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "astro check && prettier --check . && bun run gs:check"
-  },
-  "dependencies": {
-    "@astrojs/mdx": "^8.0.2",
-    "@astrojs/sitemap": "^3.7.4",
-    "@tailwindcss/vite": "^4.3.3",
-    "@tanstack/react-router": "^1.170.41",
-    "@tanstack/router-plugin": "^1.168.42",
-    "astro": "^7.3.4",
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0",
-    "tailwindcss": "^4.3.3"
+    "gs:build": "bun --filter gas build",
+    "gs:check": "bun --filter gas check",
+    "gs:test": "bun --filter gas test",
+    "gs:deploy": "bun --filter gas deploy"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.10",
-    "@google/clasp": "^3.4.1",
-    "@types/google-apps-script": "^2.0.13",
-    "@types/react": "^19.3.0",
-    "@types/react-dom": "^19.3.0",
-    "@vitejs/plugin-react": "^6.1.1",
-    "bootstrap-icons": "^1.13.1",
-    "esbuild": "^0.25.0",
     "prettier": "^3.9.9",
-    "prettier-plugin-astro": "^1.1.0",
-    "sharp": "^0.35.4",
-    "typescript": "^6.0.3",
-    "vite": "^8.3.2",
-    "vite-plugin-singlefile": "^2.3.3"
+    "prettier-plugin-astro": "^1.1.0"
   }
 }
