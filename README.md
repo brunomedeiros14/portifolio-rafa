@@ -7,7 +7,8 @@ Minas Gerais. Site estático gerado com [Astro](https://astro.build),
 - **Idioma:** pt-BR (único, sem i18n)
 - **Saída:** 100% estática (`dist/`), sem servidor
 - **Deploy:** Cloudflare Pages, build a partir de `main`
-- **CMS:** Google Apps Script (`gs-form/`) publica casamentos via GitHub Actions
+- **CMS:** Google Apps Script (`src_gas/`) publica casamentos via GitHub Actions
+- **Painel (admin):** `/admin` embebe o CMS num iframe — especificação completa em `cms_spec.md`
 
 ## Stack
 
@@ -31,6 +32,10 @@ Minas Gerais. Site estático gerado com [Astro](https://astro.build),
 | `bun run preview`   | Serve o build local para conferência            |
 | `bun run check`     | Verificação de tipos de `.astro` e `.ts`        |
 | `bun run astro ...` | CLI do Astro (ex.: `bun run astro info`)        |
+| `bun run gs:build`  | Transpila + audita o CMS em `src_gas/dist/`     |
+| `bun run gs:test`   | Testes do servidor GAS (`src_gas/test/`)        |
+| `bun run gs:check`  | Typecheck servidor+UI + testes + build do CMS   |
+| `bun run gs:deploy` | `gs:build` + `clasp push` em `src_gas/dist/`    |
 
 > Em desenvolvimento, prefira rodar o servidor em segundo plano:
 > `astro dev --background`, gerenciado com `astro dev stop`,
@@ -55,7 +60,7 @@ src/
 
 public/                  # favicon, webmanifest, robots.txt, fonts/
 scripts/                 # scripts Node (pipeline de publicação)
-gs-form/                 # projeto Google Apps Script (CMS)
+src_gas/                 # projeto Google Apps Script (CMS) — ver cms_spec.md
 ```
 
 ## Rotas
@@ -70,30 +75,39 @@ gs-form/                 # projeto Google Apps Script (CMS)
 | `/sobre`             | SSG  | Sobre o fotógrafo                          |
 | `/experiencia`       | SSG  | Processo, do contato à entrega             |
 | `/contato`           | SSG  | Canais de contato                          |
+| `/admin`             | SSG  | Iframe do CMS (noindex, fora do sitemap)   |
 | `/404`               | SSG  | Página de erro (`noindex`)                 |
 
 ## Publicar um casamento (CMS)
 
-O `gs-form` é um painel em Google Apps Script que grava os dados numa Google
-Sheet, sobe as fotos para o Drive e dispara o workflow de publicação. O painel
-exige senha (ou um deployment restrito à sua conta); ver `gs-form/README.md`.
+O `src_gas` é um painel em Google Apps Script que grava os dados numa Google
+Sheet, sobe as fotos para o Drive e dispara o workflow de publicação. Ele roda
+embebido em `https://rafaeldiasfotos.com.br/admin` (iframe) e exige senha. Toda a
+especificação (modelo, API, segurança, deploy) está em `cms_spec.md`.
 
-1. No painel, preencha o evento, envie as fotos e marque uma delas como capa —
-   as demais vão para a galeria.
+1. Abra `/admin`, entre e preencha o evento, envie as fotos e marque uma delas
+   como capa — as demais vão para a galeria.
 2. **Executar automação** faz `repository_dispatch` com `publish-wedding`.
 3. `.github/workflows/publish-wedding.yml` lê a publicação no GAS, roda
    `node scripts/generate-wedding.mjs publication.json` e faz commit das
    `index.mdx` geradas em `src/content/weddings/<slug>/`.
 4. O push em `main` dispara o build no Cloudflare Pages.
+5. O GAS é publicado com `bun run gs:deploy` (que atualiza o `src_gas/dist/`) e
+   o `/admin` embebe a URL `/exec` do Web App — defina `PUBLIC_CMS_URL` no build
+   do site apontando para ela (ex.: `https://script.google.com/macros/s/<url_id>/exec`).
+   Na publicação do Apps Script use acesso "Qualquer pessoa" + autenticação por
+   senha (`ADMIN_PASSWORD_HASH`, §14) — em iframe cross-site a auth por conta
+   Google não funciona.
 
 ### Variáveis
 
-| Segredo                                                | Onde                     | Necessário para                                |
-| ------------------------------------------------------ | ------------------------ | ---------------------------------------------- |
-| `CMS_API_TOKEN`                                        | Repo + Script Properties | Calls autenticadas do GAS                      |
-| `GITHUB_OWNER/REPO/TOKEN`                              | Script Properties        | Disparar o `repository_dispatch`               |
-| `ADMIN_PASSWORD_HASH`                                  | Script Properties        | Login do painel (se o deploy não for restrito) |
-| `SHEET_ID`, `DRIVE_ROOT_ID`, `MIN_GALLERY`, `SITE_URL` | Script Properties        | Opcional (defaults no `gs-form/`)              |
+| Segredo                                    | Onde                     | Necessário para                                    |
+| ------------------------------------------ | ------------------------ | -------------------------------------------------- |
+| `CMS_API_TOKEN`                            | Repo + Script Properties | Calls autenticadas do GAS                          |
+| `GITHUB_OWNER/REPO/TOKEN`                  | Script Properties        | Disparar o `repository_dispatch`                   |
+| `ADMIN_PASSWORD_HASH`                      | Script Properties        | Login do painel (obrigatório p/ o iframe `ANYONE`) |
+| `SHEET_ID`, `DRIVE_ROOT_ID`, `MIN_GALLERY` | Script Properties        | Opcional (defaults no `src_gas/`)                  |
+| `PUBLIC_CMS_URL`                           | Build do site            | `/admin` embutir o iframe (URL `/exec`)            |
 
 ## Deploy
 

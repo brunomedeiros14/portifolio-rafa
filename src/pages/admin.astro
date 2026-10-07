@@ -1,0 +1,43 @@
+---
+import '../styles/global.css';
+
+/**
+ * Conta só de hospedar o iframe do CMS (§16), sem o chrome do portfólio
+ * (header, rodapé, WhatsApp): a tela é inteiramente o painel.
+ *
+ * Aponte `PUBLIC_CMS_URL` no build do site para a URL `/exec` do Web App
+ * (ex.: `https://script.google.com/macros/s/<url_id>/exec`). Sem a variável
+ * a página monta com instruções, em vez de embutir uma URL fake.
+ */
+const CMS_URL = import.meta.env.PUBLIC_CMS_URL as string | undefined;
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Casamentos — Painel de publicação</title>
+  </head>
+  <body>
+    {CMS_URL ? (
+      <iframe
+        src={CMS_URL}
+        title="Painel de publicação"
+        loading="eager"
+        referrerpolicy="no-referrer"
+        class="block h-screen w-full border-0"
+      />
+    ) : (
+      <div class="mx-auto max-w-xl px-4 py-16 text-sm leading-relaxed text-muted">
+        <p class="font-display text-2xl text-ink">Painel não configurado</p>
+        <p class="mt-4">
+          Defina <code class="text-accent">PUBLIC_CMS_URL</code> no build do site, apontando para a
+          URL <code>/exec</code> do Web App do Apps Script, ex.:{' '}
+          <code class="break-all">https://script.google.com/macros/s/&#60;url_id&#62;/exec</code>.
+        </p>
+      </div>
+    )}
+  </body>
+</html>

@@ -466,6 +466,7 @@ export default defineConfig({
       // `/rss.xml` gerado também é um `.xml` e ficaria listado como página.
       filter: (page) =>
         !page.endsWith('/404') &&
+        !page.endsWith('/admin') &&
         !page.includes('/_astro') &&
         !page.endsWith('.xml') &&
         !isWeddingPageNumber(page) &&

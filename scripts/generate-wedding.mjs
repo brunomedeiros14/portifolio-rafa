@@ -1,7 +1,7 @@
 // Gera o folder de um casamento no repositório a partir do JSON do Google Apps Script.
 // Uso: node scripts/generate-wedding.mjs <publication.json>
 //
-// O JSON é retornado pelo endpoint do gs-form ({ action: "publication" }). Este script:
+// O JSON é retornado pelo endpoint do src_gas ({ action: "publication" }). Este script:
 //  1. valida os campos obrigatórios (mesmo schema de src/content.config.ts);
 //  2. baixa as fotos do Google Drive (links públicos) para images/;
 //  3. escreve src/content/weddings/<slug>/index.mdx.
@@ -35,7 +35,7 @@ let stagingDir = null;
 const MIN_EDGE = 1600;
 const MAX_BYTES = 20 * 1024 * 1024;
 
-/** Mesmo piso do `Events.minGallery_()` no gs-form. */
+/** Mesmo piso do `Events.minGallery_()` no src_gas. */
 const MIN_GALLERY = 8;
 
 /**
@@ -61,7 +61,7 @@ try {
   fail(`publication.json não é um JSON válido: ${err.message}`);
 }
 
-if (!pub || pub.error) fail(`Erro retornado pelo endpoint do gs-form: ${pub && pub.error}`);
+if (!pub || pub.error) fail(`Erro retornado pelo endpoint do src_gas: ${pub && pub.error}`);
 
 const REQUIRED = ['slug', 'couple', 'date', 'city', 'state', 'description', 'excerpt', 'cover'];
 for (const field of REQUIRED) {

@@ -21,6 +21,14 @@
   Cache-Control: public, max-age=0, must-revalidate
 /*.html
   Cache-Control: public, max-age=0, must-revalidate
+
+# /admin embebe o iframe do CMS (§16): o HTML do wrapper não pode ficar em
+# cache (o /exec muda de novo deployment). E, em vez de só herdarem o CSP
+# global que proíbe framing, esta página declara os frames do Google que ela
+# embebe de propósito.
+/admin
+  Cache-Control: no-store
+  Content-Security-Policy: frame-src 'self' https://script.google.com https://*.googleusercontent.com; frame-ancestors 'none'; X-Content-Type-Options: nosniff; Referrer-Policy: strict-origin-when-cross-origin; Permissions-Policy: geolocation=(), microphone=(), camera=(), interest-cohort=(); X-Frame-Options: DENY
 /blog/*
   Cache-Control: public, max-age=0, must-revalidate
 /casamentos/*

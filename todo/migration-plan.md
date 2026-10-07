@@ -1,5 +1,12 @@
 # Migração do painel do Apps Script
 
+> **Status: superseded.** Este plano descrevia o `gs-form/` antigo (apagado no
+> commit `dfe149f`) e a portagem para TS/Preact. O painel foi reespecificado do
+> zero — **`src_gas/`, React 19 + TanStack Router + Tailwind v4, ver `cms_spec.md`**
+> — e as correções de auditoria marcadas aqui como "planejada" foram absorvidas
+> como requisito da nova spec (§8). O que não foi absorvido está listado em
+> `cms_spec.md` §14.
+
 Objetivo: levar o painel de `gs-form` (servidor em JS solto na raiz + painel em
 `innerHTML` manual) para **TypeScript estrito em `src/server/*.ts`**, **UI em
 Preact**, **Tailwind v4** e saída compilada em **`gs-form/dist/`**.
